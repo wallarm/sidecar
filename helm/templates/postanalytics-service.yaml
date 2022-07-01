@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-postanalytics
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.postanalytics.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- with .Values.postanalytics.service.annotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postanalytics
+    {{- with .Values.postanalytics.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.postanalytics.service.type | default "ClusterIP" }}
+  {{- with .Values.postanalytics.service.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
+  {{- if eq (.Values.postanalytics.service.type | default "ClusterIP") "LoadBalancer" -}}
+  {{- with .Values.postanalytics.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+  {{- end }}
+  {{- with .Values.postanalytics.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{ . | toYaml | nindent 2 }}
+  {{- end }}
+  {{- end }}
+  selector:
+    {{- include "wallarm-sidecar.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postanalytics
+  ports:
+  - name: tarantool
+    port: {{ .Values.postanalytics.service.port }}
+    targetPort: tarantool
+    protocol: TCP
+    {{- if has (.Values.postanalytics.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") -}}
+    {{- with .Values.postanalytics.service.nodePort }}
+    nodePort: {{ . }}
+    {{- end }}
+    {{- end }}
+  {{- if has (.Values.postanalytics.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") }}
+  {{- with .Values.postanalytics.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ . }}
+  {{- end }}
+  {{- end }}
+  {{- with .Values.postanalytics.service.externalIPs }}
+  externalIPs: {{- . | toYaml | nindent 2 }}
+  {{- end }}

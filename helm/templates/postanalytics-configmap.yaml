@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-postanalytics
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.postanalytics.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postanalytics
+    {{- with .Values.postanalytics.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+data:
+  crontab: |-
+    ### Postanalytics service crontab
+    ###
+    {{- range $k, $v := .Values.postanalytics.cron.config }}
+    # {{ $k }}
+    {{ $v.schedule }} timeout {{ $v.timeout }} {{ $v.command }}
+    {{- end }}

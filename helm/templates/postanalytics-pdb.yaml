@@ -1,0 +1,31 @@
+{{- if .Values.postanalytics.podDisruptionBudget }}
+{{- if .Values.postanalytics.podDisruptionBudget.enabled }}
+---
+apiVersion: {{ template "podDisruptionBudget.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-postanalytics
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.postanalytics.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postanalytics
+    {{- with .Values.postanalytics.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "wallarm-sidecar.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postanalytics
+  {{- with .Values.postanalytics.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ . }}
+  {{- end }}
+  {{- with .Values.postanalytics.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}

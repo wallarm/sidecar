@@ -1,0 +1,115 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+
+  workflow_dispatch:
+
+
+jobs:
+  lint:
+    name: Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Helm lint
+        run: |
+          helm version
+          helm lint . --debug
+
+  validate:
+    name: Validate manifests
+    env:
+      KUBEVAL_SCHEMA_LOCATION: 'https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/'
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 1.19-1.24
+        kubeVersion:
+          - 1.19.16
+          - 1.20.15
+          - 1.21.14
+          - 1.22.11
+          - 1.23.8
+          - 1.24.2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Helm template
+        run: helm template . > result-${{ matrix.kubeVersion }}.yaml --kube-version ${{ matrix.kubeVersion }} --debug
+
+      - name: Kubeval
+        uses: instrumenta/kubeval-action@master
+        with:
+          files: result-${{ matrix.kubeVersion }}.yaml
+          version: ${{ matrix.kubeVersion }}
+          ignore_missing_schemas: false
+
+  test:
+    name: Integration test
+    needs: validate
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 1.19-1.24
+        kubeVersion:
+          - 1.19.16
+          - 1.20.15
+          - 1.21.12
+          - 1.22.9
+          - 1.23.6
+          - 1.24.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Prepare Kind cluster
+        uses: helm/kind-action@v1.3.0
+        with:
+          verbosity: "0"
+          wait: "240s"
+          config: ./test/kind/kind.yaml
+          node_image: kindest/node:v${{ matrix.kubeVersion }}
+          cluster_name: kind
+
+      - name: Check Kind cluster
+        run: |
+          kubectl cluster-info
+          kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
+          echo "current-context:" $(kubectl config current-context)
+          echo "environment-kubeconfig:" ${KUBECONFIG}
+
+      - name: Install Helm chart
+        run: |
+          set -x
+          helm version
+          helm install wallarm-sidecar . \
+          --set config.wallarm.api.host=audit.api.wallarm.com \
+          --set config.wallarm.api.token=${{ secrets.WALLARM_TOKEN }} \
+          --set config.controller.replicaCount=1 \
+          --set config.controller.image.registry=quay.io \
+          --set config.controller.image.image=dmitriev/sidecar-injector \
+          --namespace wallarm-sidecar \
+          --create-namespace \
+          --wait \
+          --timeout 5m0s
+          helm status wallarm-sidecar --namespace wallarm-sidecar
+          kubectl get all --namespace wallarm-sidecar
+
+      - name: Run test
+        run: |
+          cd helm/test
+          pytest integration_test.py

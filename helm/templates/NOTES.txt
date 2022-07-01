@@ -1,0 +1,5 @@
+1. If helm diff is used it will show some changes regarding TLS certificates for secret and MutationAdmissionWebhook.
+   No worries, during helm upgrade these resources will not be changed.
+2. Manual cleanup of the following resources needed after chart uninstall:
+    a) MutationAdmissionWebhook: "{{ template "wallarm-sidecar.fullname" . }}"
+    b) Secret "{{ template "wallarm-sidecar.fullname" . }}-admission-tls" in namespace "{{ .Release.Namespace }}"

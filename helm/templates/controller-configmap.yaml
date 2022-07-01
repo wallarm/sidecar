@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-controller
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- with .Values.controller.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+data:
+  config.yaml: |-
+    api: {{ toYaml .Values.config.wallarm.api | nindent 6 }}
+    wallarm:
+      {{- toYaml .Values.sidecarDefaults.wallarm | nindent 6 }}
+      version: {{ .Chart.AppVersion }}
+      tarantool:
+        host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
+    container: {{ toYaml .Values.sidecarDefaults.container | nindent 6 }}
+    deployment: {{ toYaml .Values.sidecarDefaults.deployment | nindent 6 }}
+    nginx: {{ toYaml .Values.sidecarDefaults.nginx| nindent 6 }}
+{{ (.Files.Glob "files/sidecar-template.yaml").AsConfig | indent 2 }}

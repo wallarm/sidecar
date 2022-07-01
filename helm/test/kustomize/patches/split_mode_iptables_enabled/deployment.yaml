@@ -1,0 +1,5 @@
+- op: add
+  path: /spec/template/metadata/annotations
+  value:
+    sidecar.wallarm.io/wallarm-mode: block
+    sidecar.wallarm.io/sidecar-deployment-scheme: split

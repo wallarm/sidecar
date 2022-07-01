@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-controller
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: controller
+    {{- with .Values.controller.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.controller.replicaCount }}
+  {{- with .Values.controller.updateStrategy }}
+  strategy: {{ . | toYaml | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "wallarm-sidecar.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: controller
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ index (include (print .Template.BasePath "/controller-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/credentials: {{ index (include (print .Template.BasePath "/shared-secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
+        {{- with .Values.controller.extraAnnotations }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- with .Values.controller.podAnnotations }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "wallarm-sidecar.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: controller
+        {{- with .Values.controller.extraLabels }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- with .Values.controller.podLabels }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wallarm-sidecar.controller.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds | default 30 }}
+      {{- with .Values.controller.nodeSelector }}
+      nodeSelector: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.tolerations }}
+      tolerations: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.affinity }}
+      affinity: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controller.extraInitContainers }}
+      initContainers:
+      {{- . | toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: controller
+          image: {{ include "wallarm-sidecar.image" .Values.controller.image }}
+          imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
+          {{ with .Values.controller.command -}}
+          command: {{- . | toYaml | nindent 10 }}
+          {{ end -}}
+          {{ with .Values.controller.args -}}
+          args: {{- . | toYaml | nindent 10 }}
+          {{ end -}}
+          {{ with .Values.controller.workdir -}}
+          workingDir: {{ . }}
+          {{ end -}}
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          {{- with .Values.controller.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          {{- with .Values.controller.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.controller.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.controller.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.controller.securityContext }}
+          securityContext: {{ .Values.controller.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.controller.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/controller/config
+              readOnly: true
+            - name: tls
+              mountPath: /etc/controller/tls
+              readOnly: true
+            {{- with .Values.controller.extraVolumeMounts }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+        {{- with .Values.controller.extraContainers }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ template "wallarm-sidecar.fullname" . }}-admission-tls
+        - name: config
+          configMap:
+            name: {{ include "wallarm-sidecar.fullname" . }}-controller
+        {{- with .Values.controller.extraVolumes }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}

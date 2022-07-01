@@ -1,0 +1,335 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-postanalytics
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.postanalytics.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postanalytics
+    {{- with .Values.postanalytics.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.postanalytics.replicaCount }}
+  {{- with .Values.postanalytics.updateStrategy }}
+  strategy: {{ . | toYaml | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "wallarm-sidecar.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postanalytics
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ index (include (print .Template.BasePath "/postanalytics-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/secret: {{ index (include (print .Template.BasePath "/shared-secret.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
+        {{- with .Values.postanalytics.extraAnnotations }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- with .Values.postanalytics.podAnnotations }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "wallarm-sidecar.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postanalytics
+        {{- with .Values.postanalytics.extraLabels }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+        {{- with .Values.postanalytics.podLabels }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "wallarm-sidecar.postanalytics.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.postanalytics.terminationGracePeriodSeconds | default 30 }}
+      {{- with .Values.postanalytics.nodeSelector }}
+      nodeSelector: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postanalytics.tolerations }}
+      tolerations: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postanalytics.affinity }}
+      affinity: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      {{- with .Values.postanalytics.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ . | toYaml | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: addnode
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.addnode.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.addnode.image.pullPolicy }}"
+          command:
+          - sh
+          - -c
+          - /opt/wallarm/ruby/usr/share/wallarm-common/synccloud --one-time && /opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists --one-time -l STDOUT && /opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source --one-time -l STDOUT {{- if eq .Values.config.wallarm.fallback "on" }} || true {{- end }}
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: WALLARM_SYNCNODE_OWNER
+            value: www-data
+          - name: WALLARM_SYNCNODE_GROUP
+            value: www-data
+          {{- with .Values.postanalytics.addnode.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.addnode.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.addnode.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.addnode.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.addnode.securityContext }}
+          securityContext: {{ .Values.postanalytics.addnode.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.addnode.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          - mountPath: /var/lib/wallarm-acl
+            name: wallarm-acl
+          {{- with .Values.postanalytics.addnode.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        - name: exportenv
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.exportenv.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.exportenv.image.pullPolicy }}"
+          command: ["sh", "-c", "timeout 10m /opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT || true"]
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: WALLARM_INGRESS_CONTROLLER_VERSION
+            value: {{ .Chart.AppVersion | quote }}
+          {{- with .Values.postanalytics.exportenv.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.exportenv.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.exportenv.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.exportenv.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.exportenv.securityContext }}
+          securityContext: {{ .Values.postanalytics.exportenv.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.exportenv.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          {{- with .Values.postanalytics.exportenv.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        {{- with .Values.postanalytics.extraInitContainers }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: cron
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.cron.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.cron.image.pullPolicy }}"
+          command: ["/bin/supercronic", "-json", "/opt/cron/crontab"]
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: WALLARM_INGRESS_CONTROLLER_VERSION
+            value: {{ .Chart.AppVersion | quote }}
+          {{- with .Values.postanalytics.cron.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.cron.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.cron.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.cron.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.cron.securityContext }}
+          securityContext: {{ .Values.postanalytics.cron.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.cron.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          - mountPath: /var/lib/wallarm-acl
+            name: wallarm-acl
+          - mountPath: /opt/cron/crontab
+            name: wallarm-cron
+            subPath: crontab
+            readOnly: true
+          {{- with .Values.postanalytics.cron.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        - name: tarantool
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.tarantool.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.tarantool.image.pullPolicy }}"
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: SLAB_ALLOC_ARENA
+            value: {{ .Values.postanalytics.tarantool.config.arena | quote }}
+          {{- with .Values.postanalytics.tarantool.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          ports:
+            - name: tarantool
+              containerPort: {{ .Values.postanalytics.service.port }}
+              protocol: TCP
+          {{- with .Values.postanalytics.tarantool.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.tarantool.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.tarantool.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.tarantool.securityContext }}
+          securityContext: {{ .Values.postanalytics.tarantool.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+              add:
+              - NET_BIND_SERVICE
+          {{- end }}
+          {{- with .Values.postanalytics.tarantool.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          volumeMounts:
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        - name: heartbeat
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.heartbeat.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.heartbeat.image.pullPolicy }}"
+          command: ["/opt/wallarm/ruby/usr/share/wallarm-common/synccloud"]
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: WALLARM_SYNCNODE
+            value: "no"
+          {{- with .Values.postanalytics.heartbeat.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.heartbeat.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.heartbeat.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.heartbeat.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.heartbeat.securityContext }}
+          securityContext: {{ .Values.postanalytics.heartbeat.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.heartbeat.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        - name: appstructure
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.appstructure.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.appstructure.image.pullPolicy }}"
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          {{- with .Values.postanalytics.appstructure.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.appstructure.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.appstructure.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.appstructure.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.appstructure.securityContext }}
+          securityContext: {{ .Values.postanalytics.appstructure.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.appstructure.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        {{- with .Values.postanalytics.extraContainers }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: wallarm
+          emptyDir: {}
+        - name: wallarm-acl
+          emptyDir: {}
+        - name: wallarm-cron
+          configMap:
+            name: {{ include "wallarm-sidecar.fullname" . }}-postanalytics
+        {{- with .Values.postanalytics.extraVolumes }}
+        {{- . | toYaml | nindent 8 }}
+        {{- end }}

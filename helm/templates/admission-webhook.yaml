@@ -1,0 +1,75 @@
+{{- $tls := fromYaml (include "wallarm-sidecar.controller.certificates" . ) -}}
+---
+{{- if eq .Release.Revision 1 }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/resource-policy: keep
+    helm.sh/hook-delete-policy: before-hook-creation
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.admission.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.admission.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+webhooks:
+  - name: injector.sidecar.wallarm.io
+    admissionReviewVersions: ["v1"]
+    matchPolicy: Equivalent
+    rules:
+      - apiGroups: ["*"]
+        apiVersions: ["v1"]
+        operations:
+          - CREATE
+        resources:
+          - pods
+    objectSelector: {{- .Values.admission.objectSelector | toYaml | nindent 6 }}
+    failurePolicy: {{ .Values.admission.failurePolicy | default "Fail" }}
+    clientConfig:
+      caBundle: {{ $tls.ca }}
+      service:
+        namespace: {{ .Release.Namespace | quote }}
+        name: {{ include "wallarm-sidecar.fullname" . }}-controller
+        port: {{ .Values.controller.service.port }}
+        path: "/inject"
+    sideEffects: None
+{{- end }}
+---
+{{- if eq .Release.Revision 1 }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-admission-tls
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/resource-policy: keep
+    helm.sh/hook-delete-policy: before-hook-creation
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.admission.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- with .Values.admission.secret.annotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.admission.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+    {{- with .Values.admission.secret.labels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $tls.crt }}
+  tls.key: {{ $tls.key }}
+  ca.crt: {{ $tls.ca }}
+{{- end }}

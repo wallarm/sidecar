@@ -1,0 +1,31 @@
+### Check and fill "env.ini" or "example-env.ini" files for
+### proper configuration. This values everrided by `--set`
+### argument of helm
+###
+config:
+  wallarm:
+    api:
+      token: "123"
+      host: api.wallarm.com
+      port: 443
+
+controller:
+  image:
+    registry: docker.io
+    image: golang
+    tag: "1.18.3-alpine3.16"
+  replicaCount: 1
+  command:
+    - sleep
+  args:
+    - infinity
+  livenessProbe: null
+  readinessProbe: null
+  workdir: "/data"
+  extraVolumeMounts:
+    - name: local-repository
+      mountPath: /data
+  extraVolumes:
+    - name: local-repository
+      hostPath:
+        path: /mnt/kubernetes/sidecar
