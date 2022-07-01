@@ -1,0 +1,58 @@
+version: '3.6'
+
+services:
+  registry:
+    container_name: registry
+    image: registry:2.8.1
+    expose:
+    - "80"
+    networks:
+      default:
+        ipv4_address: 10.254.254.253
+    volumes:
+    - "registry:/var/lib/registry:rw"
+    - "./kind/config/registry.yml:/etc/docker/registry/config.yml:ro"
+
+  kubernetes:
+    container_name: kubernetes
+    image: local/kind
+    build:
+      context: ./kind
+      dockerfile: ./Dockerfile
+      args:
+        KIND_VERSION: 0.14.0
+        KUBERNETES_VERSION: 1.22.9
+    env_file:
+      - env.ini
+    privileged: true
+    entrypoint:
+    - dockerd-entrypoint.sh
+    ports:
+    - "6443:6443"
+    - "8008:30080"
+    extra_hosts:
+    - "registry:10.254.254.253"
+    - "kubernetes:127.0.0.1"
+    - "kind-control-plane:127.0.0.1"
+    volumes:
+    - dind:/var/lib/docker:rw
+    - ./kind/config/kubeconfig:/root/.kube/config:rw
+    - ./kind/config/daemon.json:/etc/docker/daemon.json:ro
+    - .:/mnt/kubernetes/sidecar:rw
+    stop_grace_period: 1s
+    depends_on:
+    - registry
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.254.254.0/24
+
+volumes:
+  dind:
+    ### Cache of downloaded kind images
+    ###
+    name: dind
+  registry:
+    name: registry

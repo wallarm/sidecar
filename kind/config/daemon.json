@@ -1,0 +1,6 @@
+{
+    "insecure-registries": [
+        "registry",
+        "10.254.254.253"
+    ]
+}
