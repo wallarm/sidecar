@@ -76,7 +76,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
 
-      - name: Prepare Kind cluster
+      - name: Create cluster
         uses: helm/kind-action@v1.3.0
         with:
           verbosity: "0"
@@ -85,7 +85,7 @@ jobs:
           node_image: kindest/node:v${{ matrix.kubeVersion }}
           cluster_name: kind
 
-      - name: Check Kind cluster
+      - name: Wait cluster
         run: |
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
@@ -106,8 +106,8 @@ jobs:
           --create-namespace \
           --wait \
           --timeout 5m0s
-          helm status wallarm-sidecar --namespace wallarm-sidecar
-          kubectl get all --namespace wallarm-sidecar
+          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
+          kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
 
       - name: Run test
         run: |
