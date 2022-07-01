@@ -98,7 +98,7 @@ jobs:
           helm version
           helm install wallarm-sidecar helm/. \
           --set config.wallarm.api.host=audit.api.wallarm.com \
-          --set config.wallarm.api.token=${{ secrets.WALLARM_TOKEN }} \
+          --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
           --set controller.replicaCount=1 \
           --set controller.image.registry=quay.io \
           --set controller.image.image=dmitriev/sidecar-injector \
