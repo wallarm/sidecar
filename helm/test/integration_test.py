@@ -41,7 +41,7 @@ class Helpers:
     @staticmethod
     def wait_pods(namespace: str, context: str) -> subprocess.CompletedProcess:
         # Need delay here because in some cases we have error: no matching resources found
-        sleep(2)
+        sleep(4)
         cmd = f'kubectl --context {context} --namespace {namespace} wait --for=condition=Ready pods --all --timeout={WAIT_PODS_TIMEOUT}'
         logger.info('Wait for all Pods ready ...')
         return Helpers.subprocess_run(cmd)
