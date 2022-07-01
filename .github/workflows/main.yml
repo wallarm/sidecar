@@ -21,7 +21,7 @@ jobs:
       - name: Helm lint
         run: |
           helm version
-          helm lint . --debug
+          helm lint helm/. --debug
 
   validate:
     name: Validate manifests
@@ -44,7 +44,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Helm template
-        run: helm template . > result-${{ matrix.kubeVersion }}.yaml --kube-version ${{ matrix.kubeVersion }} --debug
+        run: helm template helm/. > result-${{ matrix.kubeVersion }}.yaml --kube-version ${{ matrix.kubeVersion }} --debug
 
       - name: Kubeval
         uses: instrumenta/kubeval-action@master
@@ -81,7 +81,7 @@ jobs:
         with:
           verbosity: "0"
           wait: "240s"
-          config: ./test/kind/kind.yaml
+          config: helm/test/kind/kind.yaml
           node_image: kindest/node:v${{ matrix.kubeVersion }}
           cluster_name: kind
 
@@ -96,12 +96,12 @@ jobs:
         run: |
           set -x
           helm version
-          helm install wallarm-sidecar . \
+          helm install wallarm-sidecar helm/. \
           --set config.wallarm.api.host=audit.api.wallarm.com \
           --set config.wallarm.api.token=${{ secrets.WALLARM_TOKEN }} \
-          --set config.controller.replicaCount=1 \
-          --set config.controller.image.registry=quay.io \
-          --set config.controller.image.image=dmitriev/sidecar-injector \
+          --set controller.replicaCount=1 \
+          --set controller.image.registry=quay.io \
+          --set controller.image.image=dmitriev/sidecar-injector \
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
