@@ -110,12 +110,11 @@ volumes:
     {{- end }}
 {{ if .Config.Global.sidecar.containers.proxy.livenessProbeEnable }}
   livenessProbe:
-    httpGet:
-      path: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-health-path" .Config.Global.nginx.healthPath }}
-      port: status
-    {{ if (index .Config.Global.sidecar.containers.proxy "livenessProbe") }}
     {{ toYaml .Config.Global.sidecar.containers.proxy.livenessProbe | indent 4 }}
-    {{ end }}
+{{ end }}
+{{ if .Config.Global.sidecar.containers.proxy.readinessProbeEnable }}
+  readinessProbe:
+    {{ toYaml .Config.Global.sidecar.containers.proxy.readinessProbe | indent 4 }}
 {{ end }}
   volumeMounts:
     - mountPath: /etc/wallarm
@@ -131,12 +130,7 @@ volumes:
     {{ end }}
     {{- end }}
   securityContext:
-    capabilities:
-      drop:
-        - ALL
-      add:
-        - NET_BIND_SERVICE
-    runAsUser: 101
+{{ template "securityContext.main" . }}
   resources:
 {{ template "proxyContainer.resources" . }}
 {{ end }}
@@ -162,12 +156,7 @@ volumes:
     - mountPath: /var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
-    capabilities:
-      drop:
-        - ALL
-      add:
-        - NET_BIND_SERVICE
-    runAsUser: 101
+{{ template "securityContext.main" . }}
   resources:
 {{ template "helperContainer.resources" . }}
 {{ end }}
@@ -192,12 +181,7 @@ volumes:
     - mountPath: /var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
-    capabilities:
-      drop:
-        - ALL
-      add:
-        - NET_BIND_SERVICE
-    runAsUser: 101
+{{ template "securityContext.main" . }}
   resources:
 {{ template "initHelperContainer.resources" . }}
 {{ end }}
@@ -248,6 +232,14 @@ volumes:
   {{- end }}
 {{- end }}
 
+{{- define "securityContext.main" }}
+    {{ toYaml .Config.Global.sidecar.securityContext | indent 4 }}
+{{- end }}
+
+{{- define "securityContext.iptables" }}
+    {{ toYaml .Config.Global.sidecar.initContainers.iptables.securityContext | indent 4 }}
+{{- end }}
+
 {{- define "wallarmApiVariables" }}
     - name: WALLARM_API_HOST
       value: "{{ .Config.Global.wallarm.api.host }}"
@@ -266,18 +258,26 @@ volumes:
       value: "{{ .Config.Global.wallarm.cron.exportEnvironment.schedule }}"
     - name: WALLARM_CRON_EXPORT_ENV_TIMEOUT
       value: "{{ .Config.Global.wallarm.cron.exportEnvironment.timeout }}"
+    - name: WALLARM_CRON_EXPORT_ENV_COMMAND
+      value: "{{ .Config.Global.wallarm.cron.exportEnvironment.command }}"
     - name: WALLARM_CRON_EXPORT_METRICS_SCHEDULE
       value: "{{ .Config.Global.wallarm.cron.exportMetrics.schedule }}"
     - name: WALLARM_CRON_EXPORT_METRICS_TIMEOUT
       value: "{{ .Config.Global.wallarm.cron.exportMetrics.timeout }}"
+    - name: WALLARM_CRON_EXPORT_METRICS_COMMAND
+      value: "{{ .Config.Global.wallarm.cron.exportMetrics.command }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SCHEDULE
       value: "{{ .Config.Global.wallarm.cron.syncIpLists.schedule }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_TIMEOUT
       value: "{{ .Config.Global.wallarm.cron.syncIpLists.timeout }}"
+    - name: WALLARM_CRON_SYNC_IP_LISTS_COMMAND
+      value: "{{ .Config.Global.wallarm.cron.syncIpLists.command }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_SCHEDULE
       value: "{{ .Config.Global.wallarm.cron.syncIpListsSource.schedule }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_TIMEOUT
       value: "{{ .Config.Global.wallarm.cron.syncIpListsSource.timeout }}"
+    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND
+      value: "{{ .Config.Global.wallarm.cron.syncIpListsSource.command }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}

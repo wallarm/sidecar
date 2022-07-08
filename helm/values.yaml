@@ -66,21 +66,21 @@ config:
       reconnectInterval: 15s
 
     cron:
-      "exportEnvironment":
+      exportEnvironment:
         schedule: "0 */1 * * *"
-        command: "???"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT"
         timeout: 10m
-      "exportMetrics":
+      exportMetrics:
         schedule: "* * * * *"
-        command: "???"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-metrics -l STDOUT"
         timeout: 3h
-      "syncIpLists":
+      syncIpLists:
         schedule: "* * * * *"
-        command: "???"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists -l STDOUT"
         timeout: 3h
-      "syncIpListsSource":
+      syncIpListsSource:
         schedule: "*/5 * * * *"
-        command: "???"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         timeout: 3h
 
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
@@ -153,6 +153,16 @@ config:
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
 
+    ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
+    ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
+    securityContext:
+      capabilities:
+        drop:
+          - ALL
+        add:
+          - NET_BIND_SERVICE
+      runAsUser: 101
+
     ### Default configuration for sidecar container(s). Many of these parameters in this section can be
     ### overwritten individually for each pod with pod annotations.
     ###
@@ -161,10 +171,15 @@ config:
       ### and only handles traffic for `split` schema
       ###
       proxy:
-        ### Liveness probe for the container
+        ### Enable liveness probe for the container: `true` or `false`
+        ###
+        livenessProbeEnable: true
+
+        ### Liveness probe configuration for the container
         ###
         livenessProbe:
           httpGet:
+            # The value of `path` below should be the same as `nginx.healthPath`
             path: /healthz
             port: status
           initialDelaySeconds: 60
@@ -173,10 +188,15 @@ config:
           failureThreshold: 3
           successThreshold: 1
 
-        ### Readiness probe for the container
+        ### Enable readiness probe for the container: `true` or `false`
+        ###
+        readinessProbeEnable: true
+
+        ### Readiness probe configuration for the container
         ###
         readinessProbe:
           httpGet:
+            # The value of `path` below should be the same as `nginx.healthPath`
             path: /healthz
             port: status
           initialDelaySeconds: 60
@@ -227,6 +247,15 @@ config:
         #    cpu: 300m
         #    memory: 128Mi
       iptables:
+        ### Security context for `iptables` container
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            drop:
+            - ALL
+          privileged: true
+
         ### The number of resources required for the container
         ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         ###
