@@ -7,7 +7,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
-	"strconv"
+
 	"strings"
 	"text/template"
 )
@@ -25,11 +25,7 @@ type SidecarTemplateValues struct {
 }
 
 type TemplateDefaultValues struct {
-	Api        map[string]string      `yaml:"api"`
-	Container  map[string]interface{} `yaml:"container"`
-	Deployment map[string]string      `yaml:"deployment"`
-	Nginx      map[string]string      `yaml:"nginx"`
-	Wallarm    map[string]interface{} `yaml:"wallarm"`
+	Global  map[string]interface{} `yaml:"config"`
 }
 
 func fromJson(jsonString string) interface{} {
@@ -50,25 +46,25 @@ func getAnnotation(meta metav1.ObjectMeta, property string, defaultValue interfa
 	return value
 }
 
-func getAppPort(podSpec corev1.PodSpec, defaultValue string) int {
+func getAppPort(podSpec corev1.PodSpec, defaultValue float64) int32 {
 	for _, container := range podSpec.Containers {
 		for _, port := range container.Ports {
 			if port.Name == "http" {
-				return int(port.ContainerPort)
+				return port.ContainerPort
 			}
 		}
 	}
 	for _, container := range podSpec.Containers {
 		for _, port := range container.Ports {
-			return int(port.ContainerPort)
+			return port.ContainerPort
 		}
 	}
-	defaultValueInt, err := strconv.Atoi(defaultValue)
-	if err != nil {
-		errorLogger.Fatalf("Unable to convert string to integer %v", defaultValue)
-		panic(err)
-	}
-	return defaultValueInt
+// 	defaultValueInt, err := strconv.Atoi(defaultValue)
+// 	if err != nil {
+// 		errorLogger.Fatalf("Unable to convert string to integer %v", defaultValue)
+// 		panic(err)
+// 	}
+	return int32(defaultValue)
 }
 
 func toBool(value string) bool {

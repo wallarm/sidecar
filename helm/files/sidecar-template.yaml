@@ -1,13 +1,13 @@
 initContainers:
-{{ if ((getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-iptables-enable" .Config.Deployment.iptablesEnable) | toBool) -}}
+{{ if ((getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-iptables-enable" .Config.Global.injectionStrategy.iptablesEnable) | toBool) -}}
   {{ template "initIptablesContainer" . }}
 {{- end }}
-{{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-deployment-scheme" .Config.Deployment.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-schema" .Config.Global.injectionStrategy.scheme) "split" -}}
   {{ template "initHelperContainer" . }}
 {{- end }}
 
 containers:
-{{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-deployment-scheme" .Config.Deployment.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-schema" .Config.Global.injectionStrategy.scheme) "split" -}}
   {{ template "helperContainer" . }}
 {{- end }}
   {{ template "proxyContainer" . }}
@@ -29,57 +29,57 @@ volumes:
 
 {{ define "proxyContainer" }}
 - name: sidecar-proxy
-  image: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/proxy-image" .Config.Container.proxy.image.image }}
-  imagePullPolicy: {{ .Config.Container.proxy.image.pullPolicy }}
-  {{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-deployment-scheme" .Config.Deployment.scheme) "split" -}}
+  image: {{ template "image" . }}
+  imagePullPolicy: {{ .Config.Global.sidecar.image.pullPolicy }}
+  {{ if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-scheme" .Config.Global.injectionStrategy.scheme) "split" -}}
   command: ["/usr/local/run-nginx.sh"]
   {{- else }}
   command: ["/usr/local/run-node.sh"]
   {{- end }}
   env:
-    {{ if ne (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-deployment-scheme" .Config.Deployment.scheme) "split" -}}
+    {{ if ne (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-schema" .Config.Global.injectionStrategy.scheme) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
       #TODO Determine proper way to identify sidecar version
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.Wallarm.version }}"
+      value: "{{ .Config.Global.version }}"
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations "sidecar.wallarm.io/wallarm-application") -}}
     - name: WALLARM_APPLICATION
       value: "{{ index .ObjectMeta.Annotations `sidecar.wallarm.io/wallarm-application` }}"
     {{- end  }}
     - name: WALLARM_MODE
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-mode` .Config.Wallarm.mode }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-mode` .Config.Global.wallarm.mode }}"
     - name: WALLARM_MODE_ALLOW_OVERRIDE
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-mode-allow-override` .Config.Wallarm.modeAllowOverride }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-mode-allow-override` .Config.Global.wallarm.modeAllowOverride }}"
     - name: WALLARM_PARSE_RESPONSE
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-parse-response` .Config.Wallarm.parseResponse }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-parse-response` .Config.Global.wallarm.parseResponse }}"
     - name: WALLARM_PARSE_WEBSOCKET
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-parse-websocket` .Config.Wallarm.parseWebsocket }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-parse-websocket` .Config.Global.wallarm.parseWebsocket }}"
     - name: WALLARM_UNPACK_RESPONSE
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-unpack-response` .Config.Wallarm.unpackResponse }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-unpack-response` .Config.Global.wallarm.unpackResponse }}"
     - name: WALLARM_TARANTOOL_HOST
-      value: "{{ .Config.Wallarm.tarantool.host }}"
+      value: "{{ .Config.Global.tarantool.host }}"
     - name: WALLARM_UPSTREAM_CONNECT_ATTEMPTS
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-upstream-connect-attempts` .Config.Wallarm.upstream.connectAttempts }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-upstream-connect-attempts` .Config.Global.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-upstream-reconnect-interval` .Config.Wallarm.upstream.reconnectInterval }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/wallarm-upstream-reconnect-interval` .Config.Global.wallarm.upstream.reconnectInterval }}"
     - name: NGINX_LISTEN_PORT
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-listen-port` .Config.Nginx.listenPort }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-listen-port` .Config.Global.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_STATUS_PORT
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-status-port` .Config.Nginx.statusPort }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-status-port` .Config.Global.nginx.statusPort }}"
     - name: NGINX_STATUS_PATH
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-status-path` .Config.Nginx.statusPath }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-status-path` .Config.Global.nginx.statusPath }}"
     - name: NGINX_HEALTH_PATH
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-health-path` .Config.Nginx.healthPath }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-health-path` .Config.Global.nginx.healthPath }}"
     - name: NGINX_WALLARM_STATUS_PATH
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-status-path` .Config.Nginx.wallarmStatusPath }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-status-path` .Config.Global.nginx.wallarmStatusPath }}"
     - name: NGINX_WALLARM_METRICS_PORT
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-metrics-port` .Config.Nginx.wallarmMetricsPort }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-metrics-port` .Config.Global.nginx.wallarmMetricsPort }}"
     - name: NGINX_WALLARM_METRICS_PATH
-      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-metrics-path` .Config.Nginx.wallarmMetricsPath }}"
+      value: "{{ getAnnotation .ObjectMeta `sidecar.wallarm.io/nginx-wallarm-metrics-path` .Config.Global.nginx.wallarmMetricsPath }}"
     {{ if (isSet .ObjectMeta.Annotations "sidecar.wallarm.io/nginx-http-include") -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations `sidecar.wallarm.io/nginx-http-include` }}"
@@ -98,23 +98,23 @@ volumes:
     {{- end }}
   ports:
     - name: status
-      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-status-port" .Config.Nginx.statusPort }}
+      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-status-port" .Config.Global.nginx.statusPort }}
       protocol: TCP
     - name: metrics
-      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-wallarm-metrics-port" .Config.Nginx.wallarmMetricsPort }}
+      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-wallarm-metrics-port" .Config.Global.nginx.wallarmMetricsPort }}
       protocol: TCP
-    {{ if not ((getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-iptables-enable" .Config.Deployment.iptablesEnable) | toBool) -}}
+    {{ if not ((getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-injection-iptables-enable" .Config.Global.injectionStrategy.iptablesEnable) | toBool) -}}
     - name: proxy
-      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-listen-port" .Config.Nginx.listenPort }}
+      containerPort: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-listen-port" .Config.Global.nginx.listenPort }}
       protocol: TCP
     {{- end }}
-{{ if .Config.Container.proxy.livenessProbeEnable }}
+{{ if .Config.Global.sidecar.containers.proxy.livenessProbeEnable }}
   livenessProbe:
     httpGet:
-      path: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-health-path" .Config.Nginx.healthPath }}
+      path: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-health-path" .Config.Global.nginx.healthPath }}
       port: status
-    {{ if (index .Config.Container.proxy "livenessProbe") }}
-    {{ toYaml .Config.Container.proxy.livenessProbe | indent 4 }}
+    {{ if (index .Config.Global.sidecar.containers.proxy "livenessProbe") }}
+    {{ toYaml .Config.Global.sidecar.containers.proxy.livenessProbe | indent 4 }}
     {{ end }}
 {{ end }}
   volumeMounts:
@@ -143,8 +143,8 @@ volumes:
 
 {{ define "helperContainer" }}
 - name: sidecar-helper
-  image: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/proxy-image" .Config.Container.proxy.image.image }}
-  imagePullPolicy: {{ .Config.Container.proxy.image.pullPolicy }}
+  image: {{ template "image" . }}
+  imagePullPolicy: {{ .Config.Global.sidecar.image.pullPolicy }}
   command: ["supervisord", "-c", "/etc/supervisor/supervisord.helper.conf"]
   env:
     {{ template "wallarmApiVariables" . }}
@@ -155,7 +155,7 @@ volumes:
       value: www-data
       #TODO Determine proper way to identify sidecar version
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.Wallarm.version }}"
+      value: "{{ .Config.Global.version }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
@@ -174,8 +174,8 @@ volumes:
 
 {{ define "initHelperContainer" }}
 - name: sidecar-init-helper
-  image: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/proxy-image" .Config.Container.proxy.image.image }}
-  imagePullPolicy: {{ .Config.Container.proxy.image.pullPolicy }}
+  image: {{ template "image" . }}
+  imagePullPolicy: {{ .Config.Global.sidecar.image.pullPolicy }}
   command: ["/usr/local/run-addnode.sh"]
   env:
     {{ template "wallarmApiVariables" . }}
@@ -185,7 +185,7 @@ volumes:
       value: www-data
       #TODO Determine proper way to identify sidecar version
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.Wallarm.version }}"
+      value: "{{ .Config.Global.version }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
@@ -204,8 +204,8 @@ volumes:
 
 {{ define "initIptablesContainer" }}
 - name: sidecar-init-iptables
-  image: {{ getAnnotation .ObjectMeta "sidecar.wallarm.io/proxy-image" .Config.Container.proxy.image.image }}
-  imagePullPolicy: {{ .Config.Container.proxy.image.pullPolicy }}
+  image: {{ template "image" . }}
+  imagePullPolicy: {{ .Config.Global.sidecar.image.pullPolicy }}
   env:
     - name: POD_IP
       valueFrom:
@@ -214,7 +214,7 @@ volumes:
     - name: APP_PORT
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_PORT
-      value: "{{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-listen-port" .Config.Nginx.listenPort }}"
+      value: "{{ getAnnotation .ObjectMeta "sidecar.wallarm.io/nginx-listen-port" .Config.Global.nginx.listenPort }}"
   command: ["iptables"]
   args: ["-t", "nat", "-A", "PREROUTING", "-p", "tcp", "-d", "$(POD_IP)", "--dport", "$(APP_PORT)", "-j", "REDIRECT", "--to-ports", "$(NGINX_PORT)"]
   securityContext:
@@ -228,44 +228,56 @@ volumes:
 {{ template "initIptablesContainer.resources" . }}
 {{ end }}
 
-{{- define "applicationPort" }}
-  {{- if (isSet .ObjectMeta.Annotations "sidecar.wallarm.io/nginx-proxy-pass-port") }}
-    {{- index .ObjectMeta.Annotations "sidecar.wallarm.io/nginx-proxy-pass-port" }}
+{{- define "image" }}
+  {{- if (isSet .ObjectMeta.Annotations "sidecar.wallarm.io/proxy-image") }}
+{{ index .ObjectMeta.Annotations "sidecar.wallarm.io/proxy-image" }}
   {{- else }}
-    {{- getAppPort .PodSpec .Config.Nginx.proxyPassPort }}
+    {{- if (index .Config.Global.sidecar.image "registry") }}
+{{- printf "%s/%s:%s" .Config.Global.sidecar.image.registry .Config.Global.sidecar.image.image .Config.Global.sidecar.image.tag }}
+    {{- else }}
+{{- printf "%s:%s" .Config.Global.sidecar.image.image .Config.Global.sidecar.image.tag }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{- define "applicationPort" }}
+  {{- if (isSet .ObjectMeta.Annotations "sidecar.wallarm.io/application-port") }}
+    {{- index .ObjectMeta.Annotations "sidecar.wallarm.io/application-port" }}
+  {{- else }}
+    {{- getAppPort .PodSpec .Config.Global.nginx.applicationPort }}
   {{- end }}
 {{- end }}
 
 {{- define "wallarmApiVariables" }}
     - name: WALLARM_API_HOST
-      value: "{{ .Config.Api.host }}"
+      value: "{{ .Config.Global.wallarm.api.host }}"
     - name: WALLARM_API_PORT
-      value: "{{ .Config.Api.port }}"
+      value: "{{ .Config.Global.wallarm.api.port }}"
     - name: WALLARM_API_TOKEN
-      value: "{{ .Config.Api.token }}"
+      value: "{{ .Config.Global.wallarm.api.token }}"
     - name: WALLARM_API_USE_SSL
-      value: "{{ .Config.Api.useSSL }}"
+      value: "{{ .Config.Global.wallarm.api.useSSL }}"
     - name: WALLARM_API_CA_VERIFY
-      value: "{{ .Config.Api.caVerify }}"
+      value: "{{ .Config.Global.wallarm.api.caVerify }}"
 {{- end }}
 
 {{- define "wallarmCronVariables" }}
     - name: WALLARM_CRON_EXPORT_ENV_SCHEDULE
-      value: "{{ .Config.Wallarm.cronJobs.exportEnvironment.schedule }}"
+      value: "{{ .Config.Global.wallarm.cron.exportEnvironment.schedule }}"
     - name: WALLARM_CRON_EXPORT_ENV_TIMEOUT
-      value: "{{ .Config.Wallarm.cronJobs.exportEnvironment.timeout }}"
+      value: "{{ .Config.Global.wallarm.cron.exportEnvironment.timeout }}"
     - name: WALLARM_CRON_EXPORT_METRICS_SCHEDULE
-      value: "{{ .Config.Wallarm.cronJobs.exportMetrics.schedule }}"
+      value: "{{ .Config.Global.wallarm.cron.exportMetrics.schedule }}"
     - name: WALLARM_CRON_EXPORT_METRICS_TIMEOUT
-      value: "{{ .Config.Wallarm.cronJobs.exportMetrics.timeout }}"
+      value: "{{ .Config.Global.wallarm.cron.exportMetrics.timeout }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SCHEDULE
-      value: "{{ .Config.Wallarm.cronJobs.syncIpLists.schedule }}"
+      value: "{{ .Config.Global.wallarm.cron.syncIpLists.schedule }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_TIMEOUT
-      value: "{{ .Config.Wallarm.cronJobs.syncIpLists.timeout }}"
+      value: "{{ .Config.Global.wallarm.cron.syncIpLists.timeout }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_SCHEDULE
-      value: "{{ .Config.Wallarm.cronJobs.syncIpListsSource.schedule }}"
+      value: "{{ .Config.Global.wallarm.cron.syncIpListsSource.schedule }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_TIMEOUT
-      value: "{{ .Config.Wallarm.cronJobs.syncIpListsSource.timeout }}"
+      value: "{{ .Config.Global.wallarm.cron.syncIpListsSource.timeout }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}
@@ -289,8 +301,8 @@ volumes:
       {{ end }}
     {{- end }}
   {{- else }}
-    {{- if (index .Config.Container.helper "resources") }}
-    {{ toYaml .Config.Container.helper.resources | indent 4 }}
+    {{- if (index .Config.Global.sidecar.containers.helper "resources") }}
+    {{ toYaml .Config.Global.sidecar.containers.helper.resources | indent 4 }}
     {{- end }}
   {{- end }}
 {{- end }}
@@ -316,8 +328,8 @@ volumes:
       {{ end }}
     {{- end }}
   {{- else }}
-    {{- if (index .Config.Container.init.iptables "resources") }}
-    {{ toYaml .Config.Container.init.iptables.resources | indent 4 }}
+    {{- if (index .Config.Global.sidecar.initContainers.iptables "resources") }}
+    {{ toYaml .Config.Global.sidecar.initContainers.iptables.resources | indent 4 }}
     {{- end }}
   {{- end }}
 {{- end }}
@@ -343,8 +355,8 @@ volumes:
       {{ end }}
     {{- end }}
   {{- else }}
-    {{- if (index .Config.Container.init.helper "resources") }}
-    {{ toYaml .Config.Container.init.helper.resources | indent 4 }}
+    {{- if (index .Config.Global.sidecar.initContainers.helper "resources") }}
+    {{ toYaml .Config.Global.sidecar.initContainers.helper.resources | indent 4 }}
     {{- end }}
   {{- end }}
 {{- end }}
@@ -370,14 +382,8 @@ volumes:
       {{ end }}
     {{- end }}
   {{- else }}
-    {{- if eq (getAnnotation .ObjectMeta "sidecar.wallarm.io/sidecar-deployment-scheme" .Config.Deployment.scheme) "split" }}
-      {{- if (index .Config.Container.proxy.split "resources") }}
-    {{ toYaml .Config.Container.proxy.split.resources | indent 4 }}
-      {{- end }}
-    {{- else }}
-      {{- if (index .Config.Container.proxy.single "resources") }}
-    {{ toYaml .Config.Container.proxy.single.resources | indent 4 }}
-      {{- end }}
+    {{- if (index .Config.Global.sidecar.containers.proxy "resources") }}
+    {{ toYaml .Config.Global.sidecar.containers.proxy.resources | indent 4 }}
     {{- end }}
   {{- end }}
 {{- end }}

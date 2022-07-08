@@ -8,6 +8,10 @@ config:
       token: "123"
       host: api.wallarm.com
       port: 443
+  sidecar:
+    image:
+      image: dmitriev/sidecar-proxy
+      registry: quay.io
 
 controller:
   image:

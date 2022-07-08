@@ -1,0 +1,11 @@
+config:
+  sidecar:
+    image:
+      image: dmitriev/sidecar-proxy
+      registry: quay.io
+
+controller:
+  image:
+    image: dmitriev/sidecar-injector
+    registry: quay.io
+  replicaCount: 1

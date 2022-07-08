@@ -28,8 +28,12 @@ services:
     entrypoint:
     - dockerd-entrypoint.sh
     ports:
+    # Port for Kubernetes API
     - "6443:6443"
+    # Port for Kubernetes dashboard
     - "8008:30080"
+    # Port for integration test
+    - "8080:30000"
     extra_hosts:
     - "registry:10.254.254.253"
     - "kubernetes:127.0.0.1"

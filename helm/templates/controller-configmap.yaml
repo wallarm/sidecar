@@ -15,13 +15,9 @@ metadata:
     {{- end }}
 data:
   config.yaml: |-
-    api: {{ toYaml .Values.config.wallarm.api | nindent 6 }}
-    wallarm:
-      {{- toYaml .Values.sidecarDefaults.wallarm | nindent 6 }}
+    global:
+      {{- toYaml .Values.config | nindent 6 }}
       version: {{ .Chart.AppVersion }}
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
-    container: {{ toYaml .Values.sidecarDefaults.container | nindent 6 }}
-    deployment: {{ toYaml .Values.sidecarDefaults.deployment | nindent 6 }}
-    nginx: {{ toYaml .Values.sidecarDefaults.nginx| nindent 6 }}
 {{ (.Files.Glob "files/sidecar-template.yaml").AsConfig | indent 2 }}

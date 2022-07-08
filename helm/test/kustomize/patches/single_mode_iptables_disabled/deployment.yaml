@@ -2,5 +2,4 @@
   path: /spec/template/metadata/annotations
   value:
     sidecar.wallarm.io/wallarm-mode: block
-    sidecar.wallarm.io/sidecar-iptables-enable: "false"
-    sidecar.wallarm.io/sidecar-deployment-scheme: single
+    sidecar.wallarm.io/sidecar-injection-iptables-enable: "false"

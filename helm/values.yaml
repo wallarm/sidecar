@@ -54,7 +54,7 @@ config:
     ###
     unpackResponse: "on"
 
-    ### Postanalytics node endpoint configuration
+    ### Post-analytics node endpoint configuration
     ###
     upstream:
       ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
@@ -66,31 +66,49 @@ config:
       reconnectInterval: 15s
 
     cron:
-      "export-environment":
+      "exportEnvironment":
         schedule: "0 */1 * * *"
         command: "???"
         timeout: 10m
-      "export-metrics":
+      "exportMetrics":
         schedule: "* * * * *"
         command: "???"
         timeout: 3h
-      "sync-ip-lists":
+      "syncIpLists":
         schedule: "* * * * *"
         command: "???"
         timeout: 3h
-      "sync-ip-lists-source":
+      "syncIpListsSource":
         schedule: "*/5 * * * *"
         command: "???"
         timeout: 3h
+
+  ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
+  ### for each pod with pod annotations
+  ###
+  injectionStrategy:
+    ### Sidecar injection schema: `single` or `split`. Single schema injects a single container
+    ### (well-known popular sidecar technique, as same as istio or stash) and one or more init
+    ### containers. Split schema injects TWO containers as a sidecar (wallarm in first container and
+    ### helpers in second one) and one or more init containers.
+    ### Use split schema for dividing the CPU/Memory/Storage namespaces between wallarm itself
+    ### and helper containers. This can be helpful for highly loaded applications.
+    ###
+    schema: single
+
+    ### Enables or disables `iptables` init container for automatic port redirection: `true` or `false`.
+    ### Disable it only in case of problems with other sidecars that change iptables rulesets.
+    ###
+    iptablesEnable: true
 
   ### Default parameters for Nginx configuration of sidecar proxy container. Parameters in this section
   ### can be overwritten individually for each pod with pod annotations
   ###
   nginx:
     ### Fallback listening port of application. This port will be used as a fallback of application port
-    ### detection. Sidecar controller will try to detect application port in the following approach:
+    ### detection. Sidecar controller will try to detect application port in the following sequence:
     ###   1. Application port defined in pod annotation "sidecar.wallarm.io/application-port"
-    ###   2. The first available container port with "http" name
+    ###   2. The first available container port which name is "http"
     ###   3. The first available container port
     ###   4. This value (in case of no one container port defined)
     ###
@@ -125,114 +143,100 @@ config:
     ###
     wallarmMetricsPath: /wallarm-metrics
 
-  ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
-  ### for each pod with pod annotations
+  ### Default configuration for sidecar init and regular containers
   ###
-  injectionStrategy:
-    ### Sidecar injection schema: `single` or `split`. Single schema injects a single container
-    ### (well-known popular sidecar tehnique, as same as istio or stash) and one or more init
-    ### containers. Split schema injects TWO containers as a sidecar (wallarm in first container and
-    ### helpers in second one) and one or more init containers.
-    ### Use split schema for dividing the CPU/Memory/Storage namespaces between wallarm itself
-    ### and helper containers. This can be helpful for highly loaded applications.
-    ###
-    schema: single
-
-    ### Enables or disables `iptables` init container for automatic port redirection: `true` or `false`.
-    ### Disable it only in case of problems with other sidecars that change iptables rulesets.
-    ###
-    iptablesEnable: true
-
-  ### Default configuration for sidecar container(s). Many of these parameters in this section can be
-  ### overwritten individually for each pod with pod annotations.
-  ###
-  containers:
+  sidecar:
+    ### Image for all (init and regular) containers in sidecar schema
     image:
       registry: docker.io
       image: wallarm/sidecar
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
 
-    ### Traffic flow handler. Core of sidecar schema. Does everything for `single` schema
-    ### and only handles traffic for `split` schema
+    ### Default configuration for sidecar container(s). Many of these parameters in this section can be
+    ### overwritten individually for each pod with pod annotations.
     ###
-    proxy:
-      ### Liveness probe for the container
+    containers:
+      ### Traffic flow handler. Core of sidecar schema. Does everything for `single` schema
+      ### and only handles traffic for `split` schema
       ###
-      livenessProbe:
-        httpGet:
-          path: /healthz
-          port: status
-        initialDelaySeconds: 60
-        timeoutSeconds: 1
-        periodSeconds: 10
-        failureThreshold: 3
-        successThreshold: 1
+      proxy:
+        ### Liveness probe for the container
+        ###
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: status
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+          periodSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
 
-      ### Readiness probe for the container
+        ### Readiness probe for the container
+        ###
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: status
+          initialDelaySeconds: 60
+          timeoutSeconds: 1
+          periodSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+
+        ### The number of resources required for the container
+        ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+        ###
+        resources: {}
+        #  requests:
+        #    cpu: 200m
+        #    memory: 256Mi
+        #  limits:
+        #    cpu: 500m
+        #    memory: 512Mi
+
+      ### Helper container. Used only in `split` schema. Does everything except traffic handling
+      ### for `split` schema
       ###
-      readinessProbe:
-        httpGet:
-          path: /healthz
-          port: status
-        initialDelaySeconds: 60
-        timeoutSeconds: 1
-        periodSeconds: 10
-        failureThreshold: 3
-        successThreshold: 1
+      helper:
+        ### The number of resources required for the container
+        ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+        ###
+        resources: {}
+        #  requests:
+        #    cpu: 100m
+        #    memory: 128Mi
+        #  limits:
+        #    cpu: 300m
+        #    memory: 256Mi
 
-      ### The number of resources required for the container
-      ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-      ###
-      resources: {}
-      #  requests:
-      #    cpu: 200m
-      #    memory: 256Mi
-      #  limits:
-      #    cpu: 500m
-      #    memory: 512Mi
-
-    ### Helper container. Used only in `split` schema. Does everything except traffic handling
-    ### for `split` schema
+    ### Default configuration for sidecar init container(s). Many of these parameters in this section can be
+    ### overwritten individually for each pod with pod annotations.
     ###
-    helper:
-      ### The number of resources required for the container
-      ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-      ###
-      resources: {}
-      #  requests:
-      #    cpu: 100m
-      #    memory: 128Mi
-      #  limits:
-      #    cpu: 300m
-      #    memory: 256Mi
-
-  ### Default configuration for sidecar init container(s). Many of these parameters in this section can be
-  ### overwritten individually for each pod with pod annotations.
-  ###
-  initContainers:
-    helper:
-      ### The number of resources required for the container
-      ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-      ###
-      resources: {}
-      #  requests:
-      #    cpu: 100m
-      #    memory: 64Mi
-      #  limits:
-      #    cpu: 300m
-      #    memory: 128Mi
-    iptables:
-      ### The number of resources required for the container
-      ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-      ###
-      resources: {}
-      #  requests:
-      #    cpu: 50m
-      #    memory: 32Mi
-      #  limits:
-      #    cpu: 100m
-      #    memory: 64Mi
+    initContainers:
+      helper:
+        ### The number of resources required for the container
+        ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+        ###
+        resources: {}
+        #  requests:
+        #    cpu: 100m
+        #    memory: 64Mi
+        #  limits:
+        #    cpu: 300m
+        #    memory: 128Mi
+      iptables:
+        ### The number of resources required for the container
+        ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+        ###
+        resources: {}
+        #  requests:
+        #    cpu: 50m
+        #    memory: 32Mi
+        #  limits:
+        #    cpu: 100m
+        #    memory: 64Mi
 
 ###
 ### Global settings
@@ -244,56 +248,7 @@ config:
 imagePullSecrets: []
   # - name: secretName
 
-### Admission settings
-###
-admission:
-  ### Defines how unrecognized errors from the admission endpoint are handled
-  ### Allowed values are Ignore or Fail
-  ###
-  failurePolicy: Fail
-
-  ### Cluster DNS name for resources discovery. Will be used only for creating/signing certificates
-  ### required for running admission webhook controller. For many Kubernetes clusters this is
-  ### "cluster.local" and you need not to change this for common cases.
-  ###
-  clusterDomainName: cluster.local
-
-  ### Specifies the timeout for this webhook. After the timeout passes, the webhook call will be
-  ### ignored or the API call will fail based on the failure policy
-  ###
-  timeoutSeconds: 10
-
-  ### Decides whether to run the webhook based on if the object has matching labels. Set to null
-  ### for clear default value and listen events for all pods
-  ###
-  objectSelector:
-    matchLabels:
-      wallarm-sidecar: enabled
-  
-  ### Mutation admission webhook controller TLS secrets. Required for running admission magic.
-  ###
-  secret:
-    create: true
-
-    ### You are welcome to use existing certificates with "ca.crt", "tls.crt" and "tls.key"
-    ### keys. Required if `create` is false.
-    ###
-    existingSecretName: ""
-
-    ### Extra labels for secret to create. Doesn't make sense if using exisisting
-    ### certificates
-    ###
-    labels: {}
-
-    ### Extra annotations for secret to create. Doesn't make sense if using exisisting
-    ### certificates
-    ###
-    annotations: {}
-
-  extraLabels: {}
-  extraAnnotations: {}
-
-### Configuration for postanalytics module
+### Configuration for post-analytics module
 ###
 postanalytics:
   ### Number of deployment replicas. Values more that zero doesn't supported officially
@@ -843,6 +798,55 @@ controller:
     tag: "0.1.3"
     pullPolicy: IfNotPresent
 
+  # -- Admission webhook configuration
+  # @default -- *See below for details*
+  admissionWebhook:
+    # -- Defines how unrecognized errors from the admission endpoint are handled.
+    # -- Allowed values are `Ignore` or `Fail`
+    ###
+    failurePolicy: Fail
+
+    ### Cluster DNS name for resources discovery. Will be used only for creating/signing certificates
+    ### required for running admission webhook controller. For many Kubernetes clusters this is
+    ### "cluster.local" and you need not to change this for common cases.
+    ###
+    clusterDomainName: cluster.local
+
+    ### Specifies the timeout for this webhook. After the timeout passes, the webhook call will be
+    ### ignored or the API call will fail based on the failure policy
+    ###
+    timeoutSeconds: 10
+
+    ### Decides whether to run the webhook based on if the object has matching labels. Set to null
+    ### for clear default value and listen events for all pods
+    ###
+    objectSelector:
+      matchLabels:
+        wallarm-sidecar: enabled
+
+    ### Mutation admission webhook controller TLS secrets. Required for running admission magic.
+    ###
+    secret:
+      create: true
+
+      ### You are welcome to use existing certificates with "ca.crt", "tls.crt" and "tls.key"
+      ### keys. Required if `create` is false.
+      ###
+      existingSecretName: ""
+
+      ### Extra labels for secret to create. Doesn't make sense if using existing
+      ### certificates
+      ###
+      labels: {}
+
+      ### Extra annotations for secret to create. Doesn't make sense if using existing
+      ### certificates
+      ###
+      annotations: {}
+
+    extraLabels: {}
+    extraAnnotations: {}
+
   ### Number of deployment replicas. It is recommended to use more that one pods
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
@@ -940,11 +944,11 @@ controller:
   # - name: something
   #   emptyDir: {}
 
-  ### Container command (entrypoint). Not recommended to change this, helpful for local delevlopment
+  ### Container command (entrypoint). Not recommended to change this, helpful for local development
   ###
   command: []
 
-  ### Container arguments. Not recommended to change this, helpful for local delevlopment
+  ### Container arguments. Not recommended to change this, helpful for local development
   ###
   args:
     - -port=8443
@@ -1102,139 +1106,3 @@ controller:
 
 extraLabels: {}
 extraAnnotations: {}
-
-##############################################################################################################################
-sidecarDefaults:
-  # -- Wallarm node configuration. Parameters in this section can be overwritten individually for each pod using its `metadata.annotations`
-  # @default -- *See below for details*
-  wallarm:
-    # -- Wallarm mode: `monitoring, `block` or `off`
-    mode: monitoring
-    # -- Manages the ability to override the wallarm_mode values via filtering in the Cloud (custom ruleset): `on`, `off` or `strict`
-    modeAllowOverride: "on"
-    # -- Whether to analyze the application responses for attacks: `on` or `off`
-    parseResponse: "on"
-    # -- Whether to analyze WebSocket's messages for attacks: `on` or `off`
-    parseWebsocket: "off"
-    # -- Whether to decompress compressed data returned in the application response: `on` or `off`
-    unpackResponse: "on"
-    upstream:
-      # -- Defines the number of immediate reconnects to the Tarantool or Wallarm API
-      connectAttempts: 10
-      # -- Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
-      reconnectInterval: 15s
-    cronJobs:
-      exportEnvironment:
-        schedule: "0 */1 * * *"
-        timeout: 10m
-      exportMetrics:
-        schedule: "* * * * *"
-        timeout: 3h
-      syncIpLists:
-        schedule: "* * * * *"
-        timeout: 3h
-      syncIpListsSource:
-        schedule: "*/5 * * * *"
-        timeout: 3h
-  # -- Default parameters for Nginx configuration of sidecar proxy container. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-  # @default -- *See below for details*
-  nginx:
-    # -- Port listening by application container. This port is used as application container port, if pod has no exposed ports for application container.
-    proxyPassPort: 80
-    # -- Port listening by sidecar proxy container. This port is reserved for using by Wallarm sidecar, can't be the same as nginx.proxyPassPort.
-    listenPort: 26001
-    # -- Port for Wallarm status, Nginx stats and health check endpoints
-    statusPort: 10246
-    # -- Path to Nginx status endpoint
-    statusPath: /status
-    # -- Path to Nginx health check endpoint
-    healthPath: /health
-    # -- Path to Wallarm status endpoint, status provides in JSON format
-    wallarmStatusPath: /wallarm-status
-    # -- Port for Wallarm metrics endpoint
-    wallarmMetricsPort: 18080
-    # -- Port to Wallarm metrics endpoint. Metrics provide in Prometheus format
-    wallarmMetricsPath: /wallarm-metrics
-  # Default sidecar deployment options. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-  # @default -- *See below for details*
-  deployment:
-    # -- Sidecar deployment scheme: `single` or `split`
-    scheme: single
-    # -- Enable or disable `iptables` init container for port redirection: `true` or `false`
-    iptablesEnable: true
-  # Default configuration for sidecar containers. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-  # @default -- *See below for details*
-  container:
-    # -- Default configuration for proxy container
-    # @default -- *See below for details*
-    proxy:
-      image:
-        # -- Image for all containers in sidecar scheme
-        image: "quay.io/dmitriev/sidecar-proxy:4.0.3-1"
-        # -- Image pullPolicy
-        pullPolicy: IfNotPresent
-      # -- Enable httpGet liveness probe to path "sidecarDefaults.nginx.healthPath"
-      livenessProbeEnable: true
-      # -- Parameters for httpGet liveness probe configuration. Applicable if "sidecarDefaults.container.proxy.livenessProbeEnable: true"
-      # @default -- *See below for details*
-      livenessProbe:
-        # -- Initial delay in seconds. Do not set initial delay below 60. It's time for bootstrapping sidecar and connecting to the cloud
-        initialDelaySeconds: 60
-        # -- Probe period in seconds
-        periodSeconds: 10
-        # -- Probe failure threshold
-        failureThreshold: 3
-        # -- Probe success threshold
-        successThreshold: 1
-        # -- Probe timeout in seconds
-        timeoutSeconds: 1
-      single:
-        # -- Default resources for `proxy` container in `single` deployment scheme. Applicable only if `sidecarDefaults.deployment.scheme: single`
-        resources: {}
-        #  requests:
-        #    cpu: 200m
-        #    memory: 256Mi
-        #  limits:
-        #    cpu: 500m
-        #    memory: 512Mi
-      split:
-        # -- Default resources for `proxy` container in `split` deployment scheme. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-        resources: {}
-        #  requests:
-        #    cpu: 100m
-        #    memory: 128Mi
-        #  limits:
-        #    cpu: 300m
-        #    memory: 256Mi
-    # -- Default configuration for helper container
-    # @default -- *See below for details*
-    helper:
-      # -- Resources for `helper` container. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-      resources: {}
-      #  requests:
-      #    cpu: 100m
-      #    memory: 128Mi
-      #  limits:
-      #    cpu: 300m
-      #    memory: 256Mi
-    # -- Default configuration for init-containers
-    # @default -- *See below for details*
-    init:
-      helper:
-        # -- Resources for `init-helper` container. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-        resources: {}
-        #  requests:
-        #    cpu: 100m
-        #    memory: 64Mi
-        #  limits:
-        #    cpu: 300m
-        #    memory: 128Mi
-      iptables:
-        # -- Resources for `init-iptables` container. Applicable if `sidecarDefaults.deployment.iptablesEnable` is set to `true`
-        resources: {}
-        #  requests:
-        #    cpu: 50m
-        #    memory: 32Mi
-        #  limits:
-        #    cpu: 100m
-        #    memory: 64Mi

@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_HTTP_PATH = '/get'
 FORBIDDEN_HTTP_PATH = '/?id=\'or+1=1--a-<script>prompt(1)</script>\''
-PATCHES_PATH = 'kustomize/patches'
+SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
+PATCHES_PATH = f'{SCRIPT_PATH}/kustomize/patches'
 WAIT_PODS_TIMEOUT = '180s'
 
+print('PATCHES_PATH: ${PATCHES_PATH}')
 patchList = []
 for patchPath in os.listdir(PATCHES_PATH):
     patchList.append(patchPath)
