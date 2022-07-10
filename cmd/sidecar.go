@@ -28,33 +28,14 @@ type SidecarContext struct {
 func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, error) {
 	tmplresult := bytes.NewBuffer(make([]byte, 0))
 
-	// TODO: Repack template file to remove Global
-	ttt := struct {
-		Config *struct {
-			Global TemplateContext `yaml:"config"`
-		}
-		ObjectMeta *metav1.ObjectMeta
-		PodSpec    *corev1.PodSpec
-	}{
-		Config: &struct {
-			Global TemplateContext `yaml:"config"`
-		}{
-			Global: *sctx.Config,
-		},
-		ObjectMeta: sctx.ObjectMeta,
-		PodSpec:    sctx.PodSpec,
-	}
-
 	logrus.WithFields(logrus.Fields{
 		"action":      "constructsidecar",
 		"variable":    "sctx",
 		"description": "template function data (input)",
-		// "value":       ToJson(sctx),
-		"value": ToJson(ttt),
+		"value":       ToJson(sctx),
 	}).Trace()
 
-	// if errExecute := tmpl.Execute(tmplresult, sctx); errExecute != nil {
-	if errExecute := tmpl.Execute(tmplresult, ttt); errExecute != nil {
+	if errExecute := tmpl.Execute(tmplresult, sctx); errExecute != nil {
 		return nil, fmt.Errorf("Failed to render template: %s", errExecute.Error())
 	}
 

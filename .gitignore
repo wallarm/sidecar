@@ -23,3 +23,4 @@ env.ini
 kind/config/kubeconfig
 .tmp.image.tar
 LOCALNOTES.md
+httpbin.yaml
