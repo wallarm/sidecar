@@ -15,7 +15,7 @@ metadata:
     {{- end }}
 data:
   config.yaml: |-
-    global:
+    settings:
       {{- toYaml .Values.config | nindent 6 }}
       version: {{ .Chart.AppVersion }}
       tarantool:

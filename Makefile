@@ -47,13 +47,13 @@ ifneq "$(shell $(GO_PID))" ""
 	@$(POD_EXEC) ash -c "kill -9 $(shell $(GO_PID))"
 endif
 	@$(POD_EXEC) go run cmd/* \
-	-port=8443 \
-	-sidecar-template=/data/helm/files/sidecar-template.yaml \
-	-sidecar-config=/etc/controller/config/config.yaml \
-	-tls-cert=/etc/controller/tls/tls.crt \
-	-tls-key=/etc/controller/tls/tls.key \
-	-webhook-inject-path=/inject \
-	-webhook-health-path=/healthz
+		--listen :8443 \
+		--config /etc/controller/config/config.yaml \
+		--template /etc/controller/config/sidecar-template.yaml \
+		--tls-cert-file /etc/controller/tls/tls.crt \
+		--tls-key-file /etc/controller/tls/tls.key \
+		--log-level trace \
+		--log-format text-color
 
 pod-test:
 	@$(POD_EXEC) go test cmd/*

@@ -22,3 +22,4 @@ deploy/tmp
 env.ini
 kind/config/kubeconfig
 .tmp.image.tar
+LOCALNOTES.md
