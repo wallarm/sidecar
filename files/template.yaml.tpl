@@ -288,7 +288,7 @@ volumes:
       {{ end }}
     {{- end }}
   {{- else }}
-    {{- if (index .Config.sidecar.containers.helper (withAP "resources")) }}
+    {{- if (index .Config.sidecar.containers.helper "resources") }}
     {{ toYaml .Config.sidecar.containers.helper.resources | indent 4 }}
     {{- end }}
   {{- end }}
