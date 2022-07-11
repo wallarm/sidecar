@@ -980,12 +980,12 @@ controller:
   ### Container arguments. Not recommended to change this, helpful for local development
   ###
   args:
-    - --listen :8443
-    - --template /etc/controller/config/template.yaml.tmpl
-    - --config /etc/controller/config/config.yaml
-    - --tls-cert-file /etc/controller/tls/tls.crt
-    - --tls-key-file /etc/controller/tls/tls.key
-    - --log-level info
+    - --listen=:8443
+    - --template=/etc/controller/config/template.yaml.tmpl
+    - --config=/etc/controller/config/config.yaml
+    - --tls-cert-file=/etc/controller/tls/tls.crt
+    - --tls-key-file=/etc/controller/tls/tls.key
+    - --log-level=info
 
   ### Additional environment variables to pass to the container
   ###
