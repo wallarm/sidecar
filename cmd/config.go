@@ -30,10 +30,10 @@ type Config struct {
 
 type Args struct {
 	Listen      string `arg:"-l,--listen" env:"LISTEN" default:":8443" help:"listen address"`
-	Template    string `arg:"--template" env:"TEMPLATE_FILE" default:"/etc/controller/config/template.yaml.tmpl" help:"template file with patch for webhooks"`
+	Template    string `arg:"--template" env:"TEMPLATE_FILE" default:"/etc/controller/template.yaml.tpl" help:"template file with patch for webhooks"`
 	TLSCertFile string `arg:"--tls-cert-file" env:"TLS_CERT_FILE" default:"/etc/controller/tls/tls.crt" help:"certificate file for listen server"`
 	TLSKeyFile  string `arg:"--tls-key-file" env:"TLS_KEY_FILE" default:"/etc/controller/tls/tls.key" help:"certificate key file for listen server"`
-	ConfigFile  string `arg:"-c,--config" env:"CONFIG" default:"/etc/controller/config/config.yaml" help:"config location"`
+	ConfigFile  string `arg:"-c,--config" env:"CONFIG" default:"/etc/controller/config.yaml" help:"config location"`
 	LogLevel    string `arg:"--log-level" env:"LOG_LEVEL" default:"info" help:"verbosity level, only \"error\", \"warn\", \"info\", \"debug\" are valid"`
 	LogFormat   string `arg:"--log-format" env:"LOG_FORMAT" default:"text" help:"log format, only \"text\", \"text-color\", \"json\" are valid"`
 }
@@ -85,7 +85,7 @@ func (c *Config) InitLogging(level, format string) error {
 
 	logrus.WithFields(logrus.Fields{
 		"action": "loggerinit",
-	}).Debugf("Logging stream successfuly initialized")
+	}).Debugf("Logging stream successfully initialized")
 
 	return nil
 }
@@ -114,12 +114,12 @@ func (c *Config) InitConfig(filename string) error {
 	// TODO Validate values
 
 	if isThereError {
-		return errors.New("Found errors during config file intialization. Please see output above")
+		return errors.New("Found errors during config file initialization. Please see output above")
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"action": "config",
-	}).Debug("Config file successfuly initialized")
+	}).Debug("Config file successfully initialized")
 
 	return nil
 }
@@ -156,12 +156,12 @@ func (c *Config) InitTLS(certfile, keyfile string) error {
 	}
 
 	if isThereError {
-		return errors.New("Found errors during TLS config intialization. Please see output above")
+		return errors.New("Found errors during TLS config initialization. Please see output above")
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"action": "config",
-	}).Debug("TLS configuration successfuly initialized")
+	}).Debug("TLS configuration successfully initialized")
 
 	return nil
 }
@@ -178,18 +178,20 @@ func (c *Config) InitTemplate(templatefile string) error {
 	}
 
 	tmplfuncs := template.FuncMap{
-		"getAnnotation": GetAnnotation,
-		"getAppPort":    GetAppPort,
-		"fromJson":      FromJson,
-		"fromYaml":      FromYaml,
-		"indent":        Indent,
-		"isSet":         IsSet,
-		"nindent":       Nindent,
-		"toBool":        ToBool,
-		"toJson":        ToJson,
-		"toYaml":        ToYaml,
-		"b64enc":        B64enc,
-		"b64dec":        B64dec,
+		"getAnnotation":        GetAnnotation,
+		"getAppPort":           GetAppPort,
+		"fromJson":             FromJson,
+		"fromYaml":             FromYaml,
+		"indent":               Indent,
+		"isSet":                IsSet,
+		"nindent":              Nindent,
+		"toBool":               ToBool,
+		"toJson":               ToJson,
+		"toYaml":               ToYaml,
+		"b64enc":               B64enc,
+		"b64dec":               B64dec,
+		"withAnnotationPrefix": WithAnnotationPrefix,
+		"withAP":               WithAnnotationPrefix,
 	}
 
 	tmpl, errNewTemplate := template.New("basic").Funcs(tmplfuncs).Parse(string(content))
@@ -203,12 +205,12 @@ func (c *Config) InitTemplate(templatefile string) error {
 	c.Template = tmpl
 
 	if isThereError {
-		return errors.New("Found errors during template intialization. Please see output above")
+		return errors.New("Found errors during template initialization. Please see output above")
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"action": "config",
-	}).Debug("Template successfuly initialized")
+	}).Debug("Template successfully initialized")
 
 	return nil
 }
@@ -248,7 +250,7 @@ func (c *Config) Init() error {
 	}).Trace()
 
 	if isThereError {
-		return errors.New("Found error during intialization. Please see output above")
+		return errors.New("Found error during initialization. Please see output above")
 	}
 
 	return nil

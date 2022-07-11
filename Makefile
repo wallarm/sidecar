@@ -48,8 +48,8 @@ ifneq "$(shell $(GO_PID))" ""
 endif
 	@$(POD_EXEC) go run cmd/* \
 		--listen :8443 \
-		--config /etc/controller/config/config.yaml \
-		--template /data/helm/files/template.yaml.tmpl \
+		--config /etc/controller/config.yaml \
+		--template /data/files/template.yaml.tpl \
 		--tls-cert-file /etc/controller/tls/tls.crt \
 		--tls-key-file /etc/controller/tls/tls.key \
 		--log-level trace \

@@ -11,8 +11,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var admissionWebhookAnnotationStatusKey = "sidecar.wallarm.io/status"
-
+var (
+    admissionWebhookAnnotationPrefix    = "sidecar.wallarm.io"
+    admissionWebhookAnnotationStatusKey = admissionWebhookAnnotationPrefix + "/status"
+)
 type PatchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
@@ -177,7 +179,7 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 
 	logrus.WithFields(logrus.Fields{
 		"action":    "mutationpatch",
-		"content":   B64enc(string(patch)),
+		"content":   string(patch),
 		"namespace": req.Namespace,
 		"pod":       req.Name,
 		"uid":       fmt.Sprintf("%v", req.UID),

@@ -32,6 +32,7 @@ RUN apk add --no-cache                         \
         controller
 
 COPY --from=builder /build/sidecar-controller /usr/local/bin/sidecar-controller
+COPY --chown=${UID}:${GID} files/template.yaml.tpl /etc/controller/template.yaml.tpl
 
 USER ${UID}:${GID}
 

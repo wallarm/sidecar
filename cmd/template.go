@@ -14,7 +14,7 @@ import (
 )
 
 func GetAnnotation(meta metav1.ObjectMeta, property string, defaultValue interface{}) string {
-	value, ok := meta.Annotations[property]
+	value, ok := meta.Annotations[WithAnnotationPrefix(property)]
 	if !ok {
 		value = fmt.Sprint(defaultValue)
 	}
@@ -128,7 +128,7 @@ func Nindent(spaces int, source string) string {
 }
 
 func IsSet(m map[string]string, key string) bool {
-	_, ok := m[key]
+	_, ok := m[WithAnnotationPrefix(key)]
 	return ok
 }
 
@@ -146,4 +146,9 @@ func B64dec(input string) string {
 		return ""
 	}
 	return string(output)
+}
+
+func WithAnnotationPrefix(suffix string) string {
+    prefix := config.Settings["annotationPrefix"].(string)
+    return prefix + "/" + suffix
 }

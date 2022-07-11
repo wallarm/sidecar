@@ -48,7 +48,7 @@ func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, e
 
 	logrus.WithFields(logrus.Fields{
 		"action": "constructsidecar",
-	}).Debug("Successfully render sidecar template")
+	}).Debug("Successfully rendered sidecar template")
 
 	var sidecar Sidecar
 

@@ -20,4 +20,3 @@ data:
       version: {{ .Chart.AppVersion }}
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
-{{ (.Files.Glob "files/template.yaml.tmpl").AsConfig | indent 2 }}

@@ -83,6 +83,9 @@ config:
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         timeout: 3h
 
+  ### Default Annotation prefix which is used in sidecar template to overwrite default values
+  annotationPrefix: sidecar.wallarm.io
+
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
   ### for each pod with pod annotations
   ###
@@ -823,7 +826,7 @@ postanalytics:
 controller:
   image:
     registry: docker.io
-    image: wallarm/wallarm-sidecar-controller
+    image: wallarm/sidecar-controller
     tag: "0.1.0"
     pullPolicy: IfNotPresent
 
@@ -981,8 +984,8 @@ controller:
   ###
   args:
     - --listen=:8443
-    - --template=/etc/controller/config/template.yaml.tmpl
-    - --config=/etc/controller/config/config.yaml
+    - --template=/etc/controller/template.yaml.tpl
+    - --config=/etc/controller/config.yaml
     - --tls-cert-file=/etc/controller/tls/tls.crt
     - --tls-key-file=/etc/controller/tls/tls.key
     - --log-level=info
