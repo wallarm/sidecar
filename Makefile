@@ -49,7 +49,7 @@ endif
 	@$(POD_EXEC) go run cmd/* \
 		--listen :8443 \
 		--config /etc/controller/config/config.yaml \
-		--template /etc/controller/config/sidecar-template.yaml \
+		--template /data/helm/files/template.yaml.tmpl \
 		--tls-cert-file /etc/controller/tls/tls.crt \
 		--tls-key-file /etc/controller/tls/tls.key \
 		--log-level trace \
