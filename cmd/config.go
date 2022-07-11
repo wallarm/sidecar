@@ -30,10 +30,10 @@ type Config struct {
 
 type Args struct {
 	Listen      string `arg:"-l,--listen" env:"LISTEN" default:":8443" help:"listen address"`
-	Template    string `arg:"--template" env:"TEMPLATE_FILE" default:"/etc/controller/template.yaml" help:"template file with patch for webhooks"`
+	Template    string `arg:"--template" env:"TEMPLATE_FILE" default:"/etc/controller/config/template.yaml.tmpl" help:"template file with patch for webhooks"`
 	TLSCertFile string `arg:"--tls-cert-file" env:"TLS_CERT_FILE" default:"/etc/controller/tls/tls.crt" help:"certificate file for listen server"`
 	TLSKeyFile  string `arg:"--tls-key-file" env:"TLS_KEY_FILE" default:"/etc/controller/tls/tls.key" help:"certificate key file for listen server"`
-	ConfigFile  string `arg:"-c,--config" env:"CONFIG" default:"/etc/controller/config.yaml" help:"config location"`
+	ConfigFile  string `arg:"-c,--config" env:"CONFIG" default:"/etc/controller/config/config.yaml" help:"config location"`
 	LogLevel    string `arg:"--log-level" env:"LOG_LEVEL" default:"info" help:"verbosity level, only \"error\", \"warn\", \"info\", \"debug\" are valid"`
 	LogFormat   string `arg:"--log-format" env:"LOG_FORMAT" default:"text" help:"log format, only \"text\", \"text-color\", \"json\" are valid"`
 }
