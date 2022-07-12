@@ -1,13 +1,13 @@
 initContainers:
-{{ if ((getAnnotation .ObjectMeta "sidecar-injection-iptables-enable" .Config.injectionStrategy.iptablesEnable) | toBool) -}}
+{{ if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
   {{ template "initIptablesContainer" . }}
 {{- end }}
-{{ if eq (getAnnotation .ObjectMeta "sidecar-injection-schema" .Config.injectionStrategy.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
   {{ template "initHelperContainer" . }}
 {{- end }}
 
 containers:
-{{ if eq (getAnnotation .ObjectMeta "sidecar-injection-schema" .Config.injectionStrategy.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
   {{ template "helperContainer" . }}
 {{- end }}
   {{ template "proxyContainer" . }}
@@ -19,7 +19,7 @@ volumes:
     emptyDir: {}
   - name: wallarm-cache
     emptyDir: {}
-{{ if (isSet .ObjectMeta.Annotations "proxy-extra-volumes") -}}
+{{ if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
   {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
   - name: "{{ $index }}"
     {{ toYaml $value | indent 4 }}
@@ -31,81 +31,81 @@ volumes:
 - name: sidecar-proxy
   image: {{ template "image" . }}
   imagePullPolicy: {{ .Config.sidecar.image.pullPolicy }}
-  {{ if eq (getAnnotation .ObjectMeta "sidecar-injection-scheme" .Config.injectionStrategy.scheme) "split" -}}
+  {{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-scheme") .Config.injectionStrategy.scheme) "split" -}}
   command: ["/usr/local/run-nginx.sh"]
   {{- else }}
   command: ["/usr/local/run-node.sh"]
   {{- end }}
   env:
-    {{ if ne (getAnnotation .ObjectMeta "sidecar-injection-schema" .Config.injectionStrategy.scheme) "split" -}}
+    {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
       #TODO Determine proper way to identify sidecar version
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
       value: "{{ .Config.version }}"
     {{- end  }}
-    {{ if (isSet .ObjectMeta.Annotations "wallarm-application") -}}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
     - name: WALLARM_APPLICATION
       value: "{{ index .ObjectMeta.Annotations (withAP `wallarm-application`) }}"
     {{- end  }}
     - name: WALLARM_MODE
-      value: "{{ getAnnotation .ObjectMeta `wallarm-mode` .Config.wallarm.mode }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-mode`) .Config.wallarm.mode }}"
     - name: WALLARM_MODE_ALLOW_OVERRIDE
-      value: "{{ getAnnotation .ObjectMeta `wallarm-mode-allow-override` .Config.wallarm.modeAllowOverride }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-mode-allow-override`) .Config.wallarm.modeAllowOverride }}"
     - name: WALLARM_PARSE_RESPONSE
-      value: "{{ getAnnotation .ObjectMeta `wallarm-parse-response` .Config.wallarm.parseResponse }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-parse-response`) .Config.wallarm.parseResponse }}"
     - name: WALLARM_PARSE_WEBSOCKET
-      value: "{{ getAnnotation .ObjectMeta `wallarm-parse-websocket` .Config.wallarm.parseWebsocket }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-parse-websocket`) .Config.wallarm.parseWebsocket }}"
     - name: WALLARM_UNPACK_RESPONSE
-      value: "{{ getAnnotation .ObjectMeta `wallarm-unpack-response` .Config.wallarm.unpackResponse }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-unpack-response`) .Config.wallarm.unpackResponse }}"
     - name: WALLARM_TARANTOOL_HOST
       value: "{{ .Config.tarantool.host }}"
     - name: WALLARM_UPSTREAM_CONNECT_ATTEMPTS
-      value: "{{ getAnnotation .ObjectMeta `wallarm-upstream-connect-attempts` .Config.wallarm.upstream.connectAttempts }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
-      value: "{{ getAnnotation .ObjectMeta `wallarm-upstream-reconnect-interval` .Config.wallarm.upstream.reconnectInterval }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-reconnect-interval`) .Config.wallarm.upstream.reconnectInterval }}"
     - name: NGINX_LISTEN_PORT
-      value: "{{ getAnnotation .ObjectMeta `nginx-listen-port` .Config.nginx.listenPort }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_STATUS_PORT
-      value: "{{ getAnnotation .ObjectMeta `nginx-status-port` .Config.nginx.statusPort }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
     - name: NGINX_STATUS_PATH
-      value: "{{ getAnnotation .ObjectMeta `nginx-status-path` .Config.nginx.statusPath }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-path`) .Config.nginx.statusPath }}"
     - name: NGINX_HEALTH_PATH
-      value: "{{ getAnnotation .ObjectMeta `nginx-health-path` .Config.nginx.healthPath }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-health-path`) .Config.nginx.healthPath }}"
     - name: NGINX_WALLARM_STATUS_PATH
-      value: "{{ getAnnotation .ObjectMeta `nginx-wallarm-status-path` .Config.nginx.wallarmStatusPath }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-wallarm-status-path`) .Config.nginx.wallarmStatusPath }}"
     - name: NGINX_WALLARM_METRICS_PORT
-      value: "{{ getAnnotation .ObjectMeta `nginx-wallarm-metrics-port` .Config.nginx.wallarmMetricsPort }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-wallarm-metrics-port`) .Config.nginx.wallarmMetricsPort }}"
     - name: NGINX_WALLARM_METRICS_PATH
-      value: "{{ getAnnotation .ObjectMeta `nginx-wallarm-metrics-path` .Config.nginx.wallarmMetricsPath }}"
-    {{ if (isSet .ObjectMeta.Annotations "nginx-http-include") -}}
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-wallarm-metrics-path`) .Config.nginx.wallarmMetricsPath }}"
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-include")) -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"
     {{- end }}
-    {{ if (isSet .ObjectMeta.Annotations "nginx-server-include") -}}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-server-include")) -}}
     - name: NGINX_SERVER_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-server-include`) }}"
     {{- end }}
-    {{ if (isSet .ObjectMeta.Annotations "nginx-location-include") -}}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-location-include")) -}}
     - name: NGINX_LOCATION_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-location-include`) }}"
     {{- end }}
-    {{ if (isSet .ObjectMeta.Annotations "nginx-extra-modules") -}}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-extra-modules")) -}}
     - name: NGINX_EXTRA_MODULES
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-extra-modules`) }}"
     {{- end }}
   ports:
     - name: status
-      containerPort: {{ getAnnotation .ObjectMeta "nginx-status-port" .Config.nginx.statusPort }}
+      containerPort: {{ getAnnotation .ObjectMeta (withAP "nginx-status-port") .Config.nginx.statusPort }}
       protocol: TCP
     - name: metrics
-      containerPort: {{ getAnnotation .ObjectMeta "nginx-wallarm-metrics-port" .Config.nginx.wallarmMetricsPort }}
+      containerPort: {{ getAnnotation .ObjectMeta (withAP "nginx-wallarm-metrics-port") .Config.nginx.wallarmMetricsPort }}
       protocol: TCP
-    {{ if not ((getAnnotation .ObjectMeta "sidecar-injection-iptables-enable" .Config.injectionStrategy.iptablesEnable) | toBool) -}}
+    {{ if not ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
     - name: proxy
-      containerPort: {{ getAnnotation .ObjectMeta "nginx-listen-port" .Config.nginx.listenPort }}
+      containerPort: {{ getAnnotation .ObjectMeta (withAP "nginx-listen-port") .Config.nginx.listenPort }}
       protocol: TCP
     {{- end }}
 {{ if .Config.sidecar.containers.proxy.livenessProbeEnable }}
@@ -123,7 +123,7 @@ volumes:
       name: wallarm-acl
     - mountPath: /var/lib/nginx/wallarm/
       name: wallarm-cache
-    {{- if (isSet .ObjectMeta.Annotations "proxy-extra-volume-mounts") }}
+    {{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     - name: "{{ $index }}"
       {{ toYaml $value | indent 6 }}
@@ -198,7 +198,7 @@ volumes:
     - name: APP_PORT
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_PORT
-      value: "{{ getAnnotation .ObjectMeta "nginx-listen-port" .Config.nginx.listenPort }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP "nginx-listen-port") .Config.nginx.listenPort }}"
   command: ["iptables"]
   args: ["-t", "nat", "-A", "PREROUTING", "-p", "tcp", "-d", "$(POD_IP)", "--dport", "$(APP_PORT)", "-j", "REDIRECT", "--to-ports", "$(NGINX_PORT)"]
   securityContext:
@@ -208,7 +208,7 @@ volumes:
 {{ end }}
 
 {{- define "image" }}
-  {{- if (isSet .ObjectMeta.Annotations "proxy-image") }}
+  {{- if (isSet .ObjectMeta.Annotations (withAP "proxy-image")) }}
 {{ index .ObjectMeta.Annotations (withAP "proxy-image") }}
   {{- else }}
     {{- if (index .Config.sidecar.image "fullname") }}
@@ -222,7 +222,7 @@ volumes:
 {{- end }}
 
 {{- define "applicationPort" }}
-  {{- if (isSet .ObjectMeta.Annotations "application-port") }}
+  {{- if (isSet .ObjectMeta.Annotations (withAP "application-port")) }}
     {{- index .ObjectMeta.Annotations (withAP "application-port") }}
   {{- else }}
     {{- getAppPort .PodSpec .Config.nginx.applicationPort }}
@@ -270,22 +270,22 @@ volumes:
 {{- end }}
 
 {{- define "helperContainer.resources" }}
-  {{- if or (isSet .ObjectMeta.Annotations "helper-cpu") (isSet .ObjectMeta.Annotations "helper-memory") (isSet .ObjectMeta.Annotations "helper-cpu-limit") (isSet .ObjectMeta.Annotations "helper-memory-limit") }}
-    {{- if or (isSet .ObjectMeta.Annotations "helper-cpu") (isSet .ObjectMeta.Annotations "helper-memory") }}
+  {{- if or (isSet .ObjectMeta.Annotations (withAP "helper-cpu")) (isSet .ObjectMeta.Annotations (withAP "helper-memory")) (isSet .ObjectMeta.Annotations (withAP "helper-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "helper-memory-limit")) }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "helper-cpu")) (isSet .ObjectMeta.Annotations (withAP "helper-memory")) }}
     requests:
-      {{ if (isSet .ObjectMeta.Annotations "helper-cpu") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "helper-cpu")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `helper-cpu`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "helper-memory") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "helper-memory")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `helper-memory`) }}"
       {{ end }}
   {{- end }}
-  {{- if or (isSet .ObjectMeta.Annotations "helper-cpu-limit") (isSet .ObjectMeta.Annotations "helper-memory-limit") }}
+  {{- if or (isSet .ObjectMeta.Annotations (withAP "helper-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "helper-memory-limit")) }}
     limits:
-      {{ if (isSet .ObjectMeta.Annotations "helper-cpu-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "helper-cpu-limit")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `helper-cpu-limit`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "helper-memory-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "helper-memory-limit")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `helper-memory-limit`) }}"
       {{ end }}
     {{- end }}
@@ -297,22 +297,22 @@ volumes:
 {{- end }}
 
 {{- define "initIptablesContainer.resources" }}
-  {{- if or (isSet .ObjectMeta.Annotations "init-iptables-cpu") (isSet .ObjectMeta.Annotations "init-iptables-memory") (isSet .ObjectMeta.Annotations "init-iptables-cpu-limit") (isSet .ObjectMeta.Annotations "init-iptables-memory-limit") }}
-    {{- if or (isSet .ObjectMeta.Annotations "init-iptables-cpu") (isSet .ObjectMeta.Annotations "init-iptables-memory") }}
+  {{- if or (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu")) (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory")) (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory-limit")) }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu")) (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory")) }}
     requests:
-      {{ if (isSet .ObjectMeta.Annotations "init-iptables-cpu") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `init-iptables-cpu`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "init-iptables-memory") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `init-iptables-memory`) }}"
       {{ end }}
     {{- end }}
-    {{- if or (isSet .ObjectMeta.Annotations "init-iptables-cpu-limit") (isSet .ObjectMeta.Annotations "init-iptables-memory-limit") }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory-limit")) }}
     limits:
-      {{ if (isSet .ObjectMeta.Annotations "init-iptables-cpu-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-iptables-cpu-limit")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `init-iptables-cpu-limit`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "init-iptables-memory-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-iptables-memory-limit")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `init-iptables-memory-limit`) }}"
       {{ end }}
     {{- end }}
@@ -324,22 +324,22 @@ volumes:
 {{- end }}
 
 {{- define "initHelperContainer.resources" }}
-  {{- if or (isSet .ObjectMeta.Annotations "init-helper-cpu") (isSet .ObjectMeta.Annotations "init-helper-memory") (isSet .ObjectMeta.Annotations "init-helper-cpu-limit") (isSet .ObjectMeta.Annotations "init-helper-memory-limit") }}
-    {{- if or (isSet .ObjectMeta.Annotations "init-helper-cpu") (isSet .ObjectMeta.Annotations "init-helper-memory") }}
+  {{- if or (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu")) (isSet .ObjectMeta.Annotations (withAP "init-helper-memory")) (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "init-helper-memory-limit")) }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu")) (isSet .ObjectMeta.Annotations (withAP "init-helper-memory")) }}
     requests:
-      {{ if (isSet .ObjectMeta.Annotations "init-helper-cpu") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `init-helper-cpu`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "init-helper-memory") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-helper-memory")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `init-helper-memory`) }}"
       {{ end }}
     {{- end }}
-    {{- if or (isSet .ObjectMeta.Annotations "init-helper-cpu-limit") (isSet .ObjectMeta.Annotations "init-helper-memory-limit") }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "init-helper-memory-limit")) }}
     limits:
-      {{ if (isSet .ObjectMeta.Annotations "init-helper-cpu-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-helper-cpu-limit")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `init-helper-cpu-limit`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "init-helper-memory-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "init-helper-memory-limit")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `init-helper-memory-limit`) }}"
       {{ end }}
     {{- end }}
@@ -351,22 +351,22 @@ volumes:
 {{- end }}
 
 {{- define "proxyContainer.resources" }}
-  {{- if or (isSet .ObjectMeta.Annotations "proxy-cpu") (isSet .ObjectMeta.Annotations "proxy-memory") (isSet .ObjectMeta.Annotations "proxy-cpu-limit") (isSet .ObjectMeta.Annotations "proxy-memory-limit") }}
-    {{- if or (isSet .ObjectMeta.Annotations "proxy-cpu") (isSet .ObjectMeta.Annotations "proxy-memory") }}
+  {{- if or (isSet .ObjectMeta.Annotations (withAP "proxy-cpu")) (isSet .ObjectMeta.Annotations (withAP "proxy-memory")) (isSet .ObjectMeta.Annotations (withAP "proxy-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "proxy-memory-limit")) }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "proxy-cpu")) (isSet .ObjectMeta.Annotations (withAP "proxy-memory")) }}
     requests:
-      {{ if (isSet .ObjectMeta.Annotations "proxy-cpu") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "proxy-cpu")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `proxy-cpu`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "proxy-memory") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "proxy-memory")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `proxy-memory`) }}"
       {{ end }}
     {{- end }}
-    {{- if or (isSet .ObjectMeta.Annotations "proxy-cpu-limit") (isSet .ObjectMeta.Annotations "proxy-memory-limit") }}
+    {{- if or (isSet .ObjectMeta.Annotations (withAP "proxy-cpu-limit")) (isSet .ObjectMeta.Annotations (withAP "proxy-memory-limit")) }}
     limits:
-      {{ if (isSet .ObjectMeta.Annotations "proxy-cpu-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "proxy-cpu-limit")) -}}
       cpu: "{{ index .ObjectMeta.Annotations (withAP `proxy-cpu-limit`) }}"
       {{ end }}
-      {{ if (isSet .ObjectMeta.Annotations "proxy-memory-limit") -}}
+      {{ if (isSet .ObjectMeta.Annotations (withAP "proxy-memory-limit")) -}}
       memory: "{{ index .ObjectMeta.Annotations (withAP `proxy-memory-limit`) }}"
       {{ end }}
     {{- end }}
