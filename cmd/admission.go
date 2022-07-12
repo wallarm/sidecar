@@ -11,10 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var (
-    admissionWebhookAnnotationPrefix    = "sidecar.wallarm.io"
-    admissionWebhookAnnotationStatusKey = admissionWebhookAnnotationPrefix + "/status"
-)
 type PatchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
@@ -27,7 +23,7 @@ func WhetherMutate(metadata *metav1.ObjectMeta) bool {
 		annotations = make(map[string]string)
 	}
 
-	status := annotations[admissionWebhookAnnotationStatusKey]
+	status := annotations[fmt.Sprintf("%v/status", config.Settings["annotationPrefix"])]
 
 	if strings.ToLower(status) == "injected" {
 		logrus.WithFields(logrus.Fields{
@@ -164,7 +160,7 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		}).Warn(errConstructSidecar.Error())
 	}
 
-	annotations := map[string]string{admissionWebhookAnnotationStatusKey: "injected"}
+	annotations := map[string]string{fmt.Sprintf("%v/status", config.Settings["annotationPrefix"]): "injected"}
 	patch, errCreateMutationPatch := CreateMutationPatch(&pod, sidecar, annotations)
 	if errCreateMutationPatch != nil {
 		logrus.WithFields(logrus.Fields{

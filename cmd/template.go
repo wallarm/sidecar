@@ -149,6 +149,6 @@ func B64dec(input string) string {
 }
 
 func WithAnnotationPrefix(suffix string) string {
-    prefix := config.Settings["annotationPrefix"].(string)
+    prefix := fmt.Sprintf("%v", config.Settings["annotationPrefix"])
     return prefix + "/" + suffix
 }
