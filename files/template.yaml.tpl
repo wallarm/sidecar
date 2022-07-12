@@ -2,12 +2,12 @@ initContainers:
 {{ if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
   {{ template "initIptablesContainer" . }}
 {{- end }}
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   {{ template "initHelperContainer" . }}
 {{- end }}
 
 containers:
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
+{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   {{ template "helperContainer" . }}
 {{- end }}
   {{ template "proxyContainer" . }}
@@ -31,13 +31,13 @@ volumes:
 - name: sidecar-proxy
   image: {{ template "image" . }}
   imagePullPolicy: {{ .Config.sidecar.image.pullPolicy }}
-  {{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-scheme") .Config.injectionStrategy.scheme) "split" -}}
+  {{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   command: ["/usr/local/run-nginx.sh"]
   {{- else }}
   command: ["/usr/local/run-node.sh"]
   {{- end }}
   env:
-    {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.scheme) "split" -}}
+    {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
       #TODO Determine proper way to identify sidecar version
