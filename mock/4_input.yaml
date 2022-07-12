@@ -1,0 +1,241 @@
+### Main functionality - split mode with iptables disabled
+###
+Config:
+  annotationPrefix: sidecar.wallarm.io
+  injectionStrategy:
+    iptablesEnable: true
+    schema: single
+  nginx:
+    applicationPort: 80
+    healthPath: /health
+    listenPort: 26001
+    statusPath: /status
+    statusPort: 10246
+    wallarmMetricsPath: /wallarm-metrics
+    wallarmMetricsPort: 18080
+    wallarmStatusPath: /wallarm-status
+  sidecar:
+    containers:
+      helper:
+        resources: {}
+      proxy:
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: status
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        livenessProbeEnable: true
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /healthz
+            port: status
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        readinessProbeEnable: false
+        resources: {}
+    image:
+      fullname: wallarm/sidecar:0.9.0
+      image: wallarm/sidecar
+      pullPolicy: IfNotPresent
+      registry: docker.io
+      tag: 0.9.0
+    initContainers:
+      helper:
+        resources: {}
+      iptables:
+        resources: {}
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+            drop:
+              - ALL
+          privileged: true
+    securityContext:
+      capabilities:
+        add:
+          - NET_BIND_SERVICE
+        drop:
+          - ALL
+      runAsUser: 101
+  tarantool:
+    host: wallarm-sidecar-postanalytics.default.svc
+  version: 4.0.3
+  wallarm:
+    api:
+      caVerify: true
+      host: audit.api.wallarm.com
+      port: 443
+      token: TopSecret
+      useSSL: true
+    cron:
+      exportEnvironment:
+        command: /opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT
+        schedule: 0 */1 * * *
+        timeout: 10m
+      exportMetrics:
+        command: /opt/wallarm/ruby/usr/share/wallarm-common/export-metrics -l STDOUT
+        schedule: '* * * * *'
+        timeout: 3h
+      syncIpLists:
+        command: /opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists -l STDOUT
+        schedule: '* * * * *'
+        timeout: 3h
+      syncIpListsSource:
+        command: /opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT
+        schedule: '*/5 * * * *'
+        timeout: 3h
+    fallback: "on"
+    mode: monitoring
+    modeAllowOverride: "on"
+    parseResponse: "on"
+    parseWebsocket: "off"
+    unpackResponse: "on"
+    upstream:
+      connectAttempts: 10
+      reconnectInterval: 15s
+ObjectMeta:
+  generateName: dummy-app-86c5f84bd9-
+  creationTimestamp: null
+  labels:
+    app: dummy-app
+    pod-template-hash: 86c5f84bd9
+    wallarm-sidecar: enabled
+  annotations:
+    sidecar.wallarm.io/sidecar-injection-iptables-enable: "false"
+    sidecar.wallarm.io/sidecar-injection-schema: split
+    sidecar.wallarm.io/wallarm-mode: block
+  ownerReferences:
+    - apiVersion: apps/v1
+      kind: ReplicaSet
+      name: dummy-app-86c5f84bd9
+      uid: ec2bef4e-4917-4af1-8fe9-16c545aaff3d
+      controller: true
+      blockOwnerDeletion: true
+  managedFields:
+    - manager: kube-controller-manager
+      operation: Update
+      apiVersion: v1
+      time: "2022-07-12T14:32:00Z"
+      fieldsType: FieldsV1
+      fieldsV1:
+        f:metadata:
+          f:annotations:
+            .: {}
+            f:sidecar.wallarm.io/sidecar-injection-iptables-enable: {}
+            f:sidecar.wallarm.io/sidecar-injection-schema: {}
+            f:sidecar.wallarm.io/wallarm-mode: {}
+          f:generateName: {}
+          f:labels:
+            .: {}
+            f:app: {}
+            f:pod-template-hash: {}
+            f:wallarm-sidecar: {}
+          f:ownerReferences:
+            .: {}
+            k:{"uid":"ec2bef4e-4917-4af1-8fe9-16c545aaff3d"}: {}
+        f:spec:
+          f:containers:
+            k:{"name":"application"}:
+              .: {}
+              f:image: {}
+              f:imagePullPolicy: {}
+              f:name: {}
+              f:ports:
+                .: {}
+                k:{"containerPort":80,"protocol":"TCP"}:
+                  .: {}
+                  f:containerPort: {}
+                  f:name: {}
+                  f:protocol: {}
+              f:readinessProbe:
+                .: {}
+                f:failureThreshold: {}
+                f:httpGet:
+                  .: {}
+                  f:path: {}
+                  f:port: {}
+                  f:scheme: {}
+                f:initialDelaySeconds: {}
+                f:periodSeconds: {}
+                f:successThreshold: {}
+                f:timeoutSeconds: {}
+              f:resources: {}
+              f:terminationMessagePath: {}
+              f:terminationMessagePolicy: {}
+          f:dnsPolicy: {}
+          f:enableServiceLinks: {}
+          f:restartPolicy: {}
+          f:schedulerName: {}
+          f:securityContext: {}
+          f:terminationGracePeriodSeconds: {}
+PodSpec:
+  volumes:
+    - name: kube-api-access-stchq
+      projected:
+        sources:
+          - serviceAccountToken:
+              expirationSeconds: 3607
+              path: token
+          - configMap:
+              name: kube-root-ca.crt
+              items:
+                - key: ca.crt
+                  path: ca.crt
+          - downwardAPI:
+              items:
+                - path: namespace
+                  fieldRef:
+                    apiVersion: v1
+                    fieldPath: metadata.namespace
+  containers:
+    - name: application
+      image: kennethreitz/httpbin
+      ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+      resources: {}
+      volumeMounts:
+        - name: kube-api-access-stchq
+          readOnly: true
+          mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      readinessProbe:
+        httpGet:
+          path: /status/200
+          port: http
+          scheme: HTTP
+        initialDelaySeconds: 45
+        timeoutSeconds: 1
+        periodSeconds: 10
+        successThreshold: 1
+        failureThreshold: 5
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      imagePullPolicy: Always
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 30
+  dnsPolicy: ClusterFirst
+  serviceAccountName: default
+  serviceAccount: default
+  securityContext: {}
+  schedulerName: default-scheduler
+  tolerations:
+    - key: node.kubernetes.io/not-ready
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 300
+    - key: node.kubernetes.io/unreachable
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 300
+  priority: 0
+  enableServiceLinks: true
+  preemptionPolicy: PreemptLowerPriority

@@ -1,0 +1,235 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/containers/-",
+    "value": {
+      "name": "sidecar-proxy",
+      "image": "wallarm/sidecar:0.9.0",
+      "command": [
+        "/usr/local/run-node.sh"
+      ],
+      "ports": [
+        {
+          "name": "status",
+          "containerPort": 10246,
+          "protocol": "TCP"
+        },
+        {
+          "name": "metrics",
+          "containerPort": 18080,
+          "protocol": "TCP"
+        },
+        {
+          "name": "proxy",
+          "containerPort": 26001,
+          "protocol": "TCP"
+        }
+      ],
+      "env": [
+        {
+          "name": "WALLARM_API_HOST",
+          "value": "audit.api.wallarm.com"
+        },
+        {
+          "name": "WALLARM_API_PORT",
+          "value": "443"
+        },
+        {
+          "name": "WALLARM_API_TOKEN",
+          "value": "TopSecret"
+        },
+        {
+          "name": "WALLARM_API_USE_SSL",
+          "value": "true"
+        },
+        {
+          "name": "WALLARM_API_CA_VERIFY",
+          "value": "true"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_ENV_SCHEDULE",
+          "value": "0 */1 * * *"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_ENV_TIMEOUT",
+          "value": "10m"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_ENV_COMMAND",
+          "value": "/opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_METRICS_SCHEDULE",
+          "value": "* * * * *"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_METRICS_TIMEOUT",
+          "value": "3h"
+        },
+        {
+          "name": "WALLARM_CRON_EXPORT_METRICS_COMMAND",
+          "value": "/opt/wallarm/ruby/usr/share/wallarm-common/export-metrics -l STDOUT"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_SCHEDULE",
+          "value": "* * * * *"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_TIMEOUT",
+          "value": "3h"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_COMMAND",
+          "value": "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists -l STDOUT"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_SOURCE_SCHEDULE",
+          "value": "*/5 * * * *"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_SOURCE_TIMEOUT",
+          "value": "3h"
+        },
+        {
+          "name": "WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND",
+          "value": "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
+        },
+        {
+          "name": "WALLARM_INGRESS_CONTROLLER_VERSION",
+          "value": "4.0.3"
+        },
+        {
+          "name": "WALLARM_MODE",
+          "value": "block"
+        },
+        {
+          "name": "WALLARM_MODE_ALLOW_OVERRIDE",
+          "value": "on"
+        },
+        {
+          "name": "WALLARM_PARSE_RESPONSE",
+          "value": "on"
+        },
+        {
+          "name": "WALLARM_PARSE_WEBSOCKET",
+          "value": "off"
+        },
+        {
+          "name": "WALLARM_UNPACK_RESPONSE",
+          "value": "on"
+        },
+        {
+          "name": "WALLARM_TARANTOOL_HOST",
+          "value": "wallarm-sidecar-postanalytics.default.svc"
+        },
+        {
+          "name": "WALLARM_UPSTREAM_CONNECT_ATTEMPTS",
+          "value": "10"
+        },
+        {
+          "name": "WALLARM_UPSTREAM_RECONNECT_INTERVAL",
+          "value": "15s"
+        },
+        {
+          "name": "NGINX_LISTEN_PORT",
+          "value": "26001"
+        },
+        {
+          "name": "NGINX_PROXY_PASS_PORT",
+          "value": "80"
+        },
+        {
+          "name": "NGINX_STATUS_PORT",
+          "value": "10246"
+        },
+        {
+          "name": "NGINX_STATUS_PATH",
+          "value": "/status"
+        },
+        {
+          "name": "NGINX_HEALTH_PATH",
+          "value": "/health"
+        },
+        {
+          "name": "NGINX_WALLARM_STATUS_PATH",
+          "value": "/wallarm-status"
+        },
+        {
+          "name": "NGINX_WALLARM_METRICS_PORT",
+          "value": "18080"
+        },
+        {
+          "name": "NGINX_WALLARM_METRICS_PATH",
+          "value": "/wallarm-metrics"
+        }
+      ],
+      "resources": {},
+      "volumeMounts": [
+        {
+          "name": "wallarm",
+          "mountPath": "/etc/wallarm"
+        },
+        {
+          "name": "wallarm-acl",
+          "mountPath": "/var/lib/wallarm-acl"
+        },
+        {
+          "name": "wallarm-cache",
+          "mountPath": "/var/lib/nginx/wallarm/"
+        }
+      ],
+      "livenessProbe": {
+        "httpGet": {
+          "path": "/healthz",
+          "port": "status"
+        },
+        "initialDelaySeconds": 60,
+        "timeoutSeconds": 1,
+        "periodSeconds": 10,
+        "successThreshold": 1,
+        "failureThreshold": 3
+      },
+      "imagePullPolicy": "IfNotPresent",
+      "securityContext": {
+        "capabilities": {
+          "add": [
+            "NET_BIND_SERVICE"
+          ],
+          "drop": [
+            "ALL"
+          ]
+        },
+        "runAsUser": 101
+      }
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/volumes/-",
+    "value": {
+      "name": "wallarm",
+      "emptyDir": {}
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/volumes/-",
+    "value": {
+      "name": "wallarm-acl",
+      "emptyDir": {}
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/volumes/-",
+    "value": {
+      "name": "wallarm-cache",
+      "emptyDir": {}
+    }
+  },
+  {
+    "op": "add",
+    "path": "/metadata/annotations/sidecar.wallarm.io~1status",
+    "value": "injected"
+  }
+]
