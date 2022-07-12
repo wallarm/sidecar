@@ -7,7 +7,7 @@ CONTROLLER_IMAGE := wallarm/sidecar-controller:0.1.0
 
 ### For embedding into the chart
 ###
-SIDECAR_IMAGE    := wallarm/sidecar:4.0.3-1
+SIDECAR_IMAGE    := wallarm/sidecar:0.9.0
 TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.0.3-1
 RUBY_IMAGE       := wallarm/ingress-ruby:4.0.3-1
 PYTHON_IMAGE     := wallarm/ingress-python:4.0.3-1
@@ -47,13 +47,13 @@ ifneq "$(shell $(GO_PID))" ""
 	@$(POD_EXEC) ash -c "kill -9 $(shell $(GO_PID))"
 endif
 	@$(POD_EXEC) go run cmd/* \
-	-port=8443 \
-	-sidecar-template=/data/helm/files/sidecar-template.yaml \
-	-sidecar-config=/etc/controller/config/config.yaml \
-	-tls-cert=/etc/controller/tls/tls.crt \
-	-tls-key=/etc/controller/tls/tls.key \
-	-webhook-inject-path=/inject \
-	-webhook-health-path=/healthz
+		--listen :8443 \
+		--config /etc/controller/config.yaml \
+		--template /data/files/template.yaml.tpl \
+		--tls-cert-file /etc/controller/tls/tls.crt \
+		--tls-key-file /etc/controller/tls/tls.key \
+		--log-level trace \
+		--log-format text-color
 
 pod-test:
 	@$(POD_EXEC) go test cmd/*
@@ -72,6 +72,7 @@ clean-all:
 ###
 HELMARGS := --set "config.wallarm.api.token=$(WALLARM_API_TOKEN)" \
 			--set "config.wallarm.api.host=$(WALLARM_API_HOST)" \
+			--set "config.sidecar.image.fullname=$(SIDECAR_IMAGE)" \
 			--set "postanalytics.addnode.image.fullname=$(RUBY_IMAGE)" \
 			--set "postanalytics.exportenv.image.fullname=$(RUBY_IMAGE)" \
 			--set "postanalytics.cron.image.fullname=$(RUBY_IMAGE)" \
@@ -167,7 +168,8 @@ integration-test:
 
 # Used when `pod-run` was not executed after `init`
 integration-helm-upgrade:
-	@$(KUBE_CONFIG) helm upgrade --install wallarm-sidecar ./helm -f ./helm/values.test.yaml $(HELMARGS) --wait --debug
+	@$(KUBE_CONFIG) helm upgrade --install wallarm-sidecar ./helm -f ./helm/values.test.yaml $(HELMARGS) \
+		--set "controller.image.fullname=$(CONTROLLER_IMAGE)" --wait --debug
 	@$(KUBE_CONFIG) kubectl wait pods -n default -l app.kubernetes.io/component=controller --for condition=Ready --timeout=90s
 
 .PHONY: integration-*

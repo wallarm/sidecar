@@ -83,6 +83,9 @@ config:
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         timeout: 3h
 
+  ### Default Annotation prefix which is used in sidecar template to overwrite default values
+  annotationPrefix: sidecar.wallarm.io
+
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
   ### for each pod with pod annotations
   ###
@@ -147,14 +150,16 @@ config:
   ###
   sidecar:
     ### Image for all (init and regular) containers in sidecar schema
+    ###
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.0.3-1"
+      tag: "0.9.0"
       pullPolicy: IfNotPresent
 
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
+    ###
     securityContext:
       capabilities:
         drop:
@@ -248,6 +253,7 @@ config:
         #    memory: 128Mi
       iptables:
         ### Security context for `iptables` container
+        ###
         securityContext:
           capabilities:
             add:
@@ -823,7 +829,7 @@ postanalytics:
 controller:
   image:
     registry: docker.io
-    image: wallarm/wallarm-sidecar-controller
+    image: wallarm/sidecar-controller
     tag: "0.1.0"
     pullPolicy: IfNotPresent
 
@@ -980,13 +986,12 @@ controller:
   ### Container arguments. Not recommended to change this, helpful for local development
   ###
   args:
-    - -port=8443
-    - -sidecar-template=/etc/controller/config/sidecar-template.yaml
-    - -sidecar-config=/etc/controller/config/config.yaml
-    - -tls-cert=/etc/controller/tls/tls.crt
-    - -tls-key=/etc/controller/tls/tls.key
-    - -webhook-inject-path=/inject
-    - -webhook-health-path=/healthz
+    - --listen=:8443
+    - --template=/etc/controller/template.yaml.tpl
+    - --config=/etc/controller/config.yaml
+    - --tls-cert-file=/etc/controller/tls/tls.crt
+    - --tls-key-file=/etc/controller/tls/tls.key
+    - --log-level=info
 
   ### Additional environment variables to pass to the container
   ###
@@ -1135,140 +1140,3 @@ controller:
 
 extraLabels: {}
 extraAnnotations: {}
-
-##############################################################################################################################
-#sidecarDefaults:
-#  # -- Wallarm node configuration. Parameters in this section can be overwritten individually for each pod using its `metadata.annotations`
-#  # @default -- *See below for details*
-#  wallarm:
-#    # -- Wallarm mode: `monitoring, `block` or `off`
-#    mode: monitoring
-#    # -- Manages the ability to override the wallarm_mode values via filtering in the Cloud (custom ruleset): `on`, `off` or `strict`
-#    modeAllowOverride: "on"
-#    # -- Whether to analyze the application responses for attacks: `on` or `off`
-#    parseResponse: "on"
-#    # -- Whether to analyze WebSocket's messages for attacks: `on` or `off`
-#    parseWebsocket: "off"
-#    # -- Whether to decompress compressed data returned in the application response: `on` or `off`
-#    unpackResponse: "on"
-#    upstream:
-#      # -- Defines the number of immediate reconnects to the Tarantool or Wallarm API
-#      connectAttempts: 10
-#      # -- Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
-#      reconnectInterval: 15s
-#    cronJobs:
-#      exportEnvironment:
-#        schedule: "0 */1 * * *"
-#        timeout: 10m
-#      exportMetrics:
-#        schedule: "* * * * *"
-#        timeout: 3h
-#      syncIpLists:
-#        schedule: "* * * * *"
-#        timeout: 3h
-#      syncIpListsSource:
-#        schedule: "*/5 * * * *"
-#        timeout: 3h
-#  # -- Default parameters for Nginx configuration of sidecar proxy container. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-#  # @default -- *See below for details*
-#  nginx:
-#    # -- Port listening by application container. This port is used as application container port, if pod has no exposed ports for application container.
-#    proxyPassPort: 80
-#    # -- Port listening by sidecar proxy container. This port is reserved for using by Wallarm sidecar, can't be the same as nginx.proxyPassPort.
-#    listenPort: 26001
-#    # -- Port for Wallarm status, Nginx stats and health check endpoints
-#    statusPort: 10246
-#    # -- Path to Nginx status endpoint
-#    statusPath: /status
-#    # -- Path to Nginx health check endpoint
-#    healthPath: /health
-#    # -- Path to Wallarm status endpoint, status provides in JSON format
-#    wallarmStatusPath: /wallarm-status
-#    # -- Port for Wallarm metrics endpoint
-#    wallarmMetricsPort: 18080
-#    # -- Port to Wallarm metrics endpoint. Metrics provide in Prometheus format
-#    wallarmMetricsPath: /wallarm-metrics
-#  # Default sidecar deployment options. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-#  # @default -- *See below for details*
-#  deployment:
-#    # -- Sidecar deployment scheme: `single` or `split`
-#    scheme: single
-#    # -- Enable or disable `iptables` init container for port redirection: `true` or `false`
-#    iptablesEnable: true
-#  # Default configuration for sidecar containers. Parameters in this section can be overwritten individually for each pod using its `.metadata.annotations`
-#  # @default -- *See below for details*
-#  container:
-#    # -- Default configuration for proxy container
-#    # @default -- *See below for details*
-#    proxy:
-#      image:
-#        # -- Image for all containers in sidecar scheme
-#        image: "quay.io/dmitriev/sidecar-proxy:4.0.3-1"
-#        # -- Image pullPolicy
-#        pullPolicy: IfNotPresent
-#      # -- Enable httpGet liveness probe to path "sidecarDefaults.nginx.healthPath"
-#      livenessProbeEnable: true
-#      # -- Parameters for httpGet liveness probe configuration. Applicable if "sidecarDefaults.container.proxy.livenessProbeEnable: true"
-#      # @default -- *See below for details*
-#      livenessProbe:
-#        # -- Initial delay in seconds. Do not set initial delay below 60. It's time for bootstrapping sidecar and connecting to the cloud
-#        initialDelaySeconds: 60
-#        # -- Probe period in seconds
-#        periodSeconds: 10
-#        # -- Probe failure threshold
-#        failureThreshold: 3
-#        # -- Probe success threshold
-#        successThreshold: 1
-#        # -- Probe timeout in seconds
-#        timeoutSeconds: 1
-#      single:
-#        # -- Default resources for `proxy` container in `single` deployment scheme. Applicable only if `sidecarDefaults.deployment.scheme: single`
-#        resources: {}
-#        #  requests:
-#        #    cpu: 200m
-#        #    memory: 256Mi
-#        #  limits:
-#        #    cpu: 500m
-#        #    memory: 512Mi
-#      split:
-#        # -- Default resources for `proxy` container in `split` deployment scheme. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-#        resources: {}
-#        #  requests:
-#        #    cpu: 100m
-#        #    memory: 128Mi
-#        #  limits:
-#        #    cpu: 300m
-#        #    memory: 256Mi
-#    # -- Default configuration for helper container
-#    # @default -- *See below for details*
-#    helper:
-#      # -- Resources for `helper` container. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-#      resources: {}
-#      #  requests:
-#      #    cpu: 100m
-#      #    memory: 128Mi
-#      #  limits:
-#      #    cpu: 300m
-#      #    memory: 256Mi
-#    # -- Default configuration for init-containers
-#    # @default -- *See below for details*
-#    init:
-#      helper:
-#        # -- Resources for `init-helper` container. Applicable if `sidecarDefaults.deployment.scheme` is set to `split`
-#        resources: {}
-#        #  requests:
-#        #    cpu: 100m
-#        #    memory: 64Mi
-#        #  limits:
-#        #    cpu: 300m
-#        #    memory: 128Mi
-#      iptables:
-#        # -- Resources for `init-iptables` container. Applicable if `sidecarDefaults.deployment.iptablesEnable` is set to `true`
-#        resources: {}
-#        #  requests:
-#        #    cpu: 50m
-#        #    memory: 32Mi
-#        #  limits:
-#        #    cpu: 100m
-#        #    memory: 64Mi
-

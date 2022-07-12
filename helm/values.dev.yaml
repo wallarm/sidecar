@@ -1,5 +1,5 @@
 ### Check and fill "env.ini" or "example-env.ini" files for
-### proper configuration. This values everrided by `--set`
+### proper configuration. These values override by `--set`
 ### argument of helm
 ###
 config:
@@ -9,9 +9,6 @@ config:
       host: api.wallarm.com
       port: 443
   sidecar:
-    image:
-      image: dmitriev/sidecar-proxy
-      registry: quay.io
     containers:
       proxy:
         readinessProbeEnable: false

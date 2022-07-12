@@ -15,9 +15,8 @@ metadata:
     {{- end }}
 data:
   config.yaml: |-
-    global:
+    settings:
       {{- toYaml .Values.config | nindent 6 }}
       version: {{ .Chart.AppVersion }}
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
-{{ (.Files.Glob "files/sidecar-template.yaml").AsConfig | indent 2 }}

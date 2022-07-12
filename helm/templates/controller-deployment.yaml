@@ -110,8 +110,8 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /etc/controller/config
-              readOnly: true
+              mountPath: /etc/controller/config.yaml
+              subPath: config.yaml
             - name: tls
               mountPath: /etc/controller/tls
               readOnly: true
