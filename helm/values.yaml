@@ -150,14 +150,16 @@ config:
   ###
   sidecar:
     ### Image for all (init and regular) containers in sidecar schema
+    ###
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.0.3-1"
+      tag: "0.9.0"
       pullPolicy: IfNotPresent
 
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
+    ###
     securityContext:
       capabilities:
         drop:
@@ -251,6 +253,7 @@ config:
         #    memory: 128Mi
       iptables:
         ### Security context for `iptables` container
+        ###
         securityContext:
           capabilities:
             add:

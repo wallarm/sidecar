@@ -211,7 +211,9 @@ volumes:
   {{- if (isSet .ObjectMeta.Annotations "proxy-image") }}
 {{ index .ObjectMeta.Annotations (withAP "proxy-image") }}
   {{- else }}
-    {{- if (index .Config.sidecar.image "registry") }}
+    {{- if (index .Config.sidecar.image "fullname") }}
+{{- print .Config.sidecar.image.fullname }}
+    {{- else if (index .Config.sidecar.image "registry") }}
 {{- printf "%s/%s:%s" .Config.sidecar.image.registry .Config.sidecar.image.image .Config.sidecar.image.tag }}
     {{- else }}
 {{- printf "%s:%s" .Config.sidecar.image.image .Config.sidecar.image.tag }}

@@ -1,8 +1,5 @@
 config:
   sidecar:
-    image:
-      image: dmitriev/sidecar-proxy
-      registry: quay.io
     containers:
       proxy:
         readinessProbeEnable: false
