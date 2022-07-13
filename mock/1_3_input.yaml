@@ -1,5 +1,3 @@
-### Main functionality - single mode with iptables enabled (default)
-###
 Config:
   annotationPrefix: sidecar.wallarm.io
   injectionStrategy:
@@ -73,7 +71,7 @@ Config:
       caVerify: true
       host: audit.api.wallarm.com
       port: 443
-      token: TopSecret
+      token: topSecret
       useSSL: true
     cron:
       exportEnvironment:
@@ -102,31 +100,33 @@ Config:
       connectAttempts: 10
       reconnectInterval: 15s
 ObjectMeta:
-  generateName: dummy-app-846c6b987c-
+  generateName: dummy-app-6cff49485b-
   creationTimestamp: null
   labels:
     app: dummy-app
-    pod-template-hash: 846c6b987c
+    pod-template-hash: 6cff49485b
     wallarm-sidecar: enabled
   annotations:
+    sidecar.wallarm.io/sidecar-injection-schema: split
     sidecar.wallarm.io/wallarm-mode: block
   ownerReferences:
     - apiVersion: apps/v1
       kind: ReplicaSet
-      name: dummy-app-846c6b987c
-      uid: db57dbaf-1b51-47b6-bc40-c806df4ecd42
+      name: dummy-app-6cff49485b
+      uid: 1a7bfdf0-3040-4b9d-b644-6ca22107eaa7
       controller: true
       blockOwnerDeletion: true
   managedFields:
     - manager: kube-controller-manager
       operation: Update
       apiVersion: v1
-      time: "2022-07-12T06:32:53Z"
+      time: "2022-07-13T06:55:11Z"
       fieldsType: FieldsV1
       fieldsV1:
         f:metadata:
           f:annotations:
             .: {}
+            f:sidecar.wallarm.io/sidecar-injection-schema: {}
             f:sidecar.wallarm.io/wallarm-mode: {}
           f:generateName: {}
           f:labels:
@@ -136,7 +136,7 @@ ObjectMeta:
             f:wallarm-sidecar: {}
           f:ownerReferences:
             .: {}
-            k:{"uid":"db57dbaf-1b51-47b6-bc40-c806df4ecd42"}: {}
+            k:{"uid":"1a7bfdf0-3040-4b9d-b644-6ca22107eaa7"}: {}
         f:spec:
           f:containers:
             k:{"name":"application"}:
@@ -174,7 +174,7 @@ ObjectMeta:
           f:terminationGracePeriodSeconds: {}
 PodSpec:
   volumes:
-    - name: kube-api-access-prh6r
+    - name: kube-api-access-fc2d5
       projected:
         sources:
           - serviceAccountToken:
@@ -200,7 +200,7 @@ PodSpec:
           protocol: TCP
       resources: {}
       volumeMounts:
-        - name: kube-api-access-prh6r
+        - name: kube-api-access-fc2d5
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       readinessProbe:
@@ -208,7 +208,7 @@ PodSpec:
           path: /status/200
           port: http
           scheme: HTTP
-        initialDelaySeconds: 45
+        initialDelaySeconds: 30
         timeoutSeconds: 1
         periodSeconds: 10
         successThreshold: 1

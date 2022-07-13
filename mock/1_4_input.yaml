@@ -1,5 +1,3 @@
-### Main functionality - split mode with iptables disabled
-###
 Config:
   annotationPrefix: sidecar.wallarm.io
   injectionStrategy:
@@ -73,7 +71,7 @@ Config:
       caVerify: true
       host: audit.api.wallarm.com
       port: 443
-      token: TopSecret
+      token: topSecret
       useSSL: true
     cron:
       exportEnvironment:
@@ -102,11 +100,11 @@ Config:
       connectAttempts: 10
       reconnectInterval: 15s
 ObjectMeta:
-  generateName: dummy-app-86c5f84bd9-
+  generateName: dummy-app-5d74c96985-
   creationTimestamp: null
   labels:
     app: dummy-app
-    pod-template-hash: 86c5f84bd9
+    pod-template-hash: 5d74c96985
     wallarm-sidecar: enabled
   annotations:
     sidecar.wallarm.io/sidecar-injection-iptables-enable: "false"
@@ -115,15 +113,15 @@ ObjectMeta:
   ownerReferences:
     - apiVersion: apps/v1
       kind: ReplicaSet
-      name: dummy-app-86c5f84bd9
-      uid: ec2bef4e-4917-4af1-8fe9-16c545aaff3d
+      name: dummy-app-5d74c96985
+      uid: 1049e0b7-8fc5-434b-b370-f352f9bae589
       controller: true
       blockOwnerDeletion: true
   managedFields:
     - manager: kube-controller-manager
       operation: Update
       apiVersion: v1
-      time: "2022-07-12T14:32:00Z"
+      time: "2022-07-13T06:53:58Z"
       fieldsType: FieldsV1
       fieldsV1:
         f:metadata:
@@ -140,7 +138,7 @@ ObjectMeta:
             f:wallarm-sidecar: {}
           f:ownerReferences:
             .: {}
-            k:{"uid":"ec2bef4e-4917-4af1-8fe9-16c545aaff3d"}: {}
+            k:{"uid":"1049e0b7-8fc5-434b-b370-f352f9bae589"}: {}
         f:spec:
           f:containers:
             k:{"name":"application"}:
@@ -178,7 +176,7 @@ ObjectMeta:
           f:terminationGracePeriodSeconds: {}
 PodSpec:
   volumes:
-    - name: kube-api-access-stchq
+    - name: kube-api-access-jfv65
       projected:
         sources:
           - serviceAccountToken:
@@ -204,7 +202,7 @@ PodSpec:
           protocol: TCP
       resources: {}
       volumeMounts:
-        - name: kube-api-access-stchq
+        - name: kube-api-access-jfv65
           readOnly: true
           mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       readinessProbe:
@@ -212,7 +210,7 @@ PodSpec:
           path: /status/200
           port: http
           scheme: HTTP
-        initialDelaySeconds: 45
+        initialDelaySeconds: 30
         timeoutSeconds: 1
         periodSeconds: 10
         successThreshold: 1

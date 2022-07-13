@@ -4,67 +4,57 @@
     "path": "/spec/initContainers",
     "value": [
       {
-        "name": "sidecar-init-helper",
+        "name": "sidecar-init-iptables",
         "image": "wallarm/sidecar:0.9.0",
         "command": [
-          "/usr/local/run-addnode.sh"
+          "iptables"
+        ],
+        "args": [
+          "-t",
+          "nat",
+          "-A",
+          "PREROUTING",
+          "-p",
+          "tcp",
+          "-d",
+          "$(POD_IP)",
+          "--dport",
+          "$(APP_PORT)",
+          "-j",
+          "REDIRECT",
+          "--to-ports",
+          "$(NGINX_PORT)"
         ],
         "env": [
           {
-            "name": "WALLARM_API_HOST",
-            "value": "audit.api.wallarm.com"
+            "name": "POD_IP",
+            "valueFrom": {
+              "fieldRef": {
+                "fieldPath": "status.podIP"
+              }
+            }
           },
           {
-            "name": "WALLARM_API_PORT",
-            "value": "443"
+            "name": "APP_PORT",
+            "value": "80"
           },
           {
-            "name": "WALLARM_API_TOKEN",
-            "value": "TopSecret"
-          },
-          {
-            "name": "WALLARM_API_USE_SSL",
-            "value": "true"
-          },
-          {
-            "name": "WALLARM_API_CA_VERIFY",
-            "value": "true"
-          },
-          {
-            "name": "WALLARM_SYNCNODE_OWNER",
-            "value": "www-data"
-          },
-          {
-            "name": "WALLARM_SYNCNODE_GROUP",
-            "value": "www-data"
-          },
-          {
-            "name": "WALLARM_INGRESS_CONTROLLER_VERSION",
-            "value": "4.0.3"
+            "name": "NGINX_PORT",
+            "value": "26001"
           }
         ],
         "resources": {},
-        "volumeMounts": [
-          {
-            "name": "wallarm",
-            "mountPath": "/etc/wallarm"
-          },
-          {
-            "name": "wallarm-acl",
-            "mountPath": "/var/lib/wallarm-acl"
-          }
-        ],
         "imagePullPolicy": "IfNotPresent",
         "securityContext": {
           "capabilities": {
             "add": [
-              "NET_BIND_SERVICE"
+              "NET_ADMIN"
             ],
             "drop": [
               "ALL"
             ]
           },
-          "runAsUser": 101
+          "privileged": true
         }
       }
     ]
@@ -73,12 +63,22 @@
     "op": "add",
     "path": "/spec/containers/-",
     "value": {
-      "name": "sidecar-helper",
+      "name": "sidecar-proxy",
       "image": "wallarm/sidecar:0.9.0",
       "command": [
-        "supervisord",
-        "-c",
-        "/etc/supervisor/supervisord.helper.conf"
+        "/usr/local/run-node.sh"
+      ],
+      "ports": [
+        {
+          "name": "status",
+          "containerPort": 10246,
+          "protocol": "TCP"
+        },
+        {
+          "name": "metrics",
+          "containerPort": 18080,
+          "protocol": "TCP"
+        }
       ],
       "env": [
         {
@@ -91,7 +91,7 @@
         },
         {
           "name": "WALLARM_API_TOKEN",
-          "value": "TopSecret"
+          "value": "topSecret"
         },
         {
           "name": "WALLARM_API_USE_SSL",
@@ -150,70 +150,9 @@
           "value": "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         },
         {
-          "name": "WALLARM_SYNCNODE_OWNER",
-          "value": "www-data"
-        },
-        {
-          "name": "WALLARM_SYNCNODE_GROUP",
-          "value": "www-data"
-        },
-        {
           "name": "WALLARM_INGRESS_CONTROLLER_VERSION",
           "value": "4.0.3"
-        }
-      ],
-      "resources": {},
-      "volumeMounts": [
-        {
-          "name": "wallarm",
-          "mountPath": "/etc/wallarm"
         },
-        {
-          "name": "wallarm-acl",
-          "mountPath": "/var/lib/wallarm-acl"
-        }
-      ],
-      "imagePullPolicy": "IfNotPresent",
-      "securityContext": {
-        "capabilities": {
-          "add": [
-            "NET_BIND_SERVICE"
-          ],
-          "drop": [
-            "ALL"
-          ]
-        },
-        "runAsUser": 101
-      }
-    }
-  },
-  {
-    "op": "add",
-    "path": "/spec/containers/-",
-    "value": {
-      "name": "sidecar-proxy",
-      "image": "wallarm/sidecar:0.9.0",
-      "command": [
-        "/usr/local/run-node.sh"
-      ],
-      "ports": [
-        {
-          "name": "status",
-          "containerPort": 10246,
-          "protocol": "TCP"
-        },
-        {
-          "name": "metrics",
-          "containerPort": 18080,
-          "protocol": "TCP"
-        },
-        {
-          "name": "proxy",
-          "containerPort": 26001,
-          "protocol": "TCP"
-        }
-      ],
-      "env": [
         {
           "name": "WALLARM_MODE",
           "value": "block"

@@ -9,7 +9,7 @@ initContainers:
       - name: WALLARM_API_PORT
         value: "443"
       - name: WALLARM_API_TOKEN
-        value: "TopSecret"
+        value: "topSecret"
       - name: WALLARM_API_USE_SSL
         value: "true"
       - name: WALLARM_API_CA_VERIFY
@@ -45,7 +45,7 @@ containers:
       - name: WALLARM_API_PORT
         value: "443"
       - name: WALLARM_API_TOKEN
-        value: "TopSecret"
+        value: "topSecret"
       - name: WALLARM_API_USE_SSL
         value: "true"
       - name: WALLARM_API_CA_VERIFY
@@ -97,7 +97,7 @@ containers:
   - name: sidecar-proxy
     image: wallarm/sidecar:0.9.0
     imagePullPolicy: IfNotPresent
-    command: ["/usr/local/run-node.sh"]
+    command: ["/usr/local/run-nginx.sh"]
     env:
       - name: WALLARM_MODE
         value: "block"

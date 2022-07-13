@@ -10,7 +10,7 @@ containers:
       - name: WALLARM_API_PORT
         value: "443"
       - name: WALLARM_API_TOKEN
-        value: "TopSecret"
+        value: "topSecret"
       - name: WALLARM_API_USE_SSL
         value: "true"
       - name: WALLARM_API_CA_VERIFY
