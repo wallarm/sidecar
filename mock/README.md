@@ -6,9 +6,9 @@ Check that functionality of the following settings are working properly:
 - `config.injectionStrategy.schema`
 - `config.injectionStrategy.iptablesEnable`
 
-#### 1.1. Single mode with iptables enabled +
-#### 1.2. Single mode with iptables disabled +
-#### 1.3. Split mode with iptables enabled +
+#### 1.1. Single mode with iptables enabled
+#### 1.2. Single mode with iptables disabled
+#### 1.3. Split mode with iptables enabled
 #### 1.4. Split mode with iptables disabled
 
 ### 2. Application port detection
