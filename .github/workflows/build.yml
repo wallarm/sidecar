@@ -1,75 +1,50 @@
-name: Main
+name: Build
 
 on:
   push:
-    branches:
-      - '**'
     tags:
       - '**'
 
   workflow_dispatch:
 
+env:
+  IMAGE: quay.io/dmitriev/sidecar-injector
+  TAG: test
 
 jobs:
-  lint:
-    name: Helm lint
+  build:
+    name: Docker build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Helm lint
+      - name: Build
         run: |
-          helm version
-          helm lint helm/. --debug
+          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
+          mkdir artifacts
+          docker save ${IMAGE}:${GITHUB_SHA} > artifacts/docker-image.tar
 
-  validate:
-    name: Validate manifests
-    env:
-      KUBEVAL_SCHEMA_LOCATION: 'https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/'
-    needs: lint
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # 1.19-1.24
-        kubeVersion:
-          - 1.19.16
-          - 1.20.15
-          - 1.21.14
-          - 1.22.11
-          - 1.23.8
-          - 1.24.2
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Helm template
-        run: helm template helm/. > result-${{ matrix.kubeVersion }}.yaml --kube-version ${{ matrix.kubeVersion }} --debug
-
-      - name: Kubeval
-        uses: instrumenta/kubeval-action@master
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: result-${{ matrix.kubeVersion }}.yaml
-          version: ${{ matrix.kubeVersion }}
-          ignore_missing_schemas: false
+          name: docker-artifact
+          path: artifacts/docker-image.tar
+          retention-days: 1
 
   test:
-    name: Integration test
-    needs: validate
+    name: Test
+    needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # 1.19-1.24
-        kubeVersion:
-          - 1.19.16
-          - 1.20.15
-          - 1.21.12
-          - 1.22.9
-          - 1.23.6
-          - 1.24.1
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Restore artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+          path: artifacts/docker-image.tar
 
       - name: Create cluster
         uses: helm/kind-action@v1.3.0
@@ -77,7 +52,7 @@ jobs:
           verbosity: "0"
           wait: "240s"
           config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v${{ matrix.kubeVersion }}
+          node_image: kindest/node:v1.24.1
           cluster_name: kind
 
       - name: Wait cluster
@@ -87,6 +62,9 @@ jobs:
           echo "current-context:" $(kubectl config current-context)
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
+      - name: Load image
+        run: kind load image-archive artifacts/docker-image.tar
+
       - name: Install Helm chart
         run: |
           set -x
@@ -94,6 +72,7 @@ jobs:
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
           --set config.wallarm.api.host=audit.api.wallarm.com \
           --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+          --set controller.image.fullname=${IMAGE}:${GITHUB_SHA} \
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
