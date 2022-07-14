@@ -64,7 +64,10 @@ jobs:
           echo "environment-kubeconfig:" ${KUBECONFIG}
 
       - name: Load image
-        run: kind load image-archive artifacts/docker-image.tar
+        run: |
+          ls -la artifacts
+          cat artifacts/docker-image.tar
+          kind load image-archive artifacts/docker-image.tar
 
       - name: Install Helm chart
         run: |
