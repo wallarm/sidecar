@@ -3,7 +3,9 @@
 include env.ini
 
 DOCKERFILE       := ./Dockerfile
-CONTROLLER_IMAGE := wallarm/sidecar-controller:0.1.0
+TAG   	 		 ?= 0.1.0
+IMAGE 	  		 ?= wallarm/sidecar-controller
+CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
 ### For embedding into the chart
 ###
