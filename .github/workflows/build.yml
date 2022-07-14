@@ -8,8 +8,8 @@ on:
   workflow_dispatch:
 
 env:
-  # IMAGE and TAG here are used just for testing
   IMAGE: quay.io/dmitriev/sidecar-injector
+  # TAG here is used just for testing
   TAG: test
 
 jobs:
@@ -66,7 +66,6 @@ jobs:
       - name: Load image
         run: |
           ls -la artifacts
-          cat artifacts/docker-image.tar
           kind load image-archive artifacts/docker-image.tar
 
       - name: Install Helm chart
@@ -83,6 +82,7 @@ jobs:
           --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
           kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
+          kubectl -n wallarm-sidecar describe po -l app.kubernetes.io/component=controller
 
       - name: Run test
         run: |
