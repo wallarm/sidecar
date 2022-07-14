@@ -45,7 +45,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: docker-artifact
-          path: artifacts/docker-image.tar
+          path: artifacts
 
       - name: Create cluster
         uses: helm/kind-action@v1.3.0
