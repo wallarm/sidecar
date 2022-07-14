@@ -6,6 +6,9 @@ Wallarm filtering node can be installed as a sidecar container to the same pod a
 
 TODO
 
+## Usage
+Please refer Helm chart documentation [here](helm/README.md)
+
 ## Contribution
 
 Any contribution very welcome! So, you need to do it by the dollowing contribution guide.
