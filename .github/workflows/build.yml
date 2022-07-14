@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 env:
+  # IMAGE and TAG here are used just for testing
   IMAGE: quay.io/dmitriev/sidecar-injector
   TAG: test
 
