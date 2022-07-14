@@ -14,7 +14,7 @@ This repo is based on Makefile that handles all development routines. So this me
 
 - Bootstrap a new Kubernetes cluster with defined version, as same as remove this one (`make init` and `make clean`)
 - Develop your code local and immediately run it the cluster, as same as run tests in the pod or just shell (`make pod-run`, `make pod-test` and `make pod-sh`)
-- Run integration testing in this local deployment (TODO)
+- Run integration testing in this local deployment (`make integration-test`)
 - Run install, upgrade, diff, template and remove of the helm chart (`make helm-*`)
 
 ## License
