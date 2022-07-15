@@ -110,7 +110,7 @@ config:
   nginx:
     ### Fallback listening port of application. This port will be used as a fallback of application port
     ### detection. Sidecar controller will try to detect application port in the following sequence:
-    ###   1. Application port number is defined in pod annotation "sidecar.wallarm.io/nginx-application-port"
+    ###   1. Application port number is defined in pod annotation "sidecar.wallarm.io/application-port"
     ###   2. The first available container port which name is "http"
     ###   3. The first available container port
     ###   4. This value (in case of no one container port defined)
