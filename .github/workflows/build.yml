@@ -8,9 +8,8 @@ on:
   workflow_dispatch:
 
 env:
+  # Should be updated with proper IMAGE name after testing
   IMAGE: quay.io/dmitriev/sidecar-injector
-  # TAG here is used just for testing. GITHUB_REF_NAME will be used
-  TAG: test
 
 jobs:
   build:
@@ -65,7 +64,6 @@ jobs:
 
       - name: Load image
         run: |
-          ls -la artifacts
           kind load image-archive artifacts/docker-image.tar
 
       - name: Install Helm chart
@@ -95,7 +93,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     steps:
-      - name: Docker login
+      - name: Docker login # Should be updated with proper settings after the test
         uses: docker/login-action@v2
         with:
           registry: quay.io
