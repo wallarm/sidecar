@@ -3,17 +3,17 @@ name: Build
 on:
   push:
     tags:
-      - '**'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
   workflow_dispatch:
 
 env:
+  # Should be updated with proper IMAGE name after testing
   IMAGE: quay.io/dmitriev/sidecar-injector
-  TAG: test
 
 jobs:
   build:
-    name: Docker build
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,7 +23,7 @@ jobs:
         run: |
           make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
           mkdir artifacts
-          docker save ${IMAGE}:${GITHUB_SHA} > artifacts/docker-image.tar
+          docker save -o artifacts/docker-image.tar ${IMAGE}:${GITHUB_SHA}
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
@@ -44,7 +44,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: docker-artifact
-          path: artifacts/docker-image.tar
+          path: artifacts
 
       - name: Create cluster
         uses: helm/kind-action@v1.3.0
@@ -79,9 +79,36 @@ jobs:
           --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
           kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
+          kubectl -n wallarm-sidecar describe po -l app.kubernetes.io/component=controller
 
       - name: Run test
         run: |
           python -m pip install --upgrade pip
           pip install pytest
           pytest helm/test/integration_test.py
+
+  push:
+    name: Push
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Docker login # Should be updated with proper settings after the test
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - name: Restore artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+          path: artifacts
+
+      - name: Load image
+        run: docker load -q -i artifacts/docker-image.tar
+
+      - name: Tag and push
+        run: |
+          docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:${GITHUB_REF_NAME}
+          docker push ${IMAGE}:${GITHUB_REF_NAME}

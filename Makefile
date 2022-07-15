@@ -1,6 +1,6 @@
 # https://makefiletutorial.com/
 
-include env.ini
+-include env.ini
 
 DOCKERFILE       := ./Dockerfile
 TAG   	 		 ?= 0.1.0
