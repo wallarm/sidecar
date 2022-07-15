@@ -3,13 +3,13 @@ name: Build
 on:
   push:
     tags:
-      - '**'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
   workflow_dispatch:
 
 env:
   IMAGE: quay.io/dmitriev/sidecar-injector
-  # TAG here is used just for testing
+  # TAG here is used just for testing. GITHUB_REF_NAME will be used
   TAG: test
 
 jobs:
@@ -113,5 +113,5 @@ jobs:
 
       - name: Tag and push
         run: |
-          docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:${TAG}
-          docker push ${IMAGE}:${TAG}
+          docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:${GITHUB_REF_NAME}
+          docker push ${IMAGE}:${GITHUB_REF_NAME}
