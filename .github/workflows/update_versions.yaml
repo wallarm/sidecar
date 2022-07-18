@@ -65,7 +65,7 @@ jobs:
 
       - name: Get latest Chart version
         id: get_version
-        run: echo "::set-output name=version::$(yq -r '.version' helm/Chart.yaml)
+        run: echo "::set-output name=version::$(yq -r '.version' helm/Chart.yaml)"
 
       - name: Increment Chart version
         id: bump_version
