@@ -92,11 +92,11 @@ jobs:
 
       - name: Update sidecar version
         if: ${{ inputs.sidecar_update }}
-        run: yq e -i '.config.sidecar.image.tag = "${{ inputs.sidecar_tag }}"'
+        run: yq e -i '.config.sidecar.image.tag = "${{ inputs.sidecar_tag }}"' helm/Chart.yaml
 
       - name: Update controller version
         if: ${{ inputs.controller_update }}
-        run: yq e -i '.config.sidecar.image.tag = "${{ inputs.controller_tag }}"'
+        run: yq e -i '.config.sidecar.image.tag = "${{ inputs.controller_tag }}"' helm/Chart.yaml
 
       - name: Create and merge PR
         env:
