@@ -2,6 +2,10 @@ apiVersion: v2
 name: wallarm-sidecar
 description: Wallarm sidecar controller Helm chart for Kubernetes
 type: application
-version: 0.1.0
+version: 0.1.1
 appVersion: "4.0.3"
 engine: gotpl
+config:
+  sidecar:
+    image:
+      tag: 0.8.0
