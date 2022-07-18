@@ -28,7 +28,7 @@ on:
         default: false
       sidecar_tag:
         description: Tag for sidecar image
-        type: boolean
+        type: string
         required: false
 
   workflow_call:
