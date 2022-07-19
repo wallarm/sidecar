@@ -1,0 +1,12 @@
+ci:
+- '.github/**/*'
+
+controller:
+- 'cmd/*'
+
+documentation:
+- 'README.md'
+- 'helm/README.md'
+
+helm:
+- any: ['helm/**/*', '!helm/Chart.yaml', '!helm/test/**/*', '!helm/README.md']
