@@ -1,6 +1,5 @@
 nameOverride: ""
 fullnameOverride: ""
-
 ###
 ### Global config options
 ###
@@ -25,46 +24,37 @@ config:
       ### Verify CA during connecting to Wallarm API service: `true` or `false`
       ###
       caVerify: true
-
     ### Fallback mode. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.
     ###
     fallback: "on"
-
     ### Wallarm mode: `monitoring, `block` or `off`. See details in here:
     ###   https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_mode
     ###
     mode: monitoring
-
     ### Manages the ability to override the wallarm_mode values via filtering in
     ### the Cloud (custom ruleset): `on`, `off` or `strict`
     ###
     modeAllowOverride: "on"
-
     ### Whether to analyze the application responses for attacks: `on` or `off`
     ###
     parseResponse: "on"
-
     ### Whether to analyze WebSocket's messages for attacks: `on` or `off`
     ###
     parseWebsocket: "off"
-
     ### Whether to decompress compressed data returned in the application response: `on` or `off`
     ###
     unpackResponse: "on"
-
     ### Post-analytics node endpoint configuration
     ###
     upstream:
       ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
       ###
       connectAttempts: 10
-
       ### Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
       ###
       reconnectInterval: 15s
-
     cron:
       exportEnvironment:
         schedule: "0 */1 * * *"
@@ -82,10 +72,8 @@ config:
         schedule: "*/5 * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         timeout: 3h
-
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
-
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
   ### for each pod with pod annotations
   ###
@@ -98,12 +86,10 @@ config:
     ### and helper containers. This can be helpful for highly loaded applications.
     ###
     schema: single
-
     ### Enables or disables `iptables` init container for automatic port redirection: `true` or `false`.
     ### Disable it only in case of problems with other sidecars that change iptables rulesets.
     ###
     iptablesEnable: true
-
   ### Default parameters for Nginx configuration of sidecar proxy container. Parameters in this section
   ### can be overwritten individually for each pod with pod annotations
   ###
@@ -116,36 +102,28 @@ config:
     ###   4. This value (in case of no one container port defined)
     ###
     applicationPort: 80
-
     ### Listening port for sidecar proxy container. This port is reserved for using by Wallarm sidecar
     ### and cannot be the same as nginx.applicationPort
     ###
     listenPort: 26001
-
     ### Port for Wallarm status, Nginx stats and health check endpoints
     ###
     statusPort: 10246
-
     ### Path to Nginx status endpoint (status stub)
     ###
     statusPath: /status
-
     ### Path to Nginx health check endpoint
     ###
     healthPath: /health
-
     ### Port for Wallarm status and metrics endpoints
     ###
     wallarmMetricsPort: 18080
-
     ### Path to Wallarm status endpoint (json format)
     ###
     wallarmStatusPath: /wallarm-status
-
     ### Port to Wallarm metrics endpoint (prometheus format)
     ###
     wallarmMetricsPath: /wallarm-metrics
-
   ### Default configuration for sidecar init and regular containers
   ###
   sidecar:
@@ -156,7 +134,6 @@ config:
       image: wallarm/sidecar
       tag: "0.9.0"
       pullPolicy: IfNotPresent
-
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
     ###
@@ -167,7 +144,6 @@ config:
         add:
           - NET_BIND_SERVICE
       runAsUser: 101
-
     ### Default configuration for sidecar container(s). Many of these parameters in this section can be
     ### overwritten individually for each pod with pod annotations.
     ###
@@ -179,7 +155,6 @@ config:
         ### Enable liveness probe for the container: `true` or `false`
         ###
         livenessProbeEnable: true
-
         ### Liveness probe configuration for the container
         ###
         livenessProbe:
@@ -192,11 +167,9 @@ config:
           periodSeconds: 10
           failureThreshold: 3
           successThreshold: 1
-
         ### Enable readiness probe for the container: `true` or `false`
         ###
         readinessProbeEnable: true
-
         ### Readiness probe configuration for the container
         ###
         readinessProbe:
@@ -209,7 +182,6 @@ config:
           periodSeconds: 10
           failureThreshold: 3
           successThreshold: 1
-
         ### The number of resources required for the container
         ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         ###
@@ -220,7 +192,6 @@ config:
         #  limits:
         #    cpu: 500m
         #    memory: 512Mi
-
       ### Helper container. Used only in `split` schema. Does everything except traffic handling
       ### for `split` schema
       ###
@@ -235,7 +206,6 @@ config:
         #  limits:
         #    cpu: 300m
         #    memory: 256Mi
-
     ### Default configuration for sidecar init container(s). Many of these parameters in this section can be
     ### overwritten individually for each pod with pod annotations.
     ###
@@ -257,11 +227,10 @@ config:
         securityContext:
           capabilities:
             add:
-            - NET_ADMIN
+              - NET_ADMIN
             drop:
-            - ALL
+              - ALL
           privileged: true
-
         ### The number of resources required for the container
         ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         ###
@@ -272,7 +241,6 @@ config:
         #  limits:
         #    cpu: 100m
         #    memory: 64Mi
-
 ###
 ### Global settings
 ###
@@ -281,7 +249,7 @@ config:
 ### https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
 ###
 imagePullSecrets: []
-  # - name: secretName
+# - name: secretName
 
 ### Configuration for post-analytics module
 ###
@@ -290,13 +258,11 @@ postanalytics:
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
   replicaCount: 1
-
   ### Settings for automated rolling updates
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
   updateStrategy:
     type: Recreate
-
   ### Labels to add to the pods
   ###
   podLabels: {}
@@ -346,16 +312,13 @@ postanalytics:
   ### https://kubernetes.io/docs/user-guide/node-selection/
   ###
   nodeSelector: {}
-
   ### Grace period for the pods termination in seconds
   ###
   terminationGracePeriodSeconds: 30
-
   ### PriorityClass name to apply to the pods, Indicates the importance of the pod relative to other ones
   ### https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
   ###
   priorityClassName: ""
-
   ### Additional containers for this pods
   ###
   extraContainers: []
@@ -390,7 +353,6 @@ postanalytics:
       image: wallarm/ingress-ruby
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -406,13 +368,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -427,24 +387,20 @@ postanalytics:
     ### Liveness probe for the container. Disabled by default
     ###
     livenessProbe: {}
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   exportenv:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -460,13 +416,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -481,17 +435,14 @@ postanalytics:
     ### Liveness probe for the container. Disabled by default
     ###
     livenessProbe: {}
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   cron:
     config:
       ### Cron jobs configuration
@@ -516,13 +467,11 @@ postanalytics:
         schedule: "* * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-markers -l STDOUT"
         timeout: 1h
-
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -538,13 +487,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -559,30 +506,25 @@ postanalytics:
     ### Liveness probe for the container. Disabled by default
     ###
     livenessProbe: {}
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   tarantool:
     config:
       ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
       arena: "0.5"
-
     image:
       registry: docker.io
       image: wallarm/ingress-tarantool
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -598,13 +540,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -627,24 +567,20 @@ postanalytics:
       periodSeconds: 10
       failureThreshold: 3
       successThreshold: 1
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   heartbeat:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -660,13 +596,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -681,24 +615,20 @@ postanalytics:
     ### Liveness probe for the container. Disabled by default
     ###
     livenessProbe: {}
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   appstructure:
     image:
       registry: docker.io
       image: wallarm/ingress-python
       tag: "4.0.3-1"
       pullPolicy: IfNotPresent
-
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -714,13 +644,11 @@ postanalytics:
     ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
     ###
     lifecycle: {}
-
     ### Privilegues and access controls for the container
     ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
     ###
     securityContext: {}
-
     ### The number of resources required for the container
     ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ###
@@ -735,17 +663,14 @@ postanalytics:
     ### Liveness probe for the container. Disabled by default
     ###
     livenessProbe: {}
-
     ### Readiness probe for the container. Disabled by default
     ###
     readinessProbe: {}
-
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-
   ###
   ### Other postanalytics' objects
   ###
@@ -755,20 +680,16 @@ postanalytics:
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#service-v1-core
     ###
     type: ClusterIP
-
     ## Service port
     ##
     port: 3313
-
     ## Service node port (if the service type is "NodePort" or "LoadBalancer")
     ##
     nodePort: 0
-
     ## Load balancer IP address
     ## https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
     ##
     loadBalancerIP: ""
-
     ## Load balancer source ranges. Helpful for EKS/GKE/AKE
     ## https://kubernetes.io/docs/concepts/services-networking/service/#aws-nlb-support
     ##
@@ -781,49 +702,39 @@ postanalytics:
     ## https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
     ##
     externalTrafficPolicy: ""
-
     ## Annotations for this Service
     ##
     annotations: {}
-
     ## IP address of this Service cluster
     ##
     clusterIP: ""
-
     ## ExternalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic
     ## for this service. These IPs are not managed by Kubernetes.
     ##
     externalIPs: []
-
   ## Pod Disturion Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   podDisruptionBudget:
     enabled: true
-
     ### Select only one of these:
     ###
     maxUnavailable: 1
     # minAvailable: 1
-
   ## Service Account for this Pod
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
   serviceAccount:
     create: true
-
     ## Name of the ServiceAccount. If creating not required then
     ## this name must be name of existing ServiceAccount object
     ##
     name: ""
-
     ## Annotations for the created Service Account
     ##
     annotations: {}
-
   extraLabels: {}
   extraAnnotations: {}
-
 ### Configuration for controller module
 ###
 controller:
@@ -832,7 +743,6 @@ controller:
     image: wallarm/sidecar-controller
     tag: "0.1.0"
     pullPolicy: IfNotPresent
-
   # -- Admission webhook configuration
   # @default -- *See below for details*
   admissionWebhook:
@@ -840,53 +750,43 @@ controller:
     # -- Allowed values are `Ignore` or `Fail`
     ###
     failurePolicy: Fail
-
     ### Cluster DNS name for resources discovery. Will be used only for creating/signing certificates
     ### required for running admission webhook controller. For many Kubernetes clusters this is
     ### "cluster.local" and you need not to change this for common cases.
     ###
     clusterDomainName: cluster.local
-
     ### Specifies the timeout for this webhook. After the timeout passes, the webhook call will be
     ### ignored or the API call will fail based on the failure policy
     ###
     timeoutSeconds: 10
-
     ### Decides whether to run the webhook based on if the object has matching labels. Set to null
     ### for clear default value and listen events for all pods
     ###
     objectSelector:
       matchLabels:
         wallarm-sidecar: enabled
-
     ### Mutation admission webhook controller TLS secrets. Required for running admission magic.
     ###
     secret:
       create: true
-
       ### You are welcome to use existing certificates with "ca.crt", "tls.crt" and "tls.key"
       ### keys. Required if `create` is false.
       ###
       existingSecretName: ""
-
       ### Extra labels for secret to create. Doesn't make sense if using existing
       ### certificates
       ###
       labels: {}
-
       ### Extra annotations for secret to create. Doesn't make sense if using existing
       ### certificates
       ###
       annotations: {}
-
     extraLabels: {}
     extraAnnotations: {}
-
   ### Number of deployment replicas. It is recommended to use more that one pods
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
   replicaCount: 2
-
   ### Settings for automated rolling updates
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
@@ -894,7 +794,6 @@ controller:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 1
-
   ### Labels to add to the pods
   ###
   podLabels: {}
@@ -944,16 +843,13 @@ controller:
   ### https://kubernetes.io/docs/user-guide/node-selection/
   ###
   nodeSelector: {}
-
   ### Grace period for the pods termination in seconds
   ###
   terminationGracePeriodSeconds: 30
-
   ### PriorityClass name to apply to the pods, Indicates the importance of the pod relative to other ones
   ### https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
   ###
   priorityClassName: ""
-
   ### Additional containers for this pods
   ###
   extraContainers: []
@@ -982,7 +878,6 @@ controller:
   ### Container command (entrypoint). Not recommended to change this, helpful for local development
   ###
   command: []
-
   ### Container arguments. Not recommended to change this, helpful for local development
   ###
   args:
@@ -992,7 +887,6 @@ controller:
     - --tls-cert-file=/etc/controller/tls/tls.crt
     - --tls-key-file=/etc/controller/tls/tls.key
     - --log-level=info
-
   ### Additional environment variables to pass to the container
   ###
   extraEnvs: []
@@ -1008,13 +902,11 @@ controller:
   ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
   ###
   lifecycle: {}
-
   ### Privilegues and access controls for the container
   ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
   ###
   securityContext: {}
-
   ### The number of resources required for the container
   ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
   ###
@@ -1039,7 +931,6 @@ controller:
     timeoutSeconds: 1
     successThreshold: 1
     failureThreshold: 5
-
   ### Readiness probe. Not recommended to change it, but you still can override
   ### default values for this
   ###
@@ -1053,7 +944,6 @@ controller:
     timeoutSeconds: 1
     successThreshold: 1
     failureThreshold: 5
-
   ## Additional volumes that should be mounted to the container
   ##
   extraVolumeMounts: []
@@ -1069,20 +959,16 @@ controller:
     ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#service-v1-core
     ###
     type: ClusterIP
-
     ## Service port
     ##
     port: 443
-
     ## Service node port (if the service type is "NodePort" or "LoadBalancer")
     ##
     nodePort: 0
-
     ## Load balancer IP address
     ## https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
     ##
     loadBalancerIP: ""
-
     ## Load balancer source ranges. Helpful for EKS/GKE/AKE
     ## https://kubernetes.io/docs/concepts/services-networking/service/#aws-nlb-support
     ##
@@ -1095,48 +981,38 @@ controller:
     ## https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
     ##
     externalTrafficPolicy: ""
-
     ## Annotations for this Service
     ##
     annotations: {}
-
     ## IP address of this Service cluster
     ##
     clusterIP: ""
-
     ## ExternalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic
     ## for this service. These IPs are not managed by Kubernetes.
     ##
     externalIPs: []
-
   ## Pod Disturion Budget settings
   ## https://kubernetes.io/docs/tasks/run-application/configure-pdb/
   ##
   podDisruptionBudget:
     enabled: true
-
     ### Select only one of these:
     ###
     maxUnavailable: 1
     # minAvailable: 1
-
   ## Service Account for this Pod
   ## https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
   serviceAccount:
     create: true
-
     ## Name of the ServiceAccount. If creating not required then
     ## this name must be name of existing ServiceAccount object
     ##
     name: ""
-
     ## Annotations for the created Service Account
     ##
     annotations: {}
-
   extraLabels: {}
   extraAnnotations: {}
-
 extraLabels: {}
 extraAnnotations: {}
