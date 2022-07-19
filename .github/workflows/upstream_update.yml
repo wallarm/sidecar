@@ -36,6 +36,7 @@ jobs:
             HELM_ARGS+=" --set config.sidecar.image.tag=${SIDECAR_TAG}"
             echo "HELM_ARGS: ${HELM_ARGS}"
           fi
+          echo "HELM_ARGS=${HELM_ARGS}" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -65,6 +66,7 @@ jobs:
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
           --set config.wallarm.api.host=audit.api.wallarm.com \
           --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+          ${HELM_ARGS} \
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
