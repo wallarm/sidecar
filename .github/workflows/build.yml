@@ -110,3 +110,13 @@ jobs:
         run: |
           docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:${GITHUB_REF_NAME}
           docker push ${IMAGE}:${GITHUB_REF_NAME}
+
+  update_versions:
+    name: Update versions
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/update_versions.yaml
+        with:
+          controller_update: true
+          controller_tag: ${GITHUB_REF_NAME}

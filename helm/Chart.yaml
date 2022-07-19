@@ -5,7 +5,3 @@ type: application
 version: 0.1.4
 appVersion: "4.0.3"
 engine: gotpl
-config:
-  sidecar:
-    image:
-      tag: 0.8.0
