@@ -61,10 +61,7 @@ jobs:
           ref: 'main'
 
       - name: Checkout a new branch
-        run: |
-          git pull origin
-          git checkout main
-          git checkout -b update_versions
+        run: git checkout -b update_versions
 
       - name: Get latest Chart version
         id: get_version
