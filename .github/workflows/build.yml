@@ -1,4 +1,4 @@
-name: Build
+name: Build new version
 
 on:
   push:
@@ -117,4 +117,4 @@ jobs:
     uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
     with:
       controller_update: true
-      controller_tag: ${GITHUB_REF_NAME}
+      controller_tag: ${{ github.ref_name}}
