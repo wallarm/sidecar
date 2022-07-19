@@ -96,7 +96,7 @@ jobs:
 
       - name: Update controller version
         if: ${{ inputs.controller_update }}
-        run: yq e -i '.config.sidecar.image.tag = "${{ inputs.controller_tag }}"' helm/values.yaml
+        run: yq e -i '.controller.image.tag = "${{ inputs.controller_tag }}"' helm/values.yaml
 
       - name: Create and merge PR
         env:
