@@ -18,7 +18,7 @@ on:
         required: true
         default: false
       upstream_tag:
-        description: Tag for upstream
+        description: Tag for upstream images
         type: string
         required: false
       sidecar_update:
@@ -82,7 +82,8 @@ jobs:
       - name: Update upstream version
         if: ${{ inputs.upstream_update }}
         run: |
-          yq e -i '.appVersion = "${{ inputs.upstream_tag }}"' helm/Chart.yaml
+          APP_VERSION=$(echo ${{ inputs.upstream_tag }} | cut -d "-" -f 1) 
+          yq e -i '.appVersion = "${APP_VERSION}"' helm/Chart.yaml
           yq e -i '.postanalytics.addnode.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.exportenv.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.cron.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
