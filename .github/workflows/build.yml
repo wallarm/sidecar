@@ -114,9 +114,7 @@ jobs:
   update_versions:
     name: Update versions
     needs: push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
-        with:
-          controller_update: true
-          controller_tag: ${GITHUB_REF_NAME}
+    uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
+    with:
+      controller_update: true
+      controller_tag: ${GITHUB_REF_NAME}
