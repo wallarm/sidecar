@@ -53,7 +53,7 @@ on:
         required: false
 
 jobs:
-  update-versions:
+  update_versions:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
