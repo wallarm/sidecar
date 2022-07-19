@@ -11,11 +11,6 @@ jobs:
     steps:
       - name: Debug
         run: |
-          set -x
-          echo "sidecar_update ${{ github.event.client_payload.sidecar_update }}"
-          echo "sidecar_tag ${{ github.event.client_payload.sidecar_tag }}"
-          echo "upstream_update ${{ github.event.client_payload.upstream_update }}"
-          echo "upstream_tag ${{ github.event.client_payload.upstream_tag }}" 
           HELM_ARGS=""
           if [ ${{ github.event.client_payload.upstream_update }} = true ]; then
             UPSTREAM_TAG=${{ github.event.client_payload.upstream_tag }}
@@ -70,10 +65,12 @@ jobs:
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
+          --debug \
           --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
           kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
-          kubectl -n wallarm-sidecar describe po -l app.kubernetes.io/component=controller
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
 
       - name: Run test
         run: |
