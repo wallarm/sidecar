@@ -89,7 +89,9 @@ jobs:
 
   push:
     name: Push
-    needs: test
+    #TODO revert it back
+    #needs: test
+    needs: build
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.format_tag.outputs.tag }}
