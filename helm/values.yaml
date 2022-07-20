@@ -351,7 +351,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -399,7 +399,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -470,7 +470,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -523,7 +523,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-tarantool
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -579,7 +579,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -627,7 +627,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.0.4-1"
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
