@@ -64,32 +64,34 @@ jobs:
         run: git checkout -b update_versions
 
       - name: Get latest Chart version
-        id: get_version
+        id: get_latest_chart_version
         run: echo "::set-output name=version::$(yq -r '.version' helm/Chart.yaml)"
 
       - name: Increment Chart version
-        id: bump_version
+        id: bump_chart_version
         uses: christian-draeger/increment-semantic-version@1.0.2
         with:
-          current-version: ${{ steps.get_version.outputs.version }}
+          current-version: ${{ steps.get_latest_chart_version.outputs.version }}
           version-fragment: 'bug'
 
       - name: Update Chart version
         run: |
-          echo "New chart version: ${{ steps.bump_version.outputs.next-version }}"
-          yq e -i '.version = "${{ steps.bump_version.outputs.next-version }}"' helm/Chart.yaml
+          echo "New chart version: ${{ steps.bump_chart_version.outputs.next-version }}"
+          yq e -i '.version = "${{ steps.bump_chart_version.outputs.next-version }}"' helm/Chart.yaml
 
       - name: Update upstream version
         if: ${{ inputs.upstream_update }}
+        id: update_upstream_version
         run: |
-          APP_VERSION=$(echo ${{ inputs.upstream_tag }} | cut -d "-" -f 1) 
-          yq e -i '.appVersion = "${APP_VERSION}"' helm/Chart.yaml
+          export APP_VERSION=$(echo ${{ inputs.upstream_tag }} | cut -d "-" -f 1) 
+          yq e -i '.appVersion = env(APP_VERSION)' helm/Chart.yaml
           yq e -i '.postanalytics.addnode.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.exportenv.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.cron.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.tarantool.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.heartbeat.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
           yq e -i '.postanalytics.appstructure.image.tag = "${{ inputs.upstream_tag }}"' helm/values.yaml
+          echo "::set-output name=next-version::${APP_VERSION}"
 
       - name: Update sidecar version
         if: ${{ inputs.sidecar_update }}
@@ -101,9 +103,9 @@ jobs:
 
       - name: Compute commit message
         run: |
-          COMMIT_MESSAGE="Update versions. Chart: ${{ steps.bump_version.outputs.next-version }}"
+          COMMIT_MESSAGE="Update versions. Chart: ${{ steps.bump_chart_version.outputs.next-version }}"
           if [ ${{ inputs.upstream_update }} = true ]; then
-            COMMIT_MESSAGE+=" Upstream: ${{ inputs.upstream_tag }}"
+            COMMIT_MESSAGE+=" Upstream: ${{ steps.update_upstream_version.outputs.next-version }}"
           fi
           if [ ${{ inputs.sidecar_update }} = true ]; then
             COMMIT_MESSAGE+=" Sidecar: ${{ inputs.sidecar_tag }}"
