@@ -6,15 +6,20 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: Integration test
     runs-on: ubuntu-latest
+    if: ${{ github.event.client_payload.upstream_update || github.event.client_payload.sidecar_update }}
     steps:
-      - name: Debug
+      - name: Check and prepare
         run: |
           HELM_ARGS=""
           if [ ${{ github.event.client_payload.upstream_update }} = true ]; then
+            echo "Upstream update was requested"
             UPSTREAM_TAG=${{ github.event.client_payload.upstream_tag }}
-            echo "Upstream update was requested. Upstream tag: ${UPSTREAM_TAG}"
+            if [ -z ${UPSTREAM_TAG} ]; then
+              echo "Upstream tag is empty! It should be set in 'client_payload.upstream_tag' property. Exiting ..."
+              exit 1
+            fi
             HELM_ARGS+=" \
             --set postanalytics.addnode.image.tag=${UPSTREAM_TAG} \
             --set postanalytics.exportenv.image.tag=${UPSTREAM_TAG} \
@@ -26,11 +31,15 @@ jobs:
           fi
           
           if [ ${{ github.event.client_payload.sidecar_update }} = true ]; then
+            echo "Sidecar update was requested"
             SIDECAR_TAG=${{ github.event.client_payload.sidecar_tag }}
-            echo "Sidecar update was requested. Sidecar tag: ${SIDECAR_TAG}"
+            if [ -z ${SIDECAR_TAG} ]; then
+              echo "Sidecar tag is empty! It should be set in 'client_payload.sidecar_tag' property. Exiting ..."
+              exit 1
+            fi
             HELM_ARGS+=" --set config.sidecar.image.tag=${SIDECAR_TAG}"
-            echo "HELM_ARGS: ${HELM_ARGS}"
           fi
+          
           echo "HELM_ARGS=${HELM_ARGS}" >> $GITHUB_ENV
 
       - name: Checkout
@@ -56,19 +65,17 @@ jobs:
 
       - name: Install Helm chart
         run: |
-          set -x
           helm version
-          helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
+          helm install wallarm-sidecar helm/. -f helm/values.test.yaml ${HELM_ARGS} \
           --set config.wallarm.api.host=audit.api.wallarm.com \
           --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-          ${HELM_ARGS} \
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
           --debug \
           --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
+          kubectl -n wallarm-sidecar get all
           kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
           kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
 
@@ -79,10 +86,12 @@ jobs:
           pytest helm/test/integration_test.py
 
 
-#  update_versions:
-#    name: Update versions
-#    needs: test
-#    uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
-#    with:
-#      controller_update: true
-#      controller_tag: ${{ github.ref_name }}
+  update_versions:
+    name: Update versions
+    needs: test
+    uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
+    with:
+      upstream_update: ${{ github.event.client_payload.upstream_update }}
+      upstream_tag: ${{ github.event.client_payload.upstream_tag }}
+      sidecar_update: ${{ github.event.client_payload.sidecar_update }}
+      sidecar_tag: ${{ github.event.client_payload.sidecar_tag }}

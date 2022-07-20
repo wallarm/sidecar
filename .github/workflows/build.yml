@@ -66,7 +66,6 @@ jobs:
         #TODO replace 'controller.image.fullname' with 'controller.image.tag=${GITHUB_SHA}' when switched to Wallarm registry
       - name: Install Helm chart
         run: |
-          set -x
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
           --set config.wallarm.api.host=audit.api.wallarm.com \
@@ -75,10 +74,12 @@ jobs:
           --namespace wallarm-sidecar \
           --create-namespace \
           --wait \
+          --debug \
           --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
-          kubectl -n wallarm-sidecar describe po -l app.kubernetes.io/component=controller
+          kubectl -n wallarm-sidecar get all
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
 
       - name: Run test
         run: |
