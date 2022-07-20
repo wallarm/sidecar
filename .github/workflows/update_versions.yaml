@@ -99,6 +99,20 @@ jobs:
         if: ${{ inputs.controller_update }}
         run: yq e -i '.controller.image.tag = "${{ inputs.controller_tag }}"' helm/values.yaml
 
+      - name: Compute commit message
+        run: |
+          COMMIT_MESSAGE="Update versions. Chart: ${{ steps.bump_version.outputs.next-version }}"
+          if [ ${{ inputs.upstream_update }} = true ]; then
+            COMMIT_MESSAGE+=" Upstream: ${{ inputs.upstream_tag }}"
+          fi
+          if [ ${{ inputs.sidecar_update }} = true ]; then
+            COMMIT_MESSAGE+=" Sidecar: ${{ inputs.sidecar_tag }}"
+          fi
+          if [ ${{ inputs.controller_update }} = true ]; then
+            COMMIT_MESSAGE+=" Controller: ${{ inputs.controller_tag }}"
+          fi
+          echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}" >> $GITHUB_ENV
+
       - name: Create and merge PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +120,7 @@ jobs:
           git config --local user.name 'github-actions[bot]'
           git config --local user.email 'github-actions[bot]@users.noreply.github.com'
           git add helm/Chart.yaml helm/values.yaml
-          git commit -m "Update chart version: ${{ steps.bump_version.outputs.next-version }}"
+          git commit -m "${COMMIT_MESSAGE}"
           git push --set-upstream origin update_versions
           gh pr create --fill
           gh pr merge update_versions --merge --delete-branch
