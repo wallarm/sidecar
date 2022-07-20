@@ -49,7 +49,7 @@ on:
         type: boolean
         required: false
       sidecar_tag:
-        type: boolean
+        type: string
         required: false
 
 jobs:
