@@ -1,3 +1,9 @@
+# This workflow triggers if PR is opened, reopened, synchronize and closed to target branch 'main'
+# 'Check' job skips execution of whole workflow if:
+#   1. PR is closed and NOT merged
+#   2. Source branch of PR is 'update_versions'
+# 'Update versions' job triggers only if PR is closed and MERGED
+
 name: Helm test
 
 on:
