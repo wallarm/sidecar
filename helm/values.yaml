@@ -3,6 +3,7 @@ fullnameOverride: ""
 ###
 ### Global config options
 ###
+
 config:
   ### Wallarm node configuration. Many of these parameters in this section can be overwritten individually
   ### for each pod with pod annotations
