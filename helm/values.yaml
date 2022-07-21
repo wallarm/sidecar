@@ -160,7 +160,8 @@ config:
         ###
         livenessProbe:
           httpGet:
-            # The value of `path` below should be the same as `nginx.healthPath`
+            ### The value of `path` below should be the same as `nginx.healthPath`
+            ###
             path: /healthz
             port: status
           initialDelaySeconds: 60
