@@ -133,10 +133,11 @@ jobs:
       - name: Run test
         run: |
           kubectl apply -f kind/docker/manifests/init/pytest.yaml
+          while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
+            sleep 1
+          done
           kubectl -n pytest wait pods --all --for=condition=Ready
           POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
-          kubectl -n pytest exec -t ${POD_NAME} -- ls -la
-          kubectl -n pytest exec -t ${POD_NAME} -- which pytest
           kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
   # Update version triggers if pull request closed and merged
