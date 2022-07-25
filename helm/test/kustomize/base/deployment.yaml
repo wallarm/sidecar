@@ -24,7 +24,7 @@ spec:
               path: /status/200
               port: http
               scheme: HTTP
-            initialDelaySeconds: 45
+            initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 1
             successThreshold: 1

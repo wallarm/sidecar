@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: dummy-app-svc
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: dummy-app
   ports:
     - port: 80
       targetPort: http
       protocol: TCP
-      nodePort: 30000
