@@ -4,4 +4,4 @@ nodes:
   - role: control-plane
     extraMounts:
       - hostPath: ./
-        containerPath: /mnt/kubernetes
+        containerPath: /mnt/kubernetes/sidecar

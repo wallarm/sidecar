@@ -134,7 +134,8 @@ jobs:
         run: |
           kubectl apply -f kind/docker/manifests/init/pytest.yaml
           kubectl -n pytest wait pods --all --for=condition=Ready
-          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
+          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
+          kubectl -n pytest exec -t ${POD_NAME} -- ls -la
           kubectl -n pytest exec -t ${POD_NAME} -- which pytest
           kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
