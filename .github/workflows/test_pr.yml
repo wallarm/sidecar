@@ -1,0 +1,52 @@
+# This workflow triggers if PR is opened, reopened, synchronize and closed to target branch 'main'
+# 'Check' job skips execution of whole workflow if:
+#   1. PR is closed and NOT merged
+#   2. Source branch of PR is 'update_versions'
+# 'Update versions' job triggers only if PR is closed and MERGED
+
+name: Test PR
+
+on:
+  pull_request:
+    branches: ['main']
+    types: ['closed', 'opened', 'reopened', 'synchronize']
+    paths:
+      - 'helm/**'
+      - '!helm/Chart.yaml'
+      - '!helm/README.md'
+      - '!helm/test/**'
+      - '!helm/values.*.yaml'
+
+jobs:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.head_ref, 'update_versions') && !(github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    outputs:
+      ref: ${{ steps.check.outputs.ref }}
+    steps:
+      - name: Check
+        id: check
+        run: |
+          if [ "${{ github.event.action }}" == "closed" ] && [ ${{ github.event.pull_request.merged }} == true ]; then
+            echo "::set-output name=ref::${{ github.base_ref }}"
+          else
+            echo "::set-output name=ref::${{ github.head_ref }}"
+          fi
+
+  test:
+    name: Test
+    needs: check
+    uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    with:
+      ref: ${{ needs.check.outputs.ref }}
+      run_lint: true
+      run_validate: true
+      run_test: true
+
+  # Update version triggers if pull request closed and merged
+  update_versions:
+    name: Update versions
+    needs: test
+    if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
+    uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
