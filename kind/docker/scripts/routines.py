@@ -4,7 +4,7 @@ import time
 
 __config_file = '/manifests/cluster.yml'
 __config_kubeconfig = '/root/.kube/config'
-__config_manifests = '/manifests/init.yml'
+__config_manifests_path = '/manifests/init'
 
 def help(exitcode=0):
     print("routines.py - control cluster bootstraping and destroying")
@@ -43,13 +43,14 @@ def create():
     time.sleep(5)
 
     # Apply few manifests
-    proc = subprocess.Popen([
-        "/usr/local/bin/kubectl",
-        "create",
-        "-f",
-        __config_manifests,
-    ], stdout=sys.stdout, stderr=sys.stderr, universal_newlines=True)
-    proc.communicate()
+    for manifest in os.listdir(__config_manifests_path):
+        proc = subprocess.Popen([
+            "/usr/local/bin/kubectl",
+            "create",
+            "-f",
+            f'{__config_manifests_path}/{manifest}',
+        ], stdout=sys.stdout, stderr=sys.stderr, universal_newlines=True)
+        proc.communicate()
 
 def delete():
     # Delete cluster

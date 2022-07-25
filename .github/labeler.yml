@@ -9,4 +9,4 @@ documentation:
 - 'helm/README.md'
 
 helm:
-- any: ['helm/**/*', '!helm/Chart.yaml', '!helm/test/**/*', '!helm/README.md']
+- any: ['helm/**/*', '!helm/values.*.yaml','!helm/Chart.yaml', '!helm/test/**/*', '!helm/README.md']

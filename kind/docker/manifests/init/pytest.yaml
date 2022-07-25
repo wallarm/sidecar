@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pytest
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app.kubernetes.io/name: pytest
+  name: pytest
+  namespace: pytest
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: pytest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: pytest
+    spec:
+      serviceAccountName: pytest
+      containers:
+      - name: pytest
+        image: python:3.10.5-alpine3.15
+        imagePullPolicy: Always
+        workingDir: "/data"
+        command: ["/init.sh"]
+        env:
+          - name: PYTHONUNBUFFERED
+            value: "1"
+        readinessProbe:
+          exec:
+            command:
+              - cat
+              - /tmp/ready
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 4
+        volumeMounts:
+        - name: local-repository
+          mountPath: /data
+        - name: init
+          mountPath: /init.sh
+          subPath: init.sh
+      volumes:
+      - name: local-repository
+        hostPath:
+          path: /mnt/kubernetes/sidecar
+      - name: init
+        configMap:
+          name: pytest-init
+          defaultMode: 0555
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/name: pytest
+  name: pytest-init
+  namespace: pytest
+data:
+  init.sh: |
+    #!/bin/sh
+    echo "Installing Python dependencies ..."
+    pip install pip --upgrade && pip install -r helm/test/requirements.txt
+    echo "Installing Kubectl ..."
+    apk update && apk add curl
+    curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    mv kubectl /usr/bin/kubectl && chmod +x /usr/bin/kubectl
+    echo "Configuring kube context ..."
+    SA="/var/run/secrets/kubernetes.io/serviceaccount"
+    kubectl config set-cluster kind --server=https://${KUBERNETES_SERVICE_HOST} --certificate-authority=${SA}/ca.crt
+    kubectl config set-context kind-kind --cluster=kind
+    kubectl config set-credentials user --token=$(cat ${SA}/token)
+    kubectl config set-context kind-kind --user=user
+    kubectl config use-context kind-kind
+    touch /tmp/ready
+    echo "Sleeping ..."
+    sleep infinity
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app.kubernetes.io/name: pytest
+  name: pytest
+  namespace: pytest
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pytest
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: pytest
+    namespace: pytest

@@ -2,7 +2,10 @@ config:
   sidecar:
     containers:
       proxy:
-        readinessProbeEnable: false
+        readinessProbe:
+          initialDelaySeconds: 30
+  wallarm:
+    fallback: "off"
 
 controller:
   replicaCount: 1

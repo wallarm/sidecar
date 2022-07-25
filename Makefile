@@ -163,15 +163,15 @@ cluster-unpause:
 
 ### Integration test routines
 ###
-KUBE_CONFIG := KUBECONFIG="./kind/config/kubeconfig"
 
 integration-test:
-	$(KUBE_CONFIG) pytest helm/test --port 8080
+	@$(KUBECTL) wait pods -n pytest --all --for=condition=Ready
+	@$(BASH) 'exec kubectl exec -n pytest -it $$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) -- pytest -n 4 helm/test'
 
 # Used when `pod-run` was not executed after `init`
 integration-helm-upgrade:
-	@$(KUBE_CONFIG) helm upgrade --install wallarm-sidecar ./helm -f ./helm/values.test.yaml $(HELMARGS) \
-		--set "controller.image.fullname=$(CONTROLLER_IMAGE)" --wait --debug
-	@$(KUBE_CONFIG) kubectl wait pods -n default -l app.kubernetes.io/component=controller --for condition=Ready --timeout=90s
+	@$(HELM) upgrade --install --wait wallarm-sidecar ./helm -f ./helm/values.test.yaml $(HELMARGS) \
+		--set "controller.image.fullname=$(CONTROLLER_IMAGE)"
+	@$(KUBECTL) wait pods -n default -l app.kubernetes.io/component=controller --for condition=Ready --timeout=30s
 
 .PHONY: integration-*

@@ -16,10 +16,6 @@ nodes:
   - hostPath: /mnt/kubernetes
     containerPath: /mnt/kubernetes
   extraPortMappings:
-  - containerPort: 30000
-    hostPort: 30000
-    listenAddress: "0.0.0.0"
-    protocol: TCP
   - containerPort: 30080
     hostPort: 30080
     listenAddress: "0.0.0.0"

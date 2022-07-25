@@ -1,3 +1,9 @@
+# This workflow triggers if PR is opened, reopened, synchronize and closed to target branch 'main'
+# 'Check' job skips execution of whole workflow if:
+#   1. PR is closed and NOT merged
+#   2. Source branch of PR is 'update_versions'
+# 'Update versions' job triggers only if PR is closed and MERGED
+
 name: Helm test
 
 on:
@@ -9,6 +15,7 @@ on:
       - '!helm/Chart.yaml'
       - '!helm/README.md'
       - '!helm/test/**'
+      - '!helm/values.*.yaml'
 
 jobs:
   check:
@@ -91,7 +98,7 @@ jobs:
           - 1.21.12
           - 1.22.9
           - 1.23.6
-          - 1.24.1
+          - 1.24.2
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -118,21 +125,23 @@ jobs:
         run: |
           set -x
           helm version
-          helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
-          --set config.wallarm.api.host=audit.api.wallarm.com \
-          --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-          --namespace wallarm-sidecar \
-          --create-namespace \
-          --wait \
-          --timeout 5m0s
-          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
+          helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
+            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+            --timeout 5m0s \
+            --wait
+          kubectl wait --for=condition=Ready pods --all --timeout=5m0s
+          kubectl describe pod -l app.kubernetes.io/component=postanalytics
+          kubectl describe pod -l app.kubernetes.io/component=controller
 
       - name: Run test
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          pytest helm/test/integration_test.py
+          kubectl apply -f kind/docker/manifests/init/pytest.yaml
+          while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
+            sleep 1
+          done
+          kubectl -n pytest wait pods --all --for=condition=Ready
+          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
+          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
   # Update version triggers if pull request closed and merged
   update_versions:
