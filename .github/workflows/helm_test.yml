@@ -125,20 +125,17 @@ jobs:
           set -x
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
-          --set config.wallarm.api.host=audit.api.wallarm.com \
-          --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-          --namespace wallarm-sidecar \
-          --create-namespace \
-          --wait \
-          --timeout 5m0s
-          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all --namespace wallarm-sidecar
+          --set config.wallarm.api.token=${{ secrets.API_TOKEN }}
+          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=5m0s
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
+          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
 
       - name: Run test
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          pytest helm/test/integration_test.py
+          kubectl apply -f kind/docker/manifests/init/pytest.yaml
+          kubectl -n pytest wait pods --all --for=condition=Ready
+          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
+          kubectl -n pytest exec -it ${POD_NAME} -- pytest -n 4 helm/test
 
   # Update version triggers if pull request closed and merged
   update_versions:
