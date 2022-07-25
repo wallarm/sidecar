@@ -31,13 +31,14 @@ spec:
         env:
           - name: PYTHONUNBUFFERED
             value: "1"
-        readinessProbe:
+        livenessProbe:
           exec:
             command:
               - cat
               - /tmp/ready
           initialDelaySeconds: 10
           periodSeconds: 5
+          failureThreshold: 4
         volumeMounts:
         - name: local-repository
           mountPath: /data

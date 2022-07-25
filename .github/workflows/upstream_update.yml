@@ -56,13 +56,13 @@ jobs:
           HELM_ARGS=""
           if [ ${{ github.event.client_payload.upstream_update }} = true ]; then
             UPSTREAM_TAG=${{ github.event.client_payload.upstream_tag }}
-            HELM_ARGS+=" \
-            --set postanalytics.addnode.image.tag=${UPSTREAM_TAG} \
-            --set postanalytics.exportenv.image.tag=${UPSTREAM_TAG} \
-            --set postanalytics.cron.image.tag=${UPSTREAM_TAG} \
-            --set postanalytics.tarantool.image.tag=${UPSTREAM_TAG} \
-            --set postanalytics.heartbeat.image.tag=${UPSTREAM_TAG} \
-            --set postanalytics.appstructure.image.tag=${UPSTREAM_TAG}"
+            HELM_ARGS+="\
+              --set postanalytics.addnode.image.tag=${UPSTREAM_TAG} \
+              --set postanalytics.exportenv.image.tag=${UPSTREAM_TAG} \
+              --set postanalytics.cron.image.tag=${UPSTREAM_TAG} \
+              --set postanalytics.tarantool.image.tag=${UPSTREAM_TAG} \
+              --set postanalytics.heartbeat.image.tag=${UPSTREAM_TAG} \
+              --set postanalytics.appstructure.image.tag=${UPSTREAM_TAG}"
             echo "HELM_ARGS: ${HELM_ARGS}"
           fi
           
@@ -98,23 +98,21 @@ jobs:
         run: |
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml ${HELM_ARGS} \
-          --set config.wallarm.api.host=audit.api.wallarm.com \
-          --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-          --namespace wallarm-sidecar \
-          --create-namespace \
-          --wait \
-          --debug \
-          --timeout 5m0s
-          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
+            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+            --wait \
+            --debug \
+            --timeout 5m0s
+          kubectl wait --for=condition=Ready pods --all --timeout=30s
+          kubectl get all
+          kubectl describe pod -l app.kubernetes.io/component=controller
+          kubectl describe pod -l app.kubernetes.io/component=postanalytics
 
       - name: Run test
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          pytest helm/test/integration_test.py
+          kubectl apply -f kind/docker/manifests/init/pytest.yaml
+          kubectl -n pytest wait pods --all --for=condition=Ready
+          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
+          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
   update_versions:
     name: Update versions

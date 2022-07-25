@@ -68,14 +68,14 @@ jobs:
         run: |
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
-          --set config.wallarm.api.host=audit.api.wallarm.com \
-          --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-          --set controller.image.fullname=${IMAGE}:${GITHUB_SHA} \
-          --namespace wallarm-sidecar \
-          --create-namespace \
-          --wait \
-          --debug \
-          --timeout 5m0s
+            --set config.wallarm.api.host=audit.api.wallarm.com \
+            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+            --set controller.image.fullname=${IMAGE}:${GITHUB_SHA} \
+            --namespace wallarm-sidecar \
+            --create-namespace \
+            --wait \
+            --debug \
+            --timeout 5m0s
           kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
           kubectl -n wallarm-sidecar get all
           kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
