@@ -50,7 +50,7 @@ jobs:
           verbosity: "0"
           wait: "240s"
           config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v1.24.1
+          node_image: kindest/node:v1.24.2
           cluster_name: kind
 
       - name: Wait for cluster readiness
@@ -67,25 +67,22 @@ jobs:
       - name: Install Helm chart
         run: |
           helm version
-          helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
-            --set config.wallarm.api.host=audit.api.wallarm.com \
+          helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
             --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
             --set controller.image.fullname=${IMAGE}:${GITHUB_SHA} \
-            --namespace wallarm-sidecar \
-            --create-namespace \
-            --wait \
-            --debug \
-            --timeout 5m0s
-          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=30s
-          kubectl -n wallarm-sidecar get all
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
+            --timeout 5m0s \
+            --wait
+          kubectl wait --for=condition=Ready pods --all --timeout=30s
+          kubectl get all
+          kubectl describe pod -l app.kubernetes.io/component=postanalytics
+          kubectl describe pod -l app.kubernetes.io/component=controller
 
       - name: Run test
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-          pytest helm/test/integration_test.py
+          kubectl apply -f kind/docker/manifests/init/pytest.yaml
+          kubectl -n pytest wait pods --all --for=condition=Ready
+          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
+          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
   push:
     name: Push

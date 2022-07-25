@@ -15,6 +15,7 @@ on:
       - '!helm/Chart.yaml'
       - '!helm/README.md'
       - '!helm/test/**'
+      - '!helm/values.*.yaml'
 
 jobs:
   check:
@@ -97,7 +98,7 @@ jobs:
           - 1.21.12
           - 1.22.9
           - 1.23.6
-          - 1.24.1
+          - 1.24.2
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -125,7 +126,9 @@ jobs:
           set -x
           helm version
           helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
-            --set config.wallarm.api.token=${{ secrets.API_TOKEN }}
+            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+            --timeout 5m0s \
+            --wait
           kubectl wait --for=condition=Ready pods --all --timeout=5m0s
           kubectl describe pod -l app.kubernetes.io/component=postanalytics
           kubectl describe pod -l app.kubernetes.io/component=controller

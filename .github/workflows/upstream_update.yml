@@ -84,7 +84,7 @@ jobs:
           verbosity: "0"
           wait: "240s"
           config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v1.24.1
+          node_image: kindest/node:v1.24.2
           cluster_name: kind
 
       - name: Wait cluster
@@ -99,9 +99,8 @@ jobs:
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml ${HELM_ARGS} \
             --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-            --wait \
-            --debug \
-            --timeout 5m0s
+            --timeout 5m0s \
+            --wait
           kubectl wait --for=condition=Ready pods --all --timeout=30s
           kubectl get all
           kubectl describe pod -l app.kubernetes.io/component=controller
