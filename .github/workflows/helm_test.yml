@@ -126,9 +126,9 @@ jobs:
           helm version
           helm install wallarm-sidecar helm/. -f helm/values.test.yaml \
           --set config.wallarm.api.token=${{ secrets.API_TOKEN }}
-          kubectl -n wallarm-sidecar wait --for=condition=Ready pods --all --timeout=5m0s
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=controller
-          kubectl -n wallarm-sidecar describe pod -l app.kubernetes.io/component=postanalytics
+          kubectl wait --for=condition=Ready pods --all --timeout=5m0s
+          kubectl describe pod -l app.kubernetes.io/component=controller
+          kubectl describe pod -l app.kubernetes.io/component=postanalytics
 
       - name: Run test
         run: |
