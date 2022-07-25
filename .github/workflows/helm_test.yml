@@ -135,7 +135,7 @@ jobs:
           kubectl apply -f kind/docker/manifests/init/pytest.yaml
           kubectl -n pytest wait pods --all --for=condition=Ready
           POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
-          kubectl -n pytest exec -it ${POD_NAME} -- pytest -n 4 helm/test
+          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
 
   # Update version triggers if pull request closed and merged
   update_versions:
