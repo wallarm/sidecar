@@ -31,7 +31,7 @@ spec:
         env:
           - name: PYTHONUNBUFFERED
             value: "1"
-        livenessProbe:
+        readinessProbe:
           exec:
             command:
               - cat
