@@ -75,6 +75,8 @@ jobs:
     name: Test
     needs: preparation
     uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    secrets:
+      API_TOKEN: ${{ secrets.API_TOKEN }}
     with:
       ref: "master"
       run_lint: false
