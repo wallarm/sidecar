@@ -353,7 +353,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: {? {inputs.upstream_tag: ''} : ''}
+      tag: "4.0.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
