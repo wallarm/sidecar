@@ -3,6 +3,9 @@ ci:
 
 controller:
 - 'cmd/*'
+- 'files/*'
+- 'Dockerfile'
+- 'go.*'
 
 documentation:
 - 'README.md'

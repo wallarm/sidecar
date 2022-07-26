@@ -17,10 +17,12 @@ on:
     types: [upstream_update]
 
 jobs:
-  check:
-    name: Payload sanity check
+  preparation:
+    name: Preparation
     runs-on: ubuntu-latest
     if: ${{ github.event.client_payload.upstream_update || github.event.client_payload.sidecar_update }}
+    outputs:
+      helm_args: ${{ steps.compute_helm_args.outputs.helm_args }}
     steps:
       - name: Payload sanity check
         run: |
@@ -46,12 +48,8 @@ jobs:
       
           echo "Payload sanity check PASSED"
 
-  test:
-    name: Integration test
-    runs-on: ubuntu-latest
-    needs: check
-    steps:
-      - name: Prepare Helm arguments
+      - name: Compute Helm arguments
+        id: compute_helm_args
         run: |
           HELM_ARGS=""
           if [ ${{ github.event.client_payload.upstream_update }} = true ]; then
@@ -71,47 +69,19 @@ jobs:
             HELM_ARGS+=" --set config.sidecar.image.tag=${SIDECAR_TAG}"
           fi
           
-          echo "HELM_ARGS=${HELM_ARGS}" >> $GITHUB_ENV
+          echo "::set-output name=helm_args::${HELM_ARGS}"
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: 'main'
-
-      - name: Create cluster
-        uses: helm/kind-action@v1.3.0
-        with:
-          verbosity: "0"
-          wait: "240s"
-          config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v1.24.2
-          cluster_name: kind
-
-      - name: Wait cluster
-        run: |
-          kubectl cluster-info
-          kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
-          echo "current-context:" $(kubectl config current-context)
-          echo "environment-kubeconfig:" ${KUBECONFIG}
-
-      - name: Install Helm chart
-        run: |
-          helm version
-          helm install wallarm-sidecar helm/. -f helm/values.test.yaml ${HELM_ARGS} \
-            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-            --timeout 5m0s \
-            --wait
-          kubectl wait --for=condition=Ready pods --all --timeout=30s
-          kubectl get all
-          kubectl describe pod -l app.kubernetes.io/component=controller
-          kubectl describe pod -l app.kubernetes.io/component=postanalytics
-
-      - name: Run test
-        run: |
-          kubectl apply -f kind/docker/manifests/init/pytest.yaml
-          kubectl -n pytest wait pods --all --for=condition=Ready
-          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
-          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
+  test:
+    name: Test
+    needs: preparation
+    uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    with:
+      ref: "master"
+      run_lint: false
+      run_validate: false
+      run_test: true
+      helm_args: ${{ needs.preparation.outputs.helm_args }}
+      load_artifact: false
 
   update_versions:
     name: Update versions

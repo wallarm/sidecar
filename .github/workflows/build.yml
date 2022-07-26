@@ -6,13 +6,14 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
 env:
-  #TODO Replace it with 'wallarm/sidecar-controller' when Docker token will be available
-  IMAGE: quay.io/dmitriev/sidecar-injector
+  IMAGE: wallarm/sidecar-controller
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      helm_args: ${{ steps.compute_helm_args.outputs.helm_args }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -30,59 +31,23 @@ jobs:
           path: artifacts/docker-image.tar
           retention-days: 1
 
+      - name: Compute Helm arguments
+        id: compute_helm_args
+        run: |
+          HELM_ARGS="--set controller.image.tag=${GITHUB_SHA}"
+          echo "::set-output name=helm_args::${HELM_ARGS}"
+
   test:
     name: Test
     needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Restore artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: docker-artifact
-          path: artifacts
-
-      - name: Create cluster
-        uses: helm/kind-action@v1.3.0
-        with:
-          verbosity: "0"
-          wait: "240s"
-          config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v1.24.2
-          cluster_name: kind
-
-      - name: Wait for cluster readiness
-        run: |
-          kubectl cluster-info
-          kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
-          echo "current-context:" $(kubectl config current-context)
-          echo "environment-kubeconfig:" ${KUBECONFIG}
-
-      - name: Load image
-        run: kind load image-archive artifacts/docker-image.tar
-
-        #TODO replace 'controller.image.fullname' with 'controller.image.tag=${GITHUB_SHA}' when switched to Wallarm registry
-      - name: Install Helm chart
-        run: |
-          helm version
-          helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
-            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
-            --set controller.image.fullname=${IMAGE}:${GITHUB_SHA} \
-            --timeout 5m0s \
-            --wait
-          kubectl wait --for=condition=Ready pods --all --timeout=30s
-          kubectl get all
-          kubectl describe pod -l app.kubernetes.io/component=postanalytics
-          kubectl describe pod -l app.kubernetes.io/component=controller
-
-      - name: Run test
-        run: |
-          kubectl apply -f kind/docker/manifests/init/pytest.yaml
-          kubectl -n pytest wait pods --all --for=condition=Ready
-          POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) 
-          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
+    uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    with:
+      ref: "master"
+      run_lint: false
+      run_validate: false
+      run_test: true
+      helm_args: ${{ needs.build.outputs.helm_args }}
+      load_artifact: true
 
   push:
     name: Push
@@ -91,13 +56,11 @@ jobs:
     outputs:
       tag: ${{ steps.format_tag.outputs.tag }}
     steps:
-      #TODO Should be updated with proper settings when Docker token will be available
       - name: Docker login
         uses: docker/login-action@v2
         with:
-          registry: quay.io
-          username: ${{ secrets.QUAY_USER }}
-          password: ${{ secrets.QUAY_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER}}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Restore artifact
         uses: actions/download-artifact@v3
