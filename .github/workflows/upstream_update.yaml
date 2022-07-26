@@ -78,7 +78,7 @@ jobs:
     secrets:
       API_TOKEN: ${{ secrets.API_TOKEN }}
     with:
-      ref: "master"
+      ref: "main"
       run_lint: false
       run_validate: false
       run_test: true
