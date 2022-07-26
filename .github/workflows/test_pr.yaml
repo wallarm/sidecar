@@ -21,7 +21,7 @@ jobs:
   check:
     name: Check
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.head_ref, 'update_versions') && !(github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    if: ${{ !contains(github.head_ref, 'bump-versions') && !(github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     outputs:
       ref: ${{ steps.check.outputs.ref }}
     steps:
