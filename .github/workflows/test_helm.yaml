@@ -39,6 +39,10 @@ on:
       load_artifact:
         type: boolean
         required: false
+    secrets:
+      API_TOKEN:
+        description: Wallarm API token
+        required: false
 
 
 jobs:

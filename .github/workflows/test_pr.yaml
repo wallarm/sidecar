@@ -38,6 +38,8 @@ jobs:
     name: Test
     needs: check
     uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    secrets:
+      API_TOKEN: ${{ secrets.API_TOKEN }}
     with:
       ref: ${{ needs.check.outputs.ref }}
       run_lint: true
