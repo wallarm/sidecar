@@ -82,10 +82,10 @@ jobs:
         id: update_upstream_version
         run: |
           export TAG="${{ inputs.upstream_tag }}"
-          export VERSION=$(echo "${TAG}" | cut -d "-" -f 1)          
+          export VERSION=$(echo "${TAG}" | cut -d "-" -f 1)    
+          yq e -i '.appVersion = env(APP_VERSION)' helm/Chart.yaml
           yq e -i \
-          '(.appVersion = env(VERSION) |
-           (.postanalytics.addnode.image.tag = env(TAG)) |
+          '(.postanalytics.addnode.image.tag = env(TAG)) |
            (.postanalytics.exportenv.image.tag = env(TAG)) |
            (.postanalytics.cron.image.tag = env(TAG)) |
            (.postanalytics.tarantool.image.tag = env(TAG)) |
