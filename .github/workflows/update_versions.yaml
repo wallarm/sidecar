@@ -81,7 +81,7 @@ jobs:
         if: ${{ inputs.upstream_update }}
         id: update_upstream_version
         run: |
-          export TAG="{{ inputs.upstream_tag }}"
+          export TAG="${{ inputs.upstream_tag }}"
           export VERSION=$(echo "${TAG}" | cut -d "-" -f 1)          
           yq e -i \
           '(.appVersion = env(VERSION) |
