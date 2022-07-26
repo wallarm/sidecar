@@ -54,7 +54,7 @@ jobs:
     steps:
       - id: get_git_ref
         run: |
-          if [ "${{ github.event_name }}" == "workflow_call" ]; then
+          if [ -n "${{ inputs.ref }}" ]; then
             echo "::set-output name=ref::${{ inputs.ref }}"
           else
             echo "::set-output name=ref::${{ github.ref_name }}"
