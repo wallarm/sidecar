@@ -156,7 +156,8 @@ spec:
         - name: cron
           image: {{ include "wallarm-sidecar.image" .Values.postanalytics.cron.image }}
           imagePullPolicy: "{{ .Values.postanalytics.cron.image.pullPolicy }}"
-          command: ["/bin/supercronic", "-json", "/opt/cron/crontab"]
+          command: ["/bin/dumb-init", "--"]
+          args: ["/bin/supercronic", "-json", "/opt/cron/crontab"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: WALLARM_INGRESS_CONTROLLER_VERSION
