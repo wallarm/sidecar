@@ -11,7 +11,7 @@ Please refer Helm chart documentation [here](helm/README.md)
 
 ## Contribution
 
-Any contribution very welcome! So, you need to do it by the dollowing contribution guide.
+Any contribution very welcome! So, you need to do it by the following contribution guide.
 
 This repo is based on Makefile that handles all development routines. So this means that you can make this routines just with a short command:
 

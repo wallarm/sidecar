@@ -10,9 +10,9 @@ CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 ### For embedding into the chart
 ###
 SIDECAR_IMAGE    := wallarm/sidecar:0.9.0
-TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.0.3-1
-RUBY_IMAGE       := wallarm/ingress-ruby:4.0.3-1
-PYTHON_IMAGE     := wallarm/ingress-python:4.0.3-1
+TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.0.5-1
+RUBY_IMAGE       := wallarm/ingress-ruby:4.0.5-1
+PYTHON_IMAGE     := wallarm/ingress-python:4.0.5-1
 
 ### Contribution routines
 ###
@@ -22,7 +22,6 @@ HELM     := $(EXEC) helm
 BASH     := $(EXEC) bash -c
 POD_NAME := $(KUBECTL) get pods -o name -l app.kubernetes.io/component=controller | cut -d '/' -f 2
 POD_EXEC  = $(KUBECTL) exec -it $(shell $(POD_NAME)) --
-GO_PID    = $(KUBECTL) exec -t $(shell $(POD_NAME)) -- ash -c "pgrep -f 'go run'"
 
 init: cluster-start
 	@$(HELM) upgrade --install --wait wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
@@ -43,11 +42,6 @@ pod-sh:
 	@$(POD_EXEC) sh
 
 pod-run:
-	$(info Checking if GO proccess is already running ...)
-ifneq "$(shell $(GO_PID))" ""
-	$(info GO process found, killing it...)
-	@$(POD_EXEC) ash -c "kill -9 $(shell $(GO_PID))"
-endif
 	@$(POD_EXEC) go run cmd/* \
 		--listen :8443 \
 		--config /etc/controller/config.yaml \
@@ -167,11 +161,5 @@ cluster-unpause:
 integration-test:
 	@$(KUBECTL) wait pods -n pytest --all --for=condition=Ready
 	@$(BASH) 'exec kubectl exec -n pytest -it $$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) -- pytest -n 4 helm/test'
-
-# Used when `pod-run` was not executed after `init`
-integration-helm-upgrade:
-	@$(HELM) upgrade --install --wait wallarm-sidecar ./helm -f ./helm/values.test.yaml $(HELMARGS) \
-		--set "controller.image.fullname=$(CONTROLLER_IMAGE)"
-	@$(KUBECTL) wait pods -n default -l app.kubernetes.io/component=controller --for condition=Ready --timeout=30s
 
 .PHONY: integration-*
