@@ -128,3 +128,31 @@ jobs:
           git push --set-upstream origin ${PR_BRANCH}
           gh pr create --fill
           gh pr merge ${PR_BRANCH} --merge --delete-branch
+
+  helm_publish:
+    name: Publish new Helm version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: 'main'
+
+      - name: Get versions
+        id: get_versions
+        run: |
+          echo "::set-output name=chart_version::$(yq -r '.version' helm/Chart.yaml)"
+          echo "::set-output name=app_version::$(yq -r '.appVersion' helm/Chart.yaml)"
+
+      - name: Publish
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ secrets.HELM_PUBLISH_TOKEN }}
+          charts_dir: ./charts
+          charts_url: https://charts.wallarm.com
+          linting: off
+          repository: helm-charts
+          branch: main
+          target_dir: wallarm-sidecar
+          index_dir: .
+          app_version: ${{ steps.get_versions.outputs.app_version }}
+          chart_version: ${{ steps.get_versions.outputs.chart_version }}
