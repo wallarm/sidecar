@@ -30,6 +30,10 @@ on:
         description: Tag for sidecar image
         type: string
         required: false
+    secrets:
+      HELM_PUBLISH_TOKEN:
+        description: Helm publish token
+        required: false
 
   workflow_call:
     inputs:
