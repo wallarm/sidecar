@@ -10,7 +10,7 @@ Components of Wallarm sidecar controller:
 - Post-analytics module - is the local data analytics backend for Wallarm sidecar proxies. Implemented using Tarantool and set of helper containers.
 
 ## Prerequisites
-- Kubernetes cluster >= 1.19-1.23
+- Kubernetes cluster >= 1.19-1.24
 - Helm 3 package manager
 - Access to Wallarm API endpoint:
     - `https://api.wallarm.com:443` for EU cloud
@@ -70,10 +70,7 @@ spec:
     spec:
       containers:
         - name: application
-          image: mockserver/mockserver
-          env:
-            - name: MOCKSERVER_SERVER_PORT
-              value: 80
+          image: kennethreitz/httpbin
           ports:
             - name: http
               containerPort: 80
@@ -116,13 +113,14 @@ on which application container accepts incoming requests. Application port auto-
 ### Inbound traffic interception (port redirection)
 By default, Wallarm sidecar intercepts inbound traffic which comes to Pod's IP and application container port, then redirects this
 traffic to sidecar proxy container using iptables manipulation. Sidecar proxy does the job and then forwards traffic to application container.
-Inbound traffic interception is implemented using init container with `iptables`. This default behaviour can be configured by:
+Inbound traffic interception is implemented using init container with `iptables`. This default behaviour can be configured:
 - on per-pod basis by setting Pod's annotation `sidecar.wallarm.io/sidecar-injection-iptables-enable` to `"false"`
 - globally by setting helm chart value `config.injectionStrategy.iptablesEnable` to `"false"`
 
 If inbound traffic interception is disabled, then sidecar proxy container will publish port with name `proxy`. In this case
-inbound traffic from Kubernetes service should be sent to the port named `proxy`, by setting `spec.ports.targetPort: proxy` in Service manifest.
-Example with disabled inbound traffic interception on per-pod basis is shown below.
+inbound traffic from Kubernetes service should be sent to the port named `proxy`, by setting `spec.ports.targetPort: proxy` in your Service manifest.
+
+Example with disabled inbound traffic interception on per-pod basis is shown below:
 
 ```yaml
 apiVersion: apps/v1
@@ -145,10 +143,7 @@ spec:
     spec:
       containers:
         - name: application
-          image: mockserver/mockserver
-          env:
-            - name: MOCKSERVER_SERVER_PORT
-              value: 80
+          image: kennethreitz/httpbin
           ports:
             - name: http
               containerPort: 80
@@ -185,45 +180,41 @@ Example of Helm chart values file for managing resources (requests & limits) glo
 
 ```yaml
 config:
-  wallarm:
-    api:
-      token: ${API_TOKEN}
-
-sidecarDefaults:
-  container:
-    proxy:
-      resources:
-        requests:
-          cpu: 200m
-          memory: 256Mi
-        limits:
-          cpu: 500m
-          memory: 512Mi
-    helper:
-      resources:
-        requests:
+  sidecar:
+    containers:
+      proxy:
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+      helper:
+        resources:
+          requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+    initContainers:
+      helper:
+        resources:
+          requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 64Mi
           limits:
             cpu: 300m
-            memory: 256Mi
-  initContainers:
-    helper:
-      resources:
-        requests:
-          cpu: 100m
-          memory: 64Mi
-        limits:
-          cpu: 300m
-          memory: 128Mi
-    iptables:
-      resources:
-        requests:
-          cpu: 50m
-          memory: 32Mi
-        limits:
-          cpu: 100m
-          memory: 64Mi
+            memory: 128Mi
+      iptables:
+        resources:
+          requests:
+            cpu: 50m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
 ```
 
 #### Configuring resources on per-pod basis using Pod's annotations
@@ -264,10 +255,7 @@ spec:
     spec:
       containers:
         - name: application
-          image: mockserver/mockserver
-          env:
-            - name: MOCKSERVER_SERVER_PORT
-              value: 80
+          image: kennethreitz/httpbin
           ports:
             - name: http
               containerPort: 80
@@ -283,7 +271,7 @@ Docker image of sidecar proxy contains the following additional Nginx modules, w
 6. ngx_http_modsecurity_module.so
 7. ngx_http_opentracing_module.so
 
-Enabling of these additional modules can be done on per-pod basis by setting Pod's annotation `sidecar.wallarm.io/nginx-extra-modules`.
+Additional modules can be enabled only on per-pod basis by setting Pod's annotation `sidecar.wallarm.io/nginx-extra-modules`.
 The format of annotation's value is JSON list. Example with additional modules enabled is shown below:
 
 ```yaml
@@ -307,10 +295,7 @@ spec:
     spec:
       containers:
         - name: application
-          image: mockserver/mockserver
-          env:
-            - name: MOCKSERVER_SERVER_PORT
-              value: 80
+          image: kennethreitz/httpbin
           ports:
             - name: http
               containerPort: 80
@@ -360,10 +345,7 @@ spec:
             spec:
       containers:
         - name: application
-          image: mockserver/mockserver
-          env:
-            - name: MOCKSERVER_SERVER_PORT
-              value: 80
+          image: kennethreitz/httpbin
           ports:
             - name: http
               containerPort: 80
@@ -376,39 +358,45 @@ All annotations below are specified without prefix `sidecar.wallarm.io/`, to use
 
 ### Sidecar deployment settings
 
-| Annotation                          | Chart value                                                      | Description                                                                                                                                                                                                              |
-|-------------------------------------|------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| sidecar-injection-schema            | config.injectionStrategy.schema                                  | Sidecar deployment schema: `single` or `split`                                                                                                                                                                           |
-| sidecar-injection-iptables-enable   | config.injectionStrategy.iptablesEnable                          | Enable or disable `iptables` init container for port redirection: `true` or `false`                                                                                                                                      |
-| wallarm-application                 | NA                                                               | The ID of Wallarm application (optional)                                                                                                                                                                                 |
-| wallarm-mode                        | config.wallarm.mode                                              | Wallarm mode: `monitoring`, `block` or `off`                                                                                                                                                                             |
-| wallarm-mode-allow-override         | config.wallarm.modeAllowOverride                                 | Manages the ability to override the wallarm_mode values via filtering in the Cloud (custom ruleset): `on`, `off` or `strict`                                                                                             |
-| wallarm-parse-response              | config.wallarm.parseResponse                                     | Whether to analyze the application responses for attacks: `on` or `off`                                                                                                                                                  |
-| wallarm-parse-websocket             | config.wallarm.parseWebsocket                                    | Whether to analyze WebSocket's messages for attacks: `on` or `off`                                                                                                                                                       |
-| wallarm-unpack-response             | config.wallarm.unpackResponse                                    | Whether to decompress compressed data returned in the application response: `on` or `off`                                                                                                                                |
-| wallarm-upstream-connect-attempts   | config.wallarm.upstream.connectAttempts                          | Defines the number of immediate reconnects to the Tarantool or Wallarm API                                                                                                                                               |
-| wallarm-upstream-reconnect-interval | config.wallarm.upstream.reconnectInterval                        | Defines the interval between attempts to reconnect to the Tarantool or Wallarm API                                                                                                                                       |
-| application-port                    | config.nginx.applicationPort                                     | Port listening by application container. This port is used as application container port, if pod has no exposed ports for application container. Refer `Application container port auto-discovery` section for details   |
-| nginx-listen-port                   | config.nginx.listenPort                                          | Port listening by sidecar proxy container. This port is reserved for using by Wallarm sidecar, can't be the same as `config.nginx.applicationPort`                                                                       |
-| nginx-http-include                  | NA                                                               | JSON list of full paths to additional config files which should be included into NGINX configuration.Refer "Using additional user provided Nginx configuration" for details                                              |
-| nginx-server-include                | NA                                                               | Same as above                                                                                                                                                                                                            |
-| nginx-location-include              | NA                                                               | Same as above                                                                                                                                                                                                            |
-| nginx-extra-modules                 | NA                                                               | JSON list of NGINX modules to enable. Refer "Enable additional Nginx modules" section for details                                                                                                                        |
-| proxy-extra-volumes                 | NA                                                               | User volumes to be added to the Pod (JSON object). Example: `"[{'name':'volumeName','configMap':{'name':'someConfigMapName'}}]"`                                                                                         |
-| proxy-extra-volume-mounts           | NA                                                               | User volume mounts to be added to the `proxy` container (JSON object). Example:`"[{'name':'volumeName','mountPath':'/some/thing'}]"`                                                                                     |
-| proxy-cpu                           | config.sidecar.containers.proxy.resources.requests.cpu           | Requested CPU for `proxy` container                                                                                                                                                                                      |
-| proxy-memory                        | config.sidecar.containers.proxy.resources.requests.memory        | Requested memory for `proxy` container                                                                                                                                                                                   |
-| proxy-cpu-limit                     | config.sidecar.containers.proxy.resources.limits.cpu             | CPU limit for `proxy` container                                                                                                                                                                                          |
-| proxy-memory-limit                  | config.sidecar.containers.proxy.resources.limits.memory          | Memory limit for `proxy` container                                                                                                                                                                                       |
-| helper-cpu                          | config.sidecar.containers.helper.resources.requests.cpu          | Requested CPU for `helper` container                                                                                                                                                                                     |
-| helper-memory                       | config.sidecar.containers.helper.resources.requests.memory       | Requested memory for `helper` container                                                                                                                                                                                  |
-| helper-cpu-limit                    | config.sidecar.containers.helper.resources.limits.cpu            | CPU limit for `helper` container                                                                                                                                                                                         |
-| helper-memory-limit                 | config.sidecar.containers.helper.resources.limits.memory         | Memory limit for `helper` container                                                                                                                                                                                      |
-| init-iptables-cpu                   | config.sidecar.initContainers.iptables.resources.requests.cpu    | Requested CPU for `init-iptables` container                                                                                                                                                                              |
-| init-iptables-memory                | config.sidecar.initContainers.iptables.resources.requests.memory | Requested memory for `init-iptables` container                                                                                                                                                                           |
-| init-iptables-cpu-limit             | config.sidecar.initContainers.iptables.resources.limits.cpu      | CPU limit for `init-iptables` container                                                                                                                                                                                  |
-| init-iptables-memory-limit          | config.sidecar.initContainers.iptables.resources.limits.memory   | Memory limit for `init-iptables` container                                                                                                                                                                               |
-| init-helper-cpu                     | config.sidecar.initContainers.helper.resources.requests.cpu      | Requested CPU for `init-helper` container                                                                                                                                                                                |
-| init-helper-memory                  | config.sidecar.initContainers.helper.resources.requests.memory   | Requested memory for `init-helper` container                                                                                                                                                                             |
-| init-helper-cpu-limit               | config.sidecar.initContainers.helper.resources.limits.cpu        | CPU limit for `init-helper` container                                                                                                                                                                                    |
-| init-helper-memory-limit            | config.sidecar.initContainers.helper.resources.limits.memory     | Memory limit for `init-helper` container                                                                                                                                                                                 |
+| Annotation                          | Chart value                                                      | Description                                                                                                                                                                                                            |
+|-------------------------------------|------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| sidecar-injection-schema            | config.injectionStrategy.schema                                  | Sidecar deployment schema: `single` or `split`                                                                                                                                                                         |
+| sidecar-injection-iptables-enable   | config.injectionStrategy.iptablesEnable                          | Enable or disable `iptables` init container for port redirection: `true` or `false`                                                                                                                                    |
+| wallarm-application                 | NA                                                               | The ID of Wallarm application (optional)                                                                                                                                                                               |
+| wallarm-block-page                  | NA                                                               | Lets you set up the response to the blocked request, e.g. ``                                                                                                                                                           |
+| wallarm-enable-libdetection         | NA                                                               | Enables additional validation of the SQL Injection attacks via the libdetection library: `on` or `off`                                                                                                                 |
+| wallarm-mode                        | config.wallarm.mode                                              | Wallarm mode: `monitoring`, `block` or `off`                                                                                                                                                                           |
+| wallarm-mode-allow-override         | config.wallarm.modeAllowOverride                                 | Manages the ability to override the wallarm_mode values via filtering in the Cloud (custom ruleset): `on`, `off` or `strict`                                                                                           |
+| wallarm-parser-disable              | NA                                                               | Allows to disable parsers. The directive values corresponds to the name of the parser to be disabled. Multiple parser can be specified, dividing by semicolon. E.g. `json`, `json; base64`                             |
+| wallarm-parse-response              | config.wallarm.parseResponse                                     | Whether to analyze the application responses for attacks: `on` or `off`                                                                                                                                                |
+| wallarm-parse-websocket             | config.wallarm.parseWebsocket                                    | Whether to analyze WebSocket's messages for attacks: `on` or `off`                                                                                                                                                     |
+| wallarm-unpack-response             | config.wallarm.unpackResponse                                    | Whether to decompress compressed data returned in the application response: `on` or `off`                                                                                                                              |
+| wallarm-upstream-connect-attempts   | config.wallarm.upstream.connectAttempts                          | Defines the number of immediate reconnects to the Tarantool or Wallarm API                                                                                                                                             |
+| wallarm-upstream-reconnect-interval | config.wallarm.upstream.reconnectInterval                        | Defines the interval between attempts to reconnect to the Tarantool or Wallarm API                                                                                                                                     |
+| application-port                    | config.nginx.applicationPort                                     | Port listening by application container. This port is used as application container port, if pod has no exposed ports for application container. Refer `Application container port auto-discovery` section for details |
+| nginx-listen-port                   | config.nginx.listenPort                                          | Port listening by sidecar proxy container. This port is reserved for using by Wallarm sidecar, can't be the same as `config.nginx.applicationPort`                                                                     |
+| nginx-http-include                  | NA                                                               | JSON list of full paths to additional config files which should be included on `http` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details                |
+| nginx-http-snippet                  | NA                                                               | Additional inline config which should be included on `http` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details                                          |
+| nginx-server-include                | NA                                                               | JSON list of full paths to additional config files which should be included on `server` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details              |                                                                                                                                                                                                        |
+| nginx-server-snippet                | NA                                                               | Additional inline config which should be included on `server` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details                                        |
+| nginx-location-include              | NA                                                               | JSON list of full paths to additional config files which should be included on `location` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details            |                                                                                                                                                                                                         |
+| nginx-location-snippet              | NA                                                               | Additional inline config which should be included on `location` level of NGINX configuration. Refer "Using additional user provided Nginx configuration" section for more details                                      |
+| nginx-extra-modules                 | NA                                                               | JSON list of NGINX modules to enable. Refer "Enable additional Nginx modules" section for details                                                                                                                      |
+| proxy-extra-volumes                 | NA                                                               | User volumes to be added to the Pod (JSON object). Example: `"[{'name':'volumeName','configMap':{'name':'someConfigMapName'}}]"`                                                                                       |
+| proxy-extra-volume-mounts           | NA                                                               | User volume mounts to be added to the `proxy` container (JSON object). Example:`"[{'name':'volumeName','mountPath':'/some/thing'}]"`                                                                                   |
+| proxy-cpu                           | config.sidecar.containers.proxy.resources.requests.cpu           | Requested CPU for `proxy` container                                                                                                                                                                                    |
+| proxy-memory                        | config.sidecar.containers.proxy.resources.requests.memory        | Requested memory for `proxy` container                                                                                                                                                                                 |
+| proxy-cpu-limit                     | config.sidecar.containers.proxy.resources.limits.cpu             | CPU limit for `proxy` container                                                                                                                                                                                        |
+| proxy-memory-limit                  | config.sidecar.containers.proxy.resources.limits.memory          | Memory limit for `proxy` container                                                                                                                                                                                     |
+| helper-cpu                          | config.sidecar.containers.helper.resources.requests.cpu          | Requested CPU for `helper` container                                                                                                                                                                                   |
+| helper-memory                       | config.sidecar.containers.helper.resources.requests.memory       | Requested memory for `helper` container                                                                                                                                                                                |
+| helper-cpu-limit                    | config.sidecar.containers.helper.resources.limits.cpu            | CPU limit for `helper` container                                                                                                                                                                                       |
+| helper-memory-limit                 | config.sidecar.containers.helper.resources.limits.memory         | Memory limit for `helper` container                                                                                                                                                                                    |
+| init-iptables-cpu                   | config.sidecar.initContainers.iptables.resources.requests.cpu    | Requested CPU for `init-iptables` container                                                                                                                                                                            |
+| init-iptables-memory                | config.sidecar.initContainers.iptables.resources.requests.memory | Requested memory for `init-iptables` container                                                                                                                                                                         |
+| init-iptables-cpu-limit             | config.sidecar.initContainers.iptables.resources.limits.cpu      | CPU limit for `init-iptables` container                                                                                                                                                                                |
+| init-iptables-memory-limit          | config.sidecar.initContainers.iptables.resources.limits.memory   | Memory limit for `init-iptables` container                                                                                                                                                                             |
+| init-helper-cpu                     | config.sidecar.initContainers.helper.resources.requests.cpu      | Requested CPU for `init-helper` container                                                                                                                                                                              |
+| init-helper-memory                  | config.sidecar.initContainers.helper.resources.requests.memory   | Requested memory for `init-helper` container                                                                                                                                                                           |
+| init-helper-cpu-limit               | config.sidecar.initContainers.helper.resources.limits.cpu        | CPU limit for `init-helper` container                                                                                                                                                                                  |
+| init-helper-memory-limit            | config.sidecar.initContainers.helper.resources.limits.memory     | Memory limit for `init-helper` container                                                                                                                                                                               |
