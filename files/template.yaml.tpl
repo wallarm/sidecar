@@ -56,6 +56,8 @@ volumes:
     - name: WALLARM_PARSER_DISABLE
       value: "{{ index .ObjectMeta.Annotations (withAP `wallarm-parser-disable`) }}"
     {{- end  }}
+    - name: WALLARM_FALLBACK
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
     - name: WALLARM_MODE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-mode`) .Config.wallarm.mode }}"
     - name: WALLARM_MODE_ALLOW_OVERRIDE
