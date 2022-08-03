@@ -48,10 +48,22 @@ volumes:
     - name: WALLARM_APPLICATION
       value: "{{ index .ObjectMeta.Annotations (withAP `wallarm-application`) }}"
     {{- end  }}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-block-page")) -}}
+    - name: WALLARM_BLOCK_PAGE
+      value: "{{ index .ObjectMeta.Annotations (withAP `wallarm-block-page`) }}"
+    {{- end  }}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-parser-disable")) -}}
+    - name: WALLARM_PARSER_DISABLE
+      value: "{{ index .ObjectMeta.Annotations (withAP `wallarm-parser-disable`) }}"
+    {{- end  }}
+    - name: WALLARM_FALLBACK
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
     - name: WALLARM_MODE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-mode`) .Config.wallarm.mode }}"
     - name: WALLARM_MODE_ALLOW_OVERRIDE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-mode-allow-override`) .Config.wallarm.modeAllowOverride }}"
+    - name: WALLARM_ENABLE_LIB_DETECTION
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-enable-libdetection`) .Config.wallarm.enableLibDetection }}"
     - name: WALLARM_PARSE_RESPONSE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-parse-response`) .Config.wallarm.parseResponse }}"
     - name: WALLARM_PARSE_WEBSOCKET
@@ -84,13 +96,25 @@ volumes:
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"
     {{- end }}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-snippet")) -}}
+    - name: NGINX_HTTP_SNIPPET
+      value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-snippet`) }}"
+    {{- end }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-server-include")) -}}
     - name: NGINX_SERVER_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-server-include`) }}"
     {{- end }}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-server-snippet")) -}}
+    - name: NGINX_SERVER_SNIPPET
+      value: "{{ index .ObjectMeta.Annotations (withAP `nginx-server-snippet`) }}"
+    {{- end }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-location-include")) -}}
     - name: NGINX_LOCATION_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-location-include`) }}"
+    {{- end }}
+    {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-location-snippet")) -}}
+    - name: NGINX_LOCATION_SNIPPET
+      value: "{{ index .ObjectMeta.Annotations (withAP `nginx-location-snippet`) }}"
     {{- end }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-extra-modules")) -}}
     - name: NGINX_EXTRA_MODULES

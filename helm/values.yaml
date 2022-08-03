@@ -29,25 +29,32 @@ config:
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.
     ###
-    fallback: "on"
+    fallback: "off"
     ### Wallarm mode: `monitoring, `block` or `off`. See details in here:
-    ###   https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_mode
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_mode
     ###
     mode: monitoring
     ### Manages the ability to override the wallarm_mode values via filtering in
     ### the Cloud (custom ruleset): `on`, `off` or `strict`
     ###
     modeAllowOverride: "on"
+    ### Enables additional validation of the SQL Injection attacks via the libdetection library: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_enable_libdetection
+    ###
+    enableLibDetection: "off"
     ### Whether to analyze the application responses for attacks: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_response
     ###
     parseResponse: "on"
     ### Whether to analyze WebSocket's messages for attacks: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_websocket
     ###
     parseWebsocket: "off"
     ### Whether to decompress compressed data returned in the application response: `on` or `off`
     ###
     unpackResponse: "on"
     ### Post-analytics node endpoint configuration
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     upstream:
       ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
