@@ -151,7 +151,7 @@ jobs:
         uses: stefanprodan/helm-gh-pages@master
         with:
           token: ${{ secrets.HELM_PUBLISH_TOKEN }}
-          charts_dir: ./charts
+          charts_dir: .
           charts_url: https://charts.wallarm.com
           linting: off
           repository: helm-charts
