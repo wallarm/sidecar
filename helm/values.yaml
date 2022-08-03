@@ -29,7 +29,7 @@ config:
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.
     ###
-    fallback: "on"
+    fallback: "off"
     ### Wallarm mode: `monitoring, `block` or `off`. See details in here:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_mode
     ###
