@@ -36,14 +36,14 @@ helm install wallarm-sidecar wallarm/wallarm-sidecar -n wallarm-sidecar --create
 ```
 Where `${API_TOKEN}` is the Wallarm node API token
 
-## Configuration
+## Configuration flow
 All available configuration options (wallarm and nginx directives, deployment schema, container resources, etc.) can be configured
 either globally using Helm chart values or on per-pod basis using Pod's annotations. Pod's annotations takes precedence over global configuration.
 To see the list of all available configuration options refer section `List of annotations and corresponding chart values` below int this document.
 
 ### Global configuration
 Global configuration is set by default Helm chart values. This configuration can be overridden by user provided values file during helm install or upgrade.
-Global configuration options apply to all sidecar resources
+Global configuration options apply to all sidecar resources created by controller.
 
 ### Configuration from annotations 
 Configuration options which specified in Pod's annotations takes precedence over global configuration and applies on per-pod basis. 
@@ -108,6 +108,8 @@ spec:
       labels:
         app: myapp
         wallarm-sidecar: enabled
+      annotations:
+        sidecar.wallarm.io/wallarm-mode: block
     spec:
       containers:
         - name: application
@@ -346,6 +348,50 @@ spec:
 Here are two options to provide additional configuration into Nginx config of sidecar proxy: snippet and include.
 All these options work on per-pod basis using annotations.
 
+#### Configuration snippet
+Snippet is a simple way to add one-line directives into Nginx config. To add more complex directives use include. 
+Snippet can be applied to http, server and location sections, corresponding annotations are shown in the table below.
+
+| Nginx config section | Annotation                                  | 
+|----------------------|---------------------------------------------|
+| http                 | `sidecar.wallarm.io/nginx-http-snippet`     |
+| server               | `sidecar.wallarm.io/nginx-server-snippet`   |
+| location             | `sidecar.wallarm.io/nginx-location-snippet` |
+
+Example of using snippet with one directive is shown below:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+        wallarm-sidecar: enabled
+      annotations:
+        sidecar.wallarm.io/wallarm-mode: block
+        sidecar.wallarm.io/nginx-location-snippet: "disable_acl on"
+    spec:
+      containers:
+        - name: application
+          image: kennethreitz/httpbin
+          ports:
+            - name: http
+              containerPort: 80
+```
+
+NOTE: to use more than one directive - they must be divided by semicolon `;` as shown below:
+```yaml
+sidecar.wallarm.io/nginx-location-snippet: "disable_acl on;wallarm_timeslice 10"
+```
+
 #### Include
 This option allows to include additional configuration files into Nginx config. The format of annotation's value is JSON list.
 When use include, additional files need to be mounted into sidecar proxy from Kubernetes ConfigMap or Secret.
@@ -395,6 +441,43 @@ spec:
               containerPort: 80
 ```
 
+### Using Wallarm block page
+Wallarm block page(s) can be configured on per-pod basis using `sidecar.wallarm.io/wallarm-block-page` annotation.
+More details on the blocking page and error code configuration refer [Wallarm documentation](https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_block_page)
+Example of using block page is shown below:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+        wallarm-sidecar: enabled
+      annotations:
+        sidecar.wallarm.io/wallarm-mode: block
+        sidecar.wallarm.io/wallarm-block-page: "&/usr/share/nginx/html/wallarm_blocked.html response_code=403 type=attack,acl_ip,acl_source"
+    spec:
+      containers:
+        - name: application
+          image: kennethreitz/httpbin
+          ports:
+            - name: http
+              containerPort: 80
+```
+
+More than one block page con be configured, in that case pages should be divided by semicolon `;` like shown below:
+`sidecar.wallarm.io/wallarm-block-page: "&/path/to/block/page1.html response_code=403 type=attack;&/path/to/block/page2.html response_code=403 type=acl_ip,acl_source"`
+
+
 ## List of annotations and corresponding chart values
 
 All annotations below are specified without prefix `sidecar.wallarm.io/`, to use them properly just add this prefix, e.g. `sidecar.wallarm.io/wallarm-mode`
@@ -411,7 +494,7 @@ All annotations below are specified without prefix `sidecar.wallarm.io/`, to use
 | wallarm-fallback                    | config.wallarm.fallback                                          | Fallback mode: `on` or  `off`. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server, and location blocks, for which the data fails to download. NGINX keeps functioning. |
 | wallarm-mode                        | config.wallarm.mode                                              | Wallarm mode: `monitoring`, `block` or `off`                                                                                                                                                                                                                                                                       |
 | wallarm-mode-allow-override         | config.wallarm.modeAllowOverride                                 | Manages the ability to override the wallarm_mode values via filtering in the Cloud (custom ruleset): `on`, `off` or `strict`                                                                                                                                                                                       |
-| wallarm-parser-disable              | NA                                                               | Allows to disable parsers. The directive values corresponds to the name of the parser to be disabled. Multiple parser can be specified, dividing by semicolon. E.g. `json`, `json; base64`                                                                                                                         |
+| wallarm-parser-disable              | NA                                                               | Allows to disable parsers. The directive values corresponds to the name of the parser to be disabled, e.g. `json`. Multiple parser can be specified, dividing by semicolon, e.g. `json;base64`                                                                                                                     |
 | wallarm-parse-response              | config.wallarm.parseResponse                                     | Whether to analyze the application responses for attacks: `on` or `off`                                                                                                                                                                                                                                            |
 | wallarm-parse-websocket             | config.wallarm.parseWebsocket                                    | Whether to analyze WebSocket's messages for attacks: `on` or `off`                                                                                                                                                                                                                                                 |
 | wallarm-unpack-response             | config.wallarm.unpackResponse                                    | Whether to decompress compressed data returned in the application response: `on` or `off`                                                                                                                                                                                                                          |
