@@ -36,6 +36,47 @@ helm install wallarm-sidecar wallarm/wallarm-sidecar -n wallarm-sidecar --create
 ```
 Where `${API_TOKEN}` is the Wallarm node API token
 
+## Configuration
+All available configuration options (wallarm and nginx directives, deployment schema, container resources, etc.) can be configured
+either globally using Helm chart values or on per-pod basis using Pod's annotations. Pod's annotations takes precedence over global configuration.
+To see the list of all available configuration options refer section `List of annotations and corresponding chart values` below int this document.
+
+### Global configuration
+Global configuration is set by default Helm chart values. This configuration can be overridden by user provided values file during helm install or upgrade.
+Global configuration options apply to all sidecar resources
+
+### Configuration from annotations 
+Configuration options which specified in Pod's annotations takes precedence over global configuration and applies on per-pod basis. 
+If same option specified globally and in annotation then value from annotation will be applied.
+
+### Configuration priority
+Each configuration option is set in the following priorities:
+1. On per-pod basis using Annotations
+2. Globally by using user provided Helm chart values file
+3. Globally by using default Helm chart values
+
+## Supported Wallarm directives
+Below is the table with the list of supported Wallarm directives. Most of them can be configured either globally using Helm chart values
+or on per-pod basis using Pod's annotations. Those Wallarm directives which are not in the list can be configured by providing custom
+Nginx configuration - refer section `Using additional user provided Nginx configuration` below in this document.
+
+Note: some directives such as `wallarm_application`, `wallarm_block_page` and `wallarm_parser_disable` can be configured only by Pod's annotations.  
+
+| Directive                           | Globally | Annotations |
+|-------------------------------------|----------|-------------|
+ | wallarm_application                 | NO       | YES         |
+ | wallarm_block_page                  | NO       | YES         |
+| wallarm_enable_libdetection         | YES      | YES         |
+| wallarm_fallback                    | YES      | YES         |
+| wallarm_mode                        | YES      | YES         |
+| wallarm_mode_allow_override         | YES      | YES         |
+| wallarm_parser_disable              | NO       | YES         |
+| wallarm_parse_response              | YES      | YES         |
+| wallarm_parse_websocket             | YES      | YES         |
+| wallarm_unpack_response             | YES      | YES         |
+| wallarm_upstream_connect_attempts   | YES      | YES         |
+| wallarm_upstream_reconnect_interval | YES      | YES         |
+
 ## Usage
 ### Sidecar injection logic
 Sidecar injection is controlled on a per-pod basis, by configuring the `wallarm-sidecar` label on a pod.
@@ -46,7 +87,7 @@ Sidecar injection is controlled on a per-pod basis, by configuring the `wallarm-
 
 Sidecar injection has the following logic:
 1. If label is set to `enabled`, sidecar is injected
-2. If label is set to `disabled`, sidecar is not injected
+2. If label is set to `disabled`, or it is set any other value - sidecar is not injected
 3. If label is not present in Pod spec, sidecar is not injected
 
 Below is simple example of Kubernetes Deployment which has Wallarm sidecar enabled:
@@ -174,7 +215,7 @@ individually on per-pod basis using annotations. Annotations take precedence ove
 | Split, Single     | sidecar-proxy         | config.sidecar.containers.proxy.resources        |
 | Split             | sidecar-helper        | config.sidecar.containers.helper.resources       |
 | Split, Single     | sidecar-init-iptables | config.sidecar.initContainers.iptables.resources |
-| Split             | sidecar-init-iptables | config.sidecar.initContainers.helper.resources   |
+| Split             | sidecar-init-helper   | config.sidecar.initContainers.helper.resources   |
 
 Example of Helm chart values file for managing resources (requests & limits) globally
 
@@ -351,7 +392,7 @@ spec:
               containerPort: 80
 ```
 
-## List of annotations
+## List of annotations and corresponding chart values
 
 All annotations below are specified without prefix `sidecar.wallarm.io/`, to use them properly just add this prefix, e.g. `sidecar.wallarm.io/wallarm-mode`
 
@@ -362,7 +403,7 @@ All annotations below are specified without prefix `sidecar.wallarm.io/`, to use
 | sidecar-injection-schema            | config.injectionStrategy.schema                                  | Sidecar deployment schema: `single` or `split`                                                                                                                                                                                                                                                                     |
 | sidecar-injection-iptables-enable   | config.injectionStrategy.iptablesEnable                          | Enable or disable `iptables` init container for port redirection: `true` or `false`                                                                                                                                                                                                                                |
 | wallarm-application                 | NA                                                               | The ID of Wallarm application (optional)                                                                                                                                                                                                                                                                           |
-| wallarm-block-page                  | NA                                                               | Lets you set up the response to the blocked request, e.g. ``                                                                                                                                                                                                                                                       |
+| wallarm-block-page                  | NA                                                               | Lets you set up the response to the blocked request. Example: `&/usr/share/nginx/html/wallarm_blocked.html response_code=403 type=attack,acl_ip,acl_source`                                                                                                                                                        |
 | wallarm-enable-libdetection         | config.wallarm.enableLibDetection                                | Enables additional validation of the SQL Injection attacks via the libdetection library: `on` or `off`                                                                                                                                                                                                             |
 | wallarm-fallback                    | config.wallarm.fallback                                          | Fallback mode: `on` or  `off`. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server, and location blocks, for which the data fails to download. NGINX keeps functioning. |
 | wallarm-mode                        | config.wallarm.mode                                              | Wallarm mode: `monitoring`, `block` or `off`                                                                                                                                                                                                                                                                       |
