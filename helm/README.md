@@ -64,8 +64,8 @@ Note: some directives such as `wallarm_application`, `wallarm_block_page` and `w
 
 | Directive                           | Globally | Annotations |
 |-------------------------------------|----------|-------------|
- | wallarm_application                 | NO       | YES         |
- | wallarm_block_page                  | NO       | YES         |
+| wallarm_application                 | NO       | YES         |
+| wallarm_block_page                  | NO       | YES         |
 | wallarm_enable_libdetection         | YES      | YES         |
 | wallarm_fallback                    | YES      | YES         |
 | wallarm_mode                        | YES      | YES         |
