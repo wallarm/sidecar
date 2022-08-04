@@ -55,6 +55,10 @@ on:
       sidecar_tag:
         type: string
         required: false
+    secrets:
+      HELM_PUBLISH_TOKEN:
+        description: Helm publish token
+        required: false
 
 jobs:
   update_versions:
