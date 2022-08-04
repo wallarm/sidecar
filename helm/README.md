@@ -343,9 +343,12 @@ spec:
 ```
 
 ### Using additional user provided Nginx configuration
-Here is an option to include user provided configuration into Nginx config of sidecar proxy.
-Additional configuration can be included on 3 different levels of Nginx config on per-pod basis using annotations.
-The format of annotation's value is JSON list.
+Here are two options to provide additional configuration into Nginx config of sidecar proxy: snippet and include.
+All these options work on per-pod basis using annotations.
+
+#### Include
+This option allows to include additional configuration files into Nginx config. The format of annotation's value is JSON list.
+When use include, additional files need to be mounted into sidecar proxy from Kubernetes ConfigMap or Secret.
 
 | Nginx config section | Annotation                                  | Value type |
 |----------------------|---------------------------------------------|------------|
