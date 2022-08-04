@@ -346,7 +346,7 @@ spec:
 
 ### Using additional user provided Nginx configuration
 Here are two options to provide additional configuration into Nginx config of sidecar proxy: snippet and include.
-All these options work on per-pod basis using annotations.
+All these options work only on per-pod basis using annotations.
 
 #### Configuration snippet
 Snippet is a simple way to add one-line directives into Nginx config. To add more complex directives use include. 
