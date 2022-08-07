@@ -89,6 +89,8 @@ jobs:
     name: Update versions
     needs: test
     uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
+    secrets:
+      HELM_PUBLISH_TOKEN: ${{ secrets.HELM_PUBLISH_TOKEN }}
     with:
       upstream_update: ${{ github.event.client_payload.upstream_update }}
       upstream_tag: ${{ github.event.client_payload.upstream_tag }}
