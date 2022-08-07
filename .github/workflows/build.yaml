@@ -86,6 +86,8 @@ jobs:
     name: Update versions
     needs: push
     uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
+    secrets:
+      HELM_PUBLISH_TOKEN: ${{ secrets.HELM_PUBLISH_TOKEN }}
     with:
       controller_update: true
       controller_tag: ${{ needs.push.outputs.tag }}
