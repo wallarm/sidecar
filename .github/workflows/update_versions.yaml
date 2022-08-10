@@ -171,6 +171,7 @@ jobs:
           index_dir: .
           app_version: ${{ steps.get_versions.outputs.app_version }}
           chart_version: ${{ steps.get_versions.outputs.chart_version }}
+
   call_news_api:
     name: Call Wallarm News API
     needs: update_versions
