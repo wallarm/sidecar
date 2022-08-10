@@ -3,13 +3,13 @@
 -include env.ini
 
 DOCKERFILE       := ./Dockerfile
-TAG   	 		 ?= 0.1.0
+TAG   	 		 ?= 0.3.0
 IMAGE 	  		 ?= wallarm/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
 ### For embedding into the chart
 ###
-SIDECAR_IMAGE    := wallarm/sidecar:4.0.3-1
+SIDECAR_IMAGE    := wallarm/sidecar:4.0.5-1
 TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.0.5-1
 RUBY_IMAGE       := wallarm/ingress-ruby:4.0.5-1
 PYTHON_IMAGE     := wallarm/ingress-python:4.0.5-1
