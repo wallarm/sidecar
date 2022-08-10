@@ -52,3 +52,5 @@ jobs:
     needs: test
     if: ${{ github.event.action == 'closed' && github.event.pull_request.merged == true }}
     uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
+    secrets:
+      HELM_PUBLISH_TOKEN: ${{ secrets.HELM_PUBLISH_TOKEN }}
