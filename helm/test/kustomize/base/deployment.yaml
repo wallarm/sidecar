@@ -16,6 +16,7 @@ spec:
       containers:
         - name: application
           image: kennethreitz/httpbin
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 80

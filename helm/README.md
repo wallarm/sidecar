@@ -126,7 +126,7 @@ Deployment schema can be configured in the following ways:
 - on per-pod basis by setting Pod's annotation `sidecar.wallarm.io/sidecar-injection-schema` to `"single"` or `"split"`
 
 #### Single (default)
-`single` - is default deployment schema where only one additional container will be injected into a Pod, apart from 
+`single` - is a default deployment schema where only one additional container will be injected into a Pod, apart from 
 optional init container with iptables. This container contains Nginx proxy with Wallarm module and helper services.
 All these processes run and manage by supervisord. Below is the list of sidecar resources for single deployment schema:
 - `sidecar-init-iptables` init container with iptables. Enabled by default and can be disabled.

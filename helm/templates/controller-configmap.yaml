@@ -17,6 +17,7 @@ data:
   config.yaml: |-
     settings:
       {{- toYaml .Values.config | nindent 6 }}
+      #TODO 'version' is to be removed after Node 4.2 release
       version: {{ .Chart.AppVersion }}
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc

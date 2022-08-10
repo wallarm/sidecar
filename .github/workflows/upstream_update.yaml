@@ -91,6 +91,7 @@ jobs:
     uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
     secrets:
       HELM_PUBLISH_TOKEN: ${{ secrets.HELM_PUBLISH_TOKEN }}
+      NEWS_API_CREDS: ${{ secrets.NEWS_API_CREDS }}
     with:
       upstream_update: ${{ github.event.client_payload.upstream_update }}
       upstream_tag: ${{ github.event.client_payload.upstream_tag }}

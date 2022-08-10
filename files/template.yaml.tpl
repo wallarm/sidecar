@@ -40,9 +40,11 @@ volumes:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
-      #TODO Determine proper way to identify sidecar version
+      #TODO To be removed after Node 4.2 release
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
       value: "{{ .Config.version }}"
+    - name: WALLARM_SIDECAR_PROXY_VERSION
+      value: "{{ .Config.sidecar.image.tag }}"
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
     - name: WALLARM_APPLICATION
@@ -171,9 +173,11 @@ volumes:
       value: www-data
     - name: WALLARM_SYNCNODE_GROUP
       value: www-data
-      #TODO Determine proper way to identify sidecar version
+      #TODO To be removed after Node 4.2 release
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
       value: "{{ .Config.version }}"
+    - name: WALLARM_SIDECAR_PROXY_VERSION
+      value: "{{ .Config.sidecar.image.tag }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
@@ -192,13 +196,17 @@ volumes:
   command: ["/usr/local/run-addnode.sh"]
   env:
     {{ template "wallarmApiVariables" . }}
+    - name: WALLARM_FALLBACK
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
     - name: WALLARM_SYNCNODE_OWNER
       value: www-data
     - name: WALLARM_SYNCNODE_GROUP
       value: www-data
-      #TODO Determine proper way to identify sidecar version
+      #TODO To be removed after Node 4.2 release
     - name: WALLARM_INGRESS_CONTROLLER_VERSION
       value: "{{ .Config.version }}"
+    - name: WALLARM_SIDECAR_PROXY_VERSION
+      value: "{{ .Config.sidecar.image.tag }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
