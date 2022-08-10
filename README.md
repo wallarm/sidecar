@@ -4,8 +4,6 @@ Wallarm is the platform Dev, Sec, and Ops teams choose to build cloud-native app
 
 Wallarm filtering node can be installed as a sidecar container to the same pod as the main application container. The Wallarm node filters incoming requests and forwards legitimate requests to the application container. For automation this deployment we use Sidecar Controller that can be installed by this chart.
 
-TODO
-
 ## Usage
 Please refer Helm chart documentation [here](helm/README.md)
 
