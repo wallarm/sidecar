@@ -132,6 +132,17 @@ config:
     ### Port to Wallarm metrics endpoint (prometheus format)
     ###
     wallarmMetricsPath: /wallarm-metrics
+    ### Nginx directive 'real_ip_header' http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_header
+    ###
+    realIpHeader: X-Forwarded-For
+    ### Nginx directive 'set_real_ip_from' http://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from
+    ###
+    setRealIpFrom:
+      - 10.0.0.0/8
+      - 192.168.0.0/16
+      - 172.16.0.0/12
+      - 127.0.0.0/8
+      - fd00::/8
   ### Default configuration for sidecar init and regular containers
   ###
   sidecar:
@@ -140,7 +151,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.0.5-1"
+      tag: "4.0.5-2"
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
