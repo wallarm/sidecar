@@ -94,6 +94,10 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-wallarm-metrics-port`) .Config.nginx.wallarmMetricsPort }}"
     - name: NGINX_WALLARM_METRICS_PATH
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-wallarm-metrics-path`) .Config.nginx.wallarmMetricsPath }}"
+    - name: NGINX_REAL_IP_HEADER
+      value: "{{ .Config.nginx.realIpHeader }}"
+    - name: NGINX_SET_REAL_IP_FROM
+      value: '{{ toJson .Config.nginx.setRealIpFrom }}'
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-include")) -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"
