@@ -1,4 +1,4 @@
-FROM golang:1.18.3-alpine3.16 as builder
+FROM golang:1.18.5-alpine3.16 as builder
 
 RUN apk add --no-cache                         \
         bash                                   \
@@ -18,7 +18,7 @@ RUN go test -v .                            && \
         -o sidecar-controller .             && \
     upx -9 sidecar-controller
 
-FROM alpine:3.16
+FROM alpine:3.16.2
 
 ARG UID=65222
 ARG GID=65222
