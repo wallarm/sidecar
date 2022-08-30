@@ -40,9 +40,6 @@ volumes:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
-      #TODO To be removed after Node 4.2 release
-    - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.version }}"
     - name: WALLARM_SIDECAR_PROXY_VERSION
       value: "{{ .Config.sidecar.image.tag }}"
     {{- end  }}
@@ -177,11 +174,10 @@ volumes:
       value: www-data
     - name: WALLARM_SYNCNODE_GROUP
       value: www-data
-      #TODO To be removed after Node 4.2 release
-    - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.version }}"
     - name: WALLARM_SIDECAR_PROXY_VERSION
       value: "{{ .Config.sidecar.image.tag }}"
+    - name: NGINX_STATUS_PORT
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
@@ -206,9 +202,6 @@ volumes:
       value: www-data
     - name: WALLARM_SYNCNODE_GROUP
       value: www-data
-      #TODO To be removed after Node 4.2 release
-    - name: WALLARM_INGRESS_CONTROLLER_VERSION
-      value: "{{ .Config.version }}"
     - name: WALLARM_SIDECAR_PROXY_VERSION
       value: "{{ .Config.sidecar.image.tag }}"
   volumeMounts:

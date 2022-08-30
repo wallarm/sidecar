@@ -246,7 +246,8 @@ spec:
         - name: heartbeat
           image: {{ include "wallarm-sidecar.image" .Values.postanalytics.heartbeat.image }}
           imagePullPolicy: "{{ .Values.postanalytics.heartbeat.image.pullPolicy }}"
-          command: ["/opt/wallarm/ruby/usr/share/wallarm-common/synccloud"]
+          command: [ "/bin/dumb-init", "--" ]
+          args: [ "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode", "-p", "-r", "120", "-l", "STDOUT", "-L", "DEBUG" ]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: WALLARM_SYNCNODE
@@ -312,6 +313,44 @@ spec:
               - ALL
           {{- end }}
           {{- with .Values.postanalytics.appstructure.resources }}
+          resources: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+          - mountPath: /etc/wallarm
+            name: wallarm
+          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+        - name: antibot
+          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.antibot.image }}
+          imagePullPolicy: "{{ .Values.postanalytics.antibot.image.pullPolicy }}"
+          command: ["/opt/wallarm/python/usr/bin/antibotapiextractor"]
+          env:
+          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          {{- with .Values.postanalytics.antibot.extraEnvs }}
+          {{- . | toYaml | nindent 10 }}
+          {{- end }}
+          {{- with .Values.postanalytics.antibot.livenessProbe }}
+          livenessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.antibot.readinessProbe }}
+          readinessProbe: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- with .Values.postanalytics.antibot.lifecycle }}
+          lifecycle: {{ . | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if .Values.postanalytics.antibot.securityContext }}
+          securityContext: {{ .Values.postanalytics.antibot.securityContext | toYaml | nindent 12 }}
+          {{- else }}
+          securityContext:
+            privileged: false
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+          {{- end }}
+          {{- with .Values.postanalytics.antibot.resources }}
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
           volumeMounts:
