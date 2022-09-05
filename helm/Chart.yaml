@@ -25,7 +25,7 @@ annotations:
     - name: sidecar-controller
       image: wallarm/sidecar-controller:1.0.2
     - name: ingress-ruby
-      image: ingress-ruby:4.2.0-1
+      image: wallarm/ingress-ruby:4.2.0-1
     - name: ingress-python
       image: wallarm/ingress-python:4.2.0-1
     - name: ingress-tarantool
