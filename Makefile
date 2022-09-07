@@ -83,7 +83,7 @@ helm-install:
 	@$(HELM) install wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
 
 helm-diff:
-	@$(HELM) diff upgrade --allow-unreleased wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
+	@$(HELM) diff upgrade --debug --allow-unreleased wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
 
 helm-upgrade:
 	@$(HELM) upgrade wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
