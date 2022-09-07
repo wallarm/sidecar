@@ -23,7 +23,7 @@ annotations:
     - name: sidecar
       image: wallarm/sidecar:4.2.1-1
     - name: sidecar-controller
-      image: wallarm/sidecar-controller:1.0.2
+      image: wallarm/sidecar-controller:1.0.3
     - name: ingress-ruby
       image: wallarm/ingress-ruby:4.2.1-1
     - name: ingress-python

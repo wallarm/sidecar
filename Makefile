@@ -3,7 +3,7 @@
 -include env.ini
 
 DOCKERFILE       := ./Dockerfile
-TAG   	 		 ?= 1.0.2
+TAG   	 		 ?= 1.0.3
 IMAGE 	  		 ?= wallarm/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
