@@ -9,10 +9,10 @@ CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
 ### For embedding into the chart
 ###
-SIDECAR_IMAGE    := wallarm/sidecar:4.2.0-1
-TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.2.0-1
-RUBY_IMAGE       := wallarm/ingress-ruby:4.2.0-1
-PYTHON_IMAGE     := wallarm/ingress-python:4.2.0-1
+SIDECAR_IMAGE    := wallarm/sidecar:4.2.1-1
+TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.2.1-1
+RUBY_IMAGE       := wallarm/ingress-ruby:4.2.1-1
+PYTHON_IMAGE     := wallarm/ingress-python:4.2.1-1
 
 ### Contribution routines
 ###

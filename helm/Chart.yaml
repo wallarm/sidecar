@@ -1,7 +1,7 @@
 apiVersion: v2
 name: wallarm-sidecar
 version: 1.1.2
-appVersion: 4.2.0
+appVersion: 4.2.1
 description: Sidecar controller for Kubernetes. Injects sidecar proxy based on NGINX with Wallarm module and helper services.
 home: https://github.com/wallarm/sidecar
 icon: https://static.wallarm.com/wallarm-logo.svg
@@ -21,12 +21,12 @@ kubeVersion: ">=1.19.16-0"
 annotations:
   artifacthub.io/images: |
     - name: sidecar
-      image: wallarm/sidecar:4.2.0-1
+      image: wallarm/sidecar:4.2.1-1
     - name: sidecar-controller
       image: wallarm/sidecar-controller:1.0.2
     - name: ingress-ruby
-      image: wallarm/ingress-ruby:4.2.0-1
+      image: wallarm/ingress-ruby:4.2.1-1
     - name: ingress-python
-      image: wallarm/ingress-python:4.2.0-1
+      image: wallarm/ingress-python:4.2.1-1
     - name: ingress-tarantool
-      image: wallarm/ingress-tarantool:4.2.0-1
+      image: wallarm/ingress-tarantool:4.2.1-1
