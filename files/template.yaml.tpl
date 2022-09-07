@@ -95,6 +95,16 @@ volumes:
       value: "{{ .Config.nginx.realIpHeader }}"
     - name: NGINX_SET_REAL_IP_FROM
       value: '{{ toJson .Config.nginx.setRealIpFrom }}'
+    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE
+      value: "{{ .Config.nginx.tarantoolUpstream.keepalive }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE_REQUESTS
+      value: "{{ .Config.nginx.tarantoolUpstream.keepaliveRequests }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_FAILS
+      value: "{{ .Config.nginx.tarantoolUpstream.server.maxFails }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_FAIL_TIMEOUT
+      value: "{{ .Config.nginx.tarantoolUpstream.server.maxConns }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_CONNS
+      value: "{{ .Config.nginx.tarantoolUpstream.server.failTimeout }}"
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-include")) -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"
