@@ -71,7 +71,7 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-unpack-response`) .Config.wallarm.unpackResponse }}"
     - name: WALLARM_TARANTOOL_HOST
       value: "{{ .Config.tarantool.host }}"
-    - name: WALLARM_TARANTOOL_HOST
+    - name: WALLARM_TARANTOOL_PORT
       value: "{{ .Config.tarantool.port }}"
     - name: WALLARM_UPSTREAM_CONNECT_ATTEMPTS
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
