@@ -19,3 +19,4 @@ data:
       {{- toYaml .Values.config | nindent 6 }}
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
+        port: {{ .Values.postanalytics.service.port }}

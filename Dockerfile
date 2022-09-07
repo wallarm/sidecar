@@ -1,4 +1,4 @@
-FROM golang:1.18.5-alpine3.16 as builder
+FROM golang:1.19.0-alpine3.16 as builder
 
 RUN apk add --no-cache                         \
         bash                                   \
@@ -22,7 +22,9 @@ FROM alpine:3.16.2
 
 ARG UID=65222
 ARG GID=65222
-RUN apk add --no-cache                         \
+RUN apk update                              && \
+    apk upgrade                             && \
+    apk add --no-cache                         \
         bash                                   \
         curl                                && \
     addgroup -g ${GID} controller           && \

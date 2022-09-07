@@ -71,6 +71,8 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-unpack-response`) .Config.wallarm.unpackResponse }}"
     - name: WALLARM_TARANTOOL_HOST
       value: "{{ .Config.tarantool.host }}"
+    - name: WALLARM_TARANTOOL_PORT
+      value: "{{ .Config.tarantool.port }}"
     - name: WALLARM_UPSTREAM_CONNECT_ATTEMPTS
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
@@ -95,6 +97,16 @@ volumes:
       value: "{{ .Config.nginx.realIpHeader }}"
     - name: NGINX_SET_REAL_IP_FROM
       value: '{{ toJson .Config.nginx.setRealIpFrom }}'
+    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE
+      value: "{{ .Config.nginx.tarantoolUpstream.keepalive }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE_REQUESTS
+      value: "{{ .Config.nginx.tarantoolUpstream.keepaliveRequests }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_FAILS
+      value: "{{ .Config.nginx.tarantoolUpstream.server.maxFails }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_FAIL_TIMEOUT
+      value: "{{ .Config.nginx.tarantoolUpstream.server.maxConns }}"
+    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_CONNS
+      value: "{{ .Config.nginx.tarantoolUpstream.server.failTimeout }}"
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-include")) -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"

@@ -143,6 +143,27 @@ config:
       - 172.16.0.0/12
       - 127.0.0.0/8
       - fd00::/8
+    ### Parameters for Tarantool upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
+    ###
+    tarantoolUpstream:
+      ### 'keepalive' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
+      ###
+      keepalive: 16
+      ### 'keepalive_requests' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive_requests
+      ###
+      keepaliveRequests: 100
+      ### Parameters for 'server' directive. Refer to 'server' section of upstream module docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server
+      ###
+      server:
+        ### 'max_fails' parameter
+        ###
+        maxFails: 0
+        ### 'max_conns' parameter
+        ###
+        maxConns: 16
+        ### 'fail_timeout' parameter
+        ###
+        failTimeout: 0
   ### Default configuration for sidecar init and regular containers
   ###
   sidecar:
@@ -151,7 +172,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -282,7 +303,9 @@ postanalytics:
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
   updateStrategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
   ### Labels to add to the pods
   ###
   podLabels: {}
@@ -371,7 +394,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -419,7 +442,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -490,7 +513,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -543,7 +566,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-tarantool
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -599,7 +622,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -647,7 +670,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -695,7 +718,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.2.0-1"
+      tag: "4.2.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -810,7 +833,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.0.2"
+    tag: "1.0.3"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
