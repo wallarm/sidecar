@@ -303,7 +303,9 @@ postanalytics:
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
   updateStrategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
   ### Labels to add to the pods
   ###
   podLabels: {}
