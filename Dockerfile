@@ -24,7 +24,7 @@ ARG UID=65222
 ARG GID=65222
 RUN apk update                              && \
     apk upgrade                             && \
-    add --no-cache                             \
+    apk add --no-cache                         \
         bash                                   \
         curl                                && \
     addgroup -g ${GID} controller           && \
