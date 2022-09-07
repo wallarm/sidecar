@@ -143,6 +143,27 @@ config:
       - 172.16.0.0/12
       - 127.0.0.0/8
       - fd00::/8
+    ### Parameters for Tarantool upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
+    ###
+    tarantoolUpstream:
+      ### 'keepalive' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
+      ###
+      keepalive: 16
+      ### 'keepalive_requests' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive_requests
+      ###
+      keepaliveRequests: 100
+      ### Parameters for 'server' directive. Refer to 'server' section of upstream module docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#server
+      ###
+      server:
+        ### 'max_fails' parameter
+        ###
+        maxFails: 0
+        ### 'max_conns' parameter
+        ###
+        maxConns: 16
+        ### 'fail_timeout' parameter
+        ###
+        failTimeout: 0
   ### Default configuration for sidecar init and regular containers
   ###
   sidecar:
