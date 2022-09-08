@@ -21,7 +21,7 @@ services:
       dockerfile: ./Dockerfile
       args:
         KIND_VERSION: 0.14.0
-        KUBERNETES_VERSION: 1.24.2
+        KUBERNETES_VERSION: 1.25.0
     env_file:
       - env.ini
     privileged: true

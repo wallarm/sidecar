@@ -176,7 +176,7 @@ jobs:
           while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
             sleep 1
           done
-          kubectl -n pytest wait pods --all --for=condition=Ready
+          kubectl -n pytest wait pods --all --for=condition=Ready --timeout=60s
 
       - name: Run test
         run: |
