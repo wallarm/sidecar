@@ -1,3 +1,4 @@
+{{- if semverCompare ">=1.25.0" .Capabilities.KubeVersion.Version }}
 {{- if .Values.postanalytics.podDisruptionBudget }}
 {{- if .Values.postanalytics.podDisruptionBudget.enabled }}
 ---
@@ -27,5 +28,6 @@ spec:
   {{- with .Values.postanalytics.podDisruptionBudget.minAvailable }}
   minAvailable: {{ . }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
