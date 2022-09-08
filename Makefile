@@ -139,7 +139,7 @@ cluster-start:
 	@docker-compose up -d
 	@sleep 3
 	@docker-compose exec kubernetes bash -c \
-		'test "$$(kubectl version | grep Platform | wc -l)" == 2 && echo CLUSTER EXISTS || routines.py create'
+		'test "$$(kubectl version -o yaml | grep platform | wc -l)" == 2 && echo CLUSTER EXISTS || routines.py create'
 
 cluster-down:
 	@docker-compose down

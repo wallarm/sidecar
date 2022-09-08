@@ -1,6 +1,6 @@
 FROM docker:20.10.17-dind-alpine3.16 as builder
 
-ARG KUBERNETES_VERSION="1.22.9"
+ARG KUBERNETES_VERSION="1.25.0"
 
 WORKDIR /output
 COPY ./docker/manifests ./manifests
@@ -14,8 +14,8 @@ FROM docker:20.10.17-dind-alpine3.16
 
 USER root
 
-ARG KIND_VERSION=0.14.0
-ARG KUBERNETES_VERSION=1.22.9
+ARG KIND_VERSION=0.15.0
+ARG KUBERNETES_VERSION=1.25.0
 ARG HELM_VERSION=3.8.1
 
 RUN apk add --no-cache                                 \
