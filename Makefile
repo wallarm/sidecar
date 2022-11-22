@@ -9,10 +9,10 @@ CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
 ### For embedding into the chart
 ###
-SIDECAR_IMAGE    := wallarm/sidecar:4.2.1-1
-TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.2.1-1
-RUBY_IMAGE       := wallarm/ingress-ruby:4.2.1-1
-PYTHON_IMAGE     := wallarm/ingress-python:4.2.1-1
+SIDECAR_IMAGE    := wallarm/sidecar:4.4.0-1
+TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.4.0-1
+RUBY_IMAGE       := wallarm/ingress-ruby:4.4.0-1
+PYTHON_IMAGE     := wallarm/ingress-python:4.4.0-1
 
 ### Contribution routines
 ###
@@ -80,7 +80,7 @@ helm-template:
 	@$(HELM) template wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS) --debug
 
 helm-install:
-	@$(HELM) install wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
+	@$(HELM) upgrade --install wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
 
 helm-diff:
 	@$(HELM) diff upgrade --debug --allow-unreleased wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
