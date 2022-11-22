@@ -77,7 +77,7 @@ jobs:
 
       - name: Get latest Chart version
         id: get_latest_chart_version
-        run: echo "::set-output name=version::$(yq -r '.version' helm/Chart.yaml)"
+        run: echo "version=$(yq -r '.version' helm/Chart.yaml)" >> $GITHUB_OUTPUT
 
       - name: Increment Chart version
         id: bump_chart_version
@@ -105,7 +105,7 @@ jobs:
            (.postanalytics.tarantool.image.tag = env(TAG)) |
            (.postanalytics.heartbeat.image.tag = env(TAG)) |
            (.postanalytics.appstructure.image.tag = env(TAG))' helm/values.yaml
-          echo "::set-output name=next-version::${VERSION}"
+          echo "next-version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Update sidecar version
         if: ${{ inputs.sidecar_update }}
@@ -155,8 +155,8 @@ jobs:
       - name: Get versions
         id: get_versions
         run: |
-          echo "::set-output name=chart_version::$(yq -r '.version' helm/Chart.yaml)"
-          echo "::set-output name=app_version::$(yq -r '.appVersion' helm/Chart.yaml)"
+          echo "chart_version=$(yq -r '.version' helm/Chart.yaml)" >> $GITHUB_OUTPUT
+          echo "app_version=$(yq -r '.appVersion' helm/Chart.yaml)" >> $GITHUB_OUTPUT
 
       - name: Publish
         uses: stefanprodan/helm-gh-pages@master
