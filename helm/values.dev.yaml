@@ -8,10 +8,6 @@ config:
       token: "123"
       host: api.wallarm.com
       port: 443
-  sidecar:
-    containers:
-      proxy:
-        readinessProbeEnable: false
 
 controller:
   image:

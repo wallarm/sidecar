@@ -69,7 +69,7 @@ jobs:
             HELM_ARGS+=" --set config.sidecar.image.tag=${SIDECAR_TAG}"
           fi
           
-          echo "::set-output name=helm_args::${HELM_ARGS}"
+          echo "helm_args=${HELM_ARGS}" >> $GITHUB_OUTPUT
 
   test:
     name: Test

@@ -29,9 +29,9 @@ jobs:
         id: check
         run: |
           if [ "${{ github.event.action }}" == "closed" ] && [ ${{ github.event.pull_request.merged }} == true ]; then
-            echo "::set-output name=ref::${{ github.base_ref }}"
+            echo "ref=${{ github.base_ref }}" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=ref::${{ github.head_ref }}"
+            echo "ref=${{ github.head_ref }}" >> $GITHUB_OUTPUT
           fi
 
   test:
