@@ -438,54 +438,6 @@ postanalytics:
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-  exportenv:
-    image:
-      registry: docker.io
-      image: wallarm/ingress-ruby
-      tag: "4.4.0-1"
-      pullPolicy: IfNotPresent
-    ### Additional environment variables to pass to the container
-    ###
-    extraEnvs: []
-    # - name: FOO
-    #   value: FOO
-    # - name: BAR
-    #   valueFrom:
-    #     secretKeyRef:
-    #       key: BAR
-    #       name: bar-secret
-
-    ### Lifecycle hooks
-    ### https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
-    ###
-    lifecycle: {}
-    ### Privilegues and access controls for the container
-    ### https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-    ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#securitycontext-v1-core
-    ###
-    securityContext: {}
-    ### The number of resources required for the container
-    ### https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-    ###
-    resources: {}
-    # limits:
-    #   cpu: 250m
-    #   memory: 300Mi
-    # requests:
-    #   cpu: 50m
-    #   memory: 150Mi
-
-    ### Liveness probe for the container. Disabled by default
-    ###
-    livenessProbe: {}
-    ### Readiness probe for the container. Disabled by default
-    ###
-    readinessProbe: {}
-    ## Additional volumes that should be mounted to the container
-    ##
-    extraVolumeMounts: []
-    # - name: something
-    #   mountPath: /mnt/something
   cron:
     config:
       ### Cron jobs configuration
