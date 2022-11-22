@@ -462,6 +462,10 @@ postanalytics:
         schedule: "* * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-markers -l STDOUT"
         timeout: 1h
+      "weak-jwt-detect":
+        schedule: "* * * * *"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/weak-jwt-detect -l STDOUT"
+        timeout: 10m
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
