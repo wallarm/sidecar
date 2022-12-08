@@ -1,6 +1,9 @@
 ci:
 - '.github/**/*'
 
+tests:
+- 'helm/test/**/*'
+
 controller:
 - 'cmd/*'
 - 'files/*'
@@ -13,6 +16,3 @@ documentation:
 
 helm:
 - any: ['helm/**/*', '!helm/values.*.yaml','!helm/Chart.yaml', '!helm/test/**/*', '!helm/README.md']
-
-tests:
-- 'helm/test/**/*'
