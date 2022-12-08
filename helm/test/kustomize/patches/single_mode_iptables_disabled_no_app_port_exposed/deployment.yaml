@@ -1,0 +1,10 @@
+- op: add
+  path: /spec/template/metadata/annotations
+  value:
+    sidecar.wallarm.io/wallarm-mode: block
+    sidecar.wallarm.io/sidecar-injection-iptables-enable: "false"
+    sidecar.wallarm.io/application-port: "80"
+- op: remove
+  path: /spec/template/spec/containers/0/readinessProbe
+- op: remove
+  path: /spec/template/spec/containers/0/ports/0
