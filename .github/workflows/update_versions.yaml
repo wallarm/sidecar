@@ -99,8 +99,7 @@ jobs:
           export VERSION=$(echo "${TAG}" | cut -d "-" -f 1)    
           yq e -i '.appVersion = env(VERSION)' helm/Chart.yaml
           yq e -i \
-          '(.postanalytics.addnode.image.tag = env(TAG)) |
-           (.postanalytics.exportenv.image.tag = env(TAG)) |
+          '(.postanalytics.init.image.tag = env(TAG)) |
            (.postanalytics.cron.image.tag = env(TAG)) |
            (.postanalytics.tarantool.image.tag = env(TAG)) |
            (.postanalytics.heartbeat.image.tag = env(TAG)) |
