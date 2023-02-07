@@ -73,7 +73,7 @@ jobs:
   test:
     name: Test
     needs: preparation
-    uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
+    uses: wallarm/sidecar/.github/workflows/test.yaml@main
     secrets:
       API_TOKEN: ${{ secrets.API_TOKEN }}
     with:

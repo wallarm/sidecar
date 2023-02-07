@@ -1,4 +1,4 @@
-name: Test Helm
+name: Test
 
 on:
   workflow_dispatch:
@@ -38,10 +38,6 @@ on:
         required: false
       load_artifact:
         type: boolean
-        required: false
-    secrets:
-      API_TOKEN:
-        description: Wallarm API token
         required: false
 
 
@@ -112,7 +108,7 @@ jobs:
     name: Integration test
     if: ${{ inputs.run_test }}
     needs: check
-    runs-on: ubuntu-latest
+    runs-on: self-hosted-1cpu
     strategy:
       matrix:
         kubeVersion:
@@ -124,22 +120,28 @@ jobs:
           - 1.24.7
           - 1.25.3
     steps:
+      - name: Import secrets
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
+        id: secrets
+        with:
+          exportEnv: true
+          url: ${{ vars.VAULT_URL }}
+          role: ${{ vars.VAULT_ROLE }}
+          method: kubernetes
+          secrets: kv-gitlab-ci/data/github/sidecar api_token
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.check.outputs.ref }}
 
       - name: Create cluster
-        uses: helm/kind-action@v1.3.0
-        with:
-          verbosity: "0"
-          wait: "240s"
-          config: helm/test/kind/kind.yaml
-          node_image: kindest/node:v${{ matrix.kubeVersion }}
-          cluster_name: kind
-
-      - name: Wait cluster
         run: |
+          kind create cluster \
+            --config ${GITHUB_WORKSPACE}/helm/test/kind/kind.yaml \
+            --image kindest/node:v${{ matrix.kubeVersion }} \
+            --name kind \
+            --wait 240s
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           echo "current-context:" $(kubectl config current-context)
@@ -158,10 +160,9 @@ jobs:
 
       - name: Install Helm chart
         run: |
-          set -x
-          helm version
+          unset KUBERNETES_SERVICE_HOST
           helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
-            --set config.wallarm.api.token=${{ secrets.API_TOKEN }} \
+            --set config.wallarm.api.token=${API_TOKEN} \
             --debug \
             --timeout 5m0s \
             --wait ${{ inputs.helm_args }}
@@ -171,6 +172,7 @@ jobs:
 
       - name: Deploy pytest
         run: |
+          unset KUBERNETES_SERVICE_HOST
           kubectl apply -f kind/docker/manifests/init/pytest.yaml
           while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
             sleep 1
@@ -179,5 +181,6 @@ jobs:
 
       - name: Run test
         run: |
+          unset KUBERNETES_SERVICE_HOST
           POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
           kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
