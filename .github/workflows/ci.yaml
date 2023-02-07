@@ -51,8 +51,7 @@ jobs:
   test:
     name: Test
     needs: build
-    #TODO put @main before merge !!!!
-    uses: wallarm/sidecar/.github/workflows/test.yaml@DEVOPS-1863
+    uses: wallarm/sidecar/.github/workflows/test.yaml@main
     with:
       ref: ${{ github.head_ref }}
       run_lint: true
