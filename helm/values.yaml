@@ -10,7 +10,8 @@ config:
   ###
   wallarm:
     api:
-      ### Token to authorize in the Wallarm Cloud. Required.
+      ### Token to authorize in the Wallarm Cloud. Required by default if 'existingSecret.enabled=false'
+      ### As a second option Wallarm API token can be pulled from existing Kubernetes secret, see section 'existingSecret' below
       ###
       token: ""
       ### Address of Wallarm API service
@@ -25,6 +26,18 @@ config:
       ### Verify CA during connecting to Wallarm API service: `true` or `false`
       ###
       caVerify: true
+      ### Existing secret feature allows to pull Wallarm API token from existing Kubernetes secret
+      ###
+      existingSecret:
+        ### Enable or disable the feature: 'true' or 'false'
+        ###
+        enabled: false
+        ### The key in which the Wallarm API token is placed
+        ###
+        secretKey: token
+        ### The name of Kubernetes secret
+        ###
+        secretName: wallarm-api-token
     ### Fallback mode. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.

@@ -276,7 +276,7 @@ volumes:
     - name: WALLARM_API_PORT
       value: "{{ .Config.wallarm.api.port }}"
     - name: WALLARM_API_TOKEN
-      value: "{{ .Config.wallarm.api.token }}"
+      value: "{{ .Secrets.Token }}"
     - name: WALLARM_API_USE_SSL
       value: "{{ .Config.wallarm.api.useSSL }}"
     - name: WALLARM_API_CA_VERIFY

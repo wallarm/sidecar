@@ -129,6 +129,12 @@ Gives name of image to use
 - name: WALLARM_API_TOKEN
   valueFrom:
     secretKeyRef:
+      {{- $existingSecret := index .Values.config.wallarm.api "existingSecret" | default dict }}
+      {{- if $existingSecret.enabled }}
+      key: {{ $existingSecret.secretKey }}
+      name: {{ $existingSecret.secretName }}
+      {{- else }}
       key: WALLARM_API_TOKEN
       name: {{ template "wallarm-sidecar.fullname" . }}-credentials
+      {{- end }}
 {{- end -}}
