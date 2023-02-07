@@ -138,3 +138,17 @@ Gives name of image to use
       name: {{ template "wallarm-sidecar.fullname" . }}-credentials
       {{- end }}
 {{- end -}}
+
+{{/*
+The name of Wallarm component
+*/}}
+{{- define "wallarm-sidecar.componentName" -}}
+wallarm-sidecar-proxy
+{{- end -}}
+
+{{- define "wallarm-sidecar.version" -}}
+- name: WALLARM_COMPONENT_NAME
+  value: {{ template "wallarm-sidecar.componentName" . }}
+- name: WALLARM_COMPONENT_VERSION
+  value: {{ .Chart.Version | quote }}
+{{- end -}}

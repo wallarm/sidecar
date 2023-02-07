@@ -40,8 +40,7 @@ volumes:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
-    - name: WALLARM_SIDECAR_PROXY_VERSION
-      value: "{{ .Config.sidecar.image.tag }}"
+    {{ template "wallarmVersion" . }}
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
     - name: WALLARM_APPLICATION
@@ -182,12 +181,7 @@ volumes:
   env:
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmCronVariables" . }}
-    - name: WALLARM_SYNCNODE_OWNER
-      value: www-data
-    - name: WALLARM_SYNCNODE_GROUP
-      value: www-data
-    - name: WALLARM_SIDECAR_PROXY_VERSION
-      value: "{{ .Config.sidecar.image.tag }}"
+    {{ template "wallarmVersion" . }}
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
   volumeMounts:
@@ -208,14 +202,9 @@ volumes:
   command: ["/usr/local/run-addnode.sh"]
   env:
     {{ template "wallarmApiVariables" . }}
+    {{ template "wallarmVersion" . }}
     - name: WALLARM_FALLBACK
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
-    - name: WALLARM_SYNCNODE_OWNER
-      value: www-data
-    - name: WALLARM_SYNCNODE_GROUP
-      value: www-data
-    - name: WALLARM_SIDECAR_PROXY_VERSION
-      value: "{{ .Config.sidecar.image.tag }}"
   volumeMounts:
     - mountPath: /etc/wallarm
       name: wallarm
@@ -281,6 +270,13 @@ volumes:
       value: "{{ .Config.wallarm.api.useSSL }}"
     - name: WALLARM_API_CA_VERIFY
       value: "{{ .Config.wallarm.api.caVerify }}"
+{{- end }}
+
+{{- define "wallarmVersion" }}
+    - name: WALLARM_COMPONENT_NAME
+      value: "{{ .Config.component.name }}"
+    - name: WALLARM_COMPONENT_VERSION
+      value: "{{ .Config.component.version }}"
 {{- end }}
 
 {{- define "wallarmCronVariables" }}
