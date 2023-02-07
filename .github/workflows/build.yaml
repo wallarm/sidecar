@@ -1,93 +1,66 @@
-name: Build new version
+name: Build release image
 
 on:
   push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - 'main'
+    paths:
+      - 'TAG'
 
-env:
-  IMAGE: wallarm/sidecar-controller
+permissions:
+  contents: read
 
 jobs:
   build:
-    name: Build
-    runs-on: ubuntu-latest
-    outputs:
-      helm_args: ${{ steps.compute_helm_args.outputs.helm_args }}
+    name: Build and push images
+    runs-on: self-hosted-1cpu
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
 
-      - name: Build
-        run: |
-          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
-          mkdir artifacts
-          docker save -o artifacts/docker-image.tar ${IMAGE}:${GITHUB_SHA}
-
-      - name: Save artifact
-        uses: actions/upload-artifact@v3
+      - name: Import secrets
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
+        id: secrets
         with:
-          name: docker-artifact
-          path: artifacts/docker-image.tar
-          retention-days: 1
+          exportEnv: true
+          url: ${{ vars.VAULT_URL }}
+          role: ${{ vars.VAULT_ROLE }}
+          method: kubernetes
+          secrets: |
+            kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
+            kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
+            kv-gitlab-ci/data/node/build/cosign password | COSIGN_PASSWORD ;
+            kv-gitlab-ci/data/node/build/cosign private_key | COSIGN_PRIVATE_KEY ;
 
-      - name: Compute Helm arguments
-        id: compute_helm_args
+      - name: Build image
+        run: make build
+
+      - name: Push image
         run: |
-          HELM_ARGS="--set controller.image.tag=${GITHUB_SHA}"
-          echo "helm_args=${HELM_ARGS}" >> $GITHUB_OUTPUT
+          echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USER} --password-stdin
+          make push
 
-  test:
-    name: Test
-    needs: build
-    uses: wallarm/sidecar/.github/workflows/test_helm.yaml@main
-    secrets:
-      API_TOKEN: ${{ secrets.API_TOKEN }}
-    with:
-      ref: "main"
-      run_lint: false
-      run_validate: false
-      run_test: true
-      helm_args: ${{ needs.build.outputs.helm_args }}
-      load_artifact: true
-
-  push:
-    name: Push
-    needs: test
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.format_tag.outputs.tag }}
-    steps:
-      - name: Docker login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USER}}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Restore artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: docker-artifact
-          path: artifacts
-
-      - name: Load image
-        run: docker load -q -i artifacts/docker-image.tar
-
-      - name: Format tag
-        id: format_tag
-        run: echo "tag=$(echo ${GITHUB_REF_NAME} | cut -d 'v' -f 2)" >> $GITHUB_OUTPUT
-
-      - name: Tag and push
+      - name: Sign image
+        id: sign
         run: |
-          docker tag ${IMAGE}:${GITHUB_SHA} ${IMAGE}:${{ steps.format_tag.outputs.tag }}
-          docker push ${IMAGE}:${{ steps.format_tag.outputs.tag }}
+          TAG=$(cat TAG)
+          IMAGE_NAME="wallarm/sidecar-controller:${TAG}"
+          docker pull -q ${IMAGE_NAME}
 
-  update_versions:
-    name: Update versions
-    needs: push
-    uses: wallarm/sidecar/.github/workflows/update_versions.yaml@main
-    secrets:
-      HELM_PUBLISH_TOKEN: ${{ secrets.HELM_PUBLISH_TOKEN }}
-    with:
-      controller_update: true
-      controller_tag: ${{ needs.push.outputs.tag }}
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${IMAGE_NAME})
+          IMAGE_URI=$(echo $IMAGE_DIGEST | sed -e 's/\@sha256:/:sha256-/')
+          SBOM_SPDX="sidecar-controller_${TAG}_spdx.json"
+
+          syft -o spdx-json ${IMAGE_NAME} > ${SBOM_SPDX}
+          cosign attach sbom --sbom ${SBOM_SPDX} ${IMAGE_DIGEST}
+          cosign sign --key env://COSIGN_PRIVATE_KEY "${IMAGE_URI}.sbom"
+          cosign sign --key env://COSIGN_PRIVATE_KEY ${IMAGE_DIGEST}
+
+          echo "sbom=${SBOM_SPDX}" >> $GITHUB_OUTPUT
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
+        with:
+          retention-days: 30
+          name: ${{ steps.sign.outputs.sbom }}
+          path: ${{ steps.sign.outputs.sbom }}

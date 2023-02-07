@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ['main']
+    types: ['opened', 'reopened', 'synchronize']
+    paths:
+      - 'helm/**'
+      - 'files/**'
+      - 'cmd/**'
+      - 'go.*'
+      - 'Dockerfile'
+      - '!helm/Chart.yaml'
+      - '!helm/README.md'
+      - '!helm/test/**'
+      - '!helm/values.*.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: self-hosted-1cpu
+    outputs:
+      helm_args: ${{ steps.compute_helm_args.outputs.helm_args }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          IMAGE="wallarm/sidecar-controller"
+          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
+          mkdir artifacts
+          docker save -o artifacts/docker-image.tar ${IMAGE}:${GITHUB_SHA}
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-artifact
+          path: artifacts/docker-image.tar
+          retention-days: 1
+
+      - name: Compute Helm arguments
+        id: compute_helm_args
+        run: |
+          HELM_ARGS="--set controller.image.tag=${GITHUB_SHA}"
+          echo "helm_args=${HELM_ARGS}" >> $GITHUB_OUTPUT
+  test:
+    name: Test
+    needs: build
+    uses: wallarm/sidecar/.github/workflows/test.yaml@main
+    with:
+      ref: ${{ github.head_ref }}
+      run_lint: true
+      run_validate: true
+      run_test: true
+      helm_args: ${{ needs.build.outputs.helm_args }}
+      load_artifact: true

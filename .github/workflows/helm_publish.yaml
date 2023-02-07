@@ -1,0 +1,46 @@
+name: Publish Helm
+on:
+  push:
+    tags:
+      - 'helm-chart-[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: self-hosted-1cpu
+    steps:
+      - name: Import secrets
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
+        id: secrets
+        with:
+          exportEnv: false
+          url: ${{ vars.VAULT_URL }}
+          role: ${{ vars.VAULT_ROLE }}
+          method: kubernetes
+          secrets: |
+            kv-gitlab-ci/data/github/shared/github_token token | GITHUB_TOKEN ;
+
+      - name: Checkout
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c
+
+      - name: Get versions
+        id: get_versions
+        run: |
+          echo "chart_version=$(echo ${GITHUB_REF_NAME} | cut -d '-' -f 3)" >> $GITHUB_OUTPUT
+          echo "app_version=$(yq -r '.appVersion' helm/Chart.yaml)" >> $GITHUB_OUTPUT
+
+      - name: Publish
+        uses: stefanprodan/helm-gh-pages@master
+        with:
+          token: ${{ steps.secrets.outputs.GITHUB_TOKEN }}
+          charts_dir: .
+          charts_url: https://charts.wallarm.com
+          linting: off
+          repository: helm-charts
+          branch: main
+          target_dir: wallarm-sidecar
+          index_dir: .
+          app_version: ${{ steps.get_versions.outputs.app_version }}
+          chart_version: ${{ steps.get_versions.outputs.chart_version }}
