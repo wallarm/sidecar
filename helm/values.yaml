@@ -846,7 +846,7 @@ controller:
   ### Number of deployment replicas. It is recommended to use more that one pods
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
-  replicaCount: 2
+  replicaCount: 1
   ### Settings for automated rolling updates
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
