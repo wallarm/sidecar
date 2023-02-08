@@ -10,7 +10,8 @@ config:
   ###
   wallarm:
     api:
-      ### Token to authorize in the Wallarm Cloud. Required.
+      ### Token to authorize in the Wallarm Cloud. Required by default if 'existingSecret.enabled=false'
+      ### As a second option Wallarm API token can be pulled from existing Kubernetes secret, see section 'existingSecret' below
       ###
       token: ""
       ### Address of Wallarm API service
@@ -25,6 +26,18 @@ config:
       ### Verify CA during connecting to Wallarm API service: `true` or `false`
       ###
       caVerify: true
+      ### Existing secret feature allows to pull Wallarm API token from existing Kubernetes secret
+      ###
+      existingSecret:
+        ### Enable or disable the feature: 'true' or 'false'
+        ###
+        enabled: false
+        ### The key in which the Wallarm API token is placed
+        ###
+        secretKey: token
+        ### The name of Kubernetes secret
+        ###
+        secretName: wallarm-api-token
     ### Fallback mode. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.
@@ -295,7 +308,7 @@ imagePullSecrets: []
 ### Configuration for post-analytics module
 ###
 postanalytics:
-  ### Number of deployment replicas. Values more that zero doesn't supported officially
+  ### Number of deployment replicas. Values more that zero is not supported officially
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
   replicaCount: 1
@@ -381,7 +394,7 @@ postanalytics:
   #   image: busybox
   #   command: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']
 
-  ### Volumes that should attached to pods
+  ### Volumes that should be attached to pods
   ###
   extraVolumes: []
   # - name: something
@@ -674,7 +687,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.4.0-1"
+      tag: "4.4.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -774,7 +787,7 @@ postanalytics:
   serviceAccount:
     create: true
     ## Name of the ServiceAccount. If creating not required then
-    ## this name must be name of existing ServiceAccount object
+    ## this name must be the name of existing ServiceAccount object
     ##
     name: ""
     ## Annotations for the created Service Account
@@ -788,7 +801,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.0.3"
+    tag: "1.1.0"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
@@ -799,7 +812,7 @@ controller:
     failurePolicy: Fail
     ### Cluster DNS name for resources discovery. Will be used only for creating/signing certificates
     ### required for running admission webhook controller. For many Kubernetes clusters this is
-    ### "cluster.local" and you need not to change this for common cases.
+    ### "cluster.local" and you don't need to change this for common cases.
     ###
     clusterDomainName: cluster.local
     ### Specifies the timeout for this webhook. After the timeout passes, the webhook call will be
@@ -833,7 +846,7 @@ controller:
   ### Number of deployment replicas. It is recommended to use more that one pods
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
-  replicaCount: 2
+  replicaCount: 1
   ### Settings for automated rolling updates
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentstrategy-v1-apps
   ###
@@ -998,7 +1011,7 @@ controller:
   #   mountPath: /mnt/something
 
   ###
-  ### Other controller' objects
+  ### Other controller's objects
   ###
   service:
     ### Service type
@@ -1053,7 +1066,7 @@ controller:
   serviceAccount:
     create: true
     ## Name of the ServiceAccount. If creating not required then
-    ## this name must be name of existing ServiceAccount object
+    ## this name must be the name of existing ServiceAccount object
     ##
     name: ""
     ## Annotations for the created Service Account

@@ -151,6 +151,7 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 
 	sidecar, errConstructSidecar := ConstructSidecar(config.Template, SidecarContext{
 		Config:     &config.Settings,
+		Secrets:    &config.Secrets,
 		ObjectMeta: &pod.ObjectMeta,
 		PodSpec:    &pod.Spec,
 	})

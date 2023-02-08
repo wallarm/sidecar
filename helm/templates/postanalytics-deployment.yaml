@@ -75,10 +75,7 @@ spec:
             timeout 10m /opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT || true
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
-          - name: WALLARM_SYNCNODE_OWNER
-            value: www-data
-          - name: WALLARM_SYNCNODE_GROUP
-            value: www-data
+          {{- include "wallarm-sidecar.version" . | nindent 10 }}
           {{- with .Values.postanalytics.init.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
@@ -124,8 +121,7 @@ spec:
           args: ["/bin/supercronic", "-json", "/opt/cron/crontab"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
-          - name: WALLARM_INGRESS_CONTROLLER_VERSION
-            value: {{ .Chart.AppVersion | quote }}
+          {{- include "wallarm-sidecar.version" . | nindent 10 }}
           {{- with .Values.postanalytics.cron.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}

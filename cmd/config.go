@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -16,6 +15,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const tokenEnvVar = "WALLARM_API_TOKEN"
+
 var config Config
 
 type Config struct {
@@ -26,6 +27,11 @@ type Config struct {
 	Deserializer runtime.Decoder    `yaml:"-" json:"-"`
 	Template     *template.Template `yaml:"-" json:"-"`
 	Settings     TemplateContext    `yaml:"settings"`
+	Secrets      Secrets            `yaml:"-" json:"-"`
+}
+
+type Secrets struct {
+	Token string
 }
 
 type Args struct {
@@ -94,7 +100,7 @@ func (c *Config) InitConfig(filename string) error {
 	isThereError := false
 
 	// Read file
-	configFileContent, errFileContent := ioutil.ReadFile(filename)
+	configFileContent, errFileContent := os.ReadFile(filename)
 	if errFileContent != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "config",
@@ -124,10 +130,41 @@ func (c *Config) InitConfig(filename string) error {
 	return nil
 }
 
+func (c *Config) InitSecrets() error {
+	isThereError := false
+
+	token, ok := os.LookupEnv(tokenEnvVar)
+	if !ok {
+		logrus.WithFields(logrus.Fields{
+			"action": "config",
+		}).Errorf("Evironment variable must be set: %s", tokenEnvVar)
+		isThereError = true
+	}
+
+	if token == "" {
+		logrus.WithFields(logrus.Fields{
+			"action": "config",
+		}).Errorf("Evironment variable must not be empty: %s", tokenEnvVar)
+		isThereError = true
+	}
+
+	c.Secrets.Token = token
+
+	if isThereError {
+		return errors.New("Found errors during initialization of environment variables. Please see output above")
+	}
+
+	logrus.WithFields(logrus.Fields{
+		"action": "config",
+	}).Debugf("Environment variables successfully initialized")
+
+	return nil
+}
+
 func (c *Config) InitTLS(certfile, keyfile string) error {
 	isThereError := false
 
-	cert, errReadCertFile := ioutil.ReadFile(certfile)
+	cert, errReadCertFile := os.ReadFile(certfile)
 	if errReadCertFile != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "config",
@@ -135,7 +172,7 @@ func (c *Config) InitTLS(certfile, keyfile string) error {
 		isThereError = true
 	}
 
-	key, errReadKeyFile := ioutil.ReadFile(keyfile)
+	key, errReadKeyFile := os.ReadFile(keyfile)
 	if errReadKeyFile != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "config",
@@ -169,7 +206,7 @@ func (c *Config) InitTLS(certfile, keyfile string) error {
 func (c *Config) InitTemplate(templatefile string) error {
 	isThereError := false
 
-	content, errReadFile := ioutil.ReadFile(templatefile)
+	content, errReadFile := os.ReadFile(templatefile)
 	if errReadFile != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "config",
@@ -227,6 +264,10 @@ func (c *Config) Init() error {
 	}
 
 	if err := c.InitConfig(args.ConfigFile); err != nil {
+		return err
+	}
+
+	if err := c.InitSecrets(); err != nil {
 		return err
 	}
 

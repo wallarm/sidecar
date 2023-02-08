@@ -20,3 +20,6 @@ data:
       tarantool:
         host: {{ template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
         port: {{ .Values.postanalytics.service.port }}
+      component:
+        name: {{ template "wallarm-sidecar.componentName" . }}
+        version: {{ .Chart.Version }}

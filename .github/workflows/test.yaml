@@ -4,18 +4,22 @@ on:
   workflow_dispatch:
     inputs:
       run_lint:
-        description: Run helm lint?
+        description: Run helm lint
         type: boolean
         required: true
         default: true
       run_validate:
-        description: Run validate manifests?
+        description: Run validate manifests
         type: boolean
         required: true
         default: true
       run_test:
-        description: Run integration/E2E test
+        description: Run integration/ test
         type: boolean
+        required: true
+        default: true
+      run_ct:
+        description: Run chart testing
         required: true
         default: true
 
@@ -31,6 +35,9 @@ on:
         type: boolean
         required: true
       run_test:
+        type: boolean
+        required: true
+      run_ct:
         type: boolean
         required: true
       helm_args:
@@ -145,7 +152,6 @@ jobs:
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           echo "current-context:" $(kubectl config current-context)
-          echo "environment-kubeconfig:" ${KUBECONFIG}
 
       - name: Restore artifact
         if: ${{ inputs.load_artifact }}
@@ -184,3 +190,45 @@ jobs:
           unset KUBERNETES_SERVICE_HOST
           POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
           kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
+
+
+  chart-testing:
+    name: Chart testing - install
+    runs-on: self-hosted-1cpu
+    needs: check
+    steps:
+      - name: Import secrets
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
+        id: secrets
+        with:
+          exportEnv: true
+          url: ${{ vars.VAULT_URL }}
+          role: ${{ vars.VAULT_ROLE }}
+          method: kubernetes
+          secrets: kv-gitlab-ci/data/github/sidecar api_token | WALLARM_API_TOKEN
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.check.outputs.ref }}
+
+      - name: Create cluster
+        run: |
+          kind create cluster --image kindest/node:v1.25.3
+          kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
+          
+      - name: Restore artifact
+        if: ${{ inputs.load_artifact }}
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-artifact
+          path: artifacts
+
+      - name: Load image
+        if: ${{ inputs.load_artifact }}
+        run: kind load image-archive artifacts/docker-image.tar
+
+      - name: Run test
+        env:
+          HELM_ARGS: ${{ inputs.helm_args }}
+        run: make ct-install

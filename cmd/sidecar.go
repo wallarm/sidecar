@@ -23,6 +23,7 @@ type SidecarContext struct {
 	Config     *TemplateContext
 	ObjectMeta *metav1.ObjectMeta
 	PodSpec    *corev1.PodSpec
+	Secrets    *Secrets
 }
 
 func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, error) {

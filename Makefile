@@ -1,6 +1,7 @@
 # https://makefiletutorial.com/
 
 -include env.ini
+.EXPORT_ALL_VARIABLES:
 
 DOCKERFILE       := ./Dockerfile
 TAG   	 		 ?= $(shell cat TAG)
@@ -163,3 +164,14 @@ integration-test:
 	@$(BASH) 'exec kubectl exec -n pytest -it $$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) -- pytest -n 4 helm/test'
 
 .PHONY: integration-*
+
+### Chart testing routines
+###
+
+ct-install:
+	@$(CURDIR)/helm/test/run_chart_tests.sh
+
+ct-upgrade:
+	@CT_MODE="upgrade" $(CURDIR)/helm/test/run_chart_tests.sh
+
+.PHONY: ct-*
