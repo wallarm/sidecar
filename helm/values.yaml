@@ -687,7 +687,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.4.0-1"
+      tag: "4.4.3-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###

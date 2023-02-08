@@ -103,6 +103,7 @@ jobs:
            (.postanalytics.cron.image.tag = env(TAG)) |
            (.postanalytics.tarantool.image.tag = env(TAG)) |
            (.postanalytics.heartbeat.image.tag = env(TAG)) |
+           (.postanalytics.antibot.image.tag = env(TAG)) |
            (.postanalytics.appstructure.image.tag = env(TAG))' helm/values.yaml
           echo "next-version=${VERSION}" >> $GITHUB_OUTPUT
 
