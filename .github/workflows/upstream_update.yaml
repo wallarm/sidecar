@@ -81,6 +81,7 @@ jobs:
       run_lint: false
       run_validate: false
       run_test: true
+      run_ct: true
       helm_args: ${{ needs.preparation.outputs.helm_args }}
       load_artifact: false
 
