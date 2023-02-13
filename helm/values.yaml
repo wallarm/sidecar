@@ -42,7 +42,7 @@ config:
     ### or custom ruleset cannot be downloaded, this setting disables the Wallarm module for the http, server,
     ### and location blocks, for which the data fails to download. NGINX keeps functioning.
     ###
-    fallback: "off"
+    fallback: "on"
     ### Wallarm mode: `monitoring, `block` or `off`. See details in here:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_mode
     ###
@@ -54,7 +54,7 @@ config:
     ### Enables additional validation of the SQL Injection attacks via the libdetection library: `on` or `off`
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_enable_libdetection
     ###
-    enableLibDetection: "off"
+    enableLibDetection: "on"
     ### Whether to analyze the application responses for attacks: `on` or `off`
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_response
     ###
