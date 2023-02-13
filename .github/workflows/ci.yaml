@@ -52,6 +52,9 @@ jobs:
     name: Test
     needs: build
     uses: wallarm/sidecar/.github/workflows/test.yaml@main
+    secrets:
+      VAULT_URL: ${{ secrets.VAULT_URL }}
+      VAULT_ROLE: ${{ secrets.VAULT_ROLE }}
     with:
       ref: ${{ github.head_ref }}
       run_lint: true

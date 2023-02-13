@@ -23,8 +23,8 @@ jobs:
         id: secrets
         with:
           exportEnv: true
-          url: ${{ vars.VAULT_URL }}
-          role: ${{ vars.VAULT_ROLE }}
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
           secrets: |
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
