@@ -46,7 +46,13 @@ on:
       load_artifact:
         type: boolean
         required: false
-
+    secrets:
+      VAULT_URL:
+        description: Vault URL
+        required: false
+      VAULT_ROLE:
+        description: Vault role
+        required: false
 
 jobs:
   check:
@@ -132,8 +138,8 @@ jobs:
         id: secrets
         with:
           exportEnv: true
-          url: ${{ vars.VAULT_URL }}
-          role: ${{ vars.VAULT_ROLE }}
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
           secrets: kv-gitlab-ci/data/github/sidecar api_token
 
@@ -202,8 +208,8 @@ jobs:
         id: secrets
         with:
           exportEnv: true
-          url: ${{ vars.VAULT_URL }}
-          role: ${{ vars.VAULT_ROLE }}
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
           secrets: kv-gitlab-ci/data/github/sidecar api_token | WALLARM_API_TOKEN
 
