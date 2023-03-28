@@ -18,7 +18,7 @@ RUN go test -v .                            && \
         -o sidecar-controller .             && \
     upx -9 sidecar-controller
 
-FROM alpine:3.17.1
+FROM alpine:3.17.2
 
 ARG UID=65222
 ARG GID=65222
