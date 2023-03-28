@@ -801,7 +801,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.1.0"
+    tag: "1.2.0"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
