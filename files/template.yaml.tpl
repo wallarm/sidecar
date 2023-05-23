@@ -80,6 +80,8 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
       value: "{{ template `applicationPort` . }}"
+    - name: NGINX_PROXY_PASS_PROTOCOL
+      value: "{{ template `applicationProtocol` . }}"
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
     - name: NGINX_STATUS_PATH
@@ -259,6 +261,16 @@ volumes:
   {{- end }}
 {{- end }}
 
+{{- define "applicationProtocol" }}
+  {{- if (isSet .ObjectMeta.Annotations (withAP "application-protocol")) }}
+    {{- if eq (index .ObjectMeta.Annotations (withAP "application-protocol")) "https" }}
+https
+    {{- else }}
+http
+    {{- end }}
+  {{- end }}
+{{- end }}
+
 {{- define "wallarmApiVariables" }}
     - name: WALLARM_API_HOST
       value: "{{ .Config.wallarm.api.host }}"
@@ -304,6 +316,10 @@ volumes:
       value: "{{ .Config.wallarm.cron.syncIpListsSource.timeout }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND
       value: "{{ .Config.wallarm.cron.syncIpListsSource.command }}"
+    - name: WALLARM_CRON_SYNC_NODE_SCHEDULE
+      value: "{{ .Config.wallarm.cron.syncNode.schedule }}"
+    - name: WALLARM_CRON_SYNC_NODE_COMMAND
+      value: "{{ .Config.wallarm.cron.syncNode.command }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}

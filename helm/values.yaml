@@ -29,13 +29,14 @@ config:
       ### Existing secret feature allows to pull Wallarm API token from existing Kubernetes secret
       ###
       existingSecret:
-        ### Enable or disable the feature: 'true' or 'false'
+        ### Enable or disable the feature: 'true' or 'false'.
+        ### If the feature is enabled, the 'config.wallarm.api.token' value will be ignored.
         ###
         enabled: false
         ### The key in which the Wallarm API token is placed
         ###
         secretKey: token
-        ### The name of Kubernetes secret
+        ### The name of Kubernetes secret. The secret must be placed in the same namespace with current Helm chart.
         ###
         secretName: wallarm-api-token
     ### Fallback mode. With the value set to on, NGINX has the ability to enter an emergency mode; if proton.db
@@ -93,6 +94,9 @@ config:
         schedule: "*/5 * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
         timeout: 3h
+      syncNode:
+        schedule: "*/2 * * * *"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L DEBUG"
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
