@@ -163,6 +163,9 @@ spec:
         - name: tarantool
           image: {{ include "wallarm-sidecar.image" .Values.postanalytics.tarantool.image }}
           imagePullPolicy: "{{ .Values.postanalytics.tarantool.image.pullPolicy }}"
+          command:
+            - sleep
+            - infinity
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: SLAB_ALLOC_ARENA
@@ -201,47 +204,6 @@ spec:
           {{- end }}
           {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
           volumeMounts:
-          {{- . | toYaml | nindent 10 }}
-          {{- end }}
-        - name: heartbeat
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.heartbeat.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.heartbeat.image.pullPolicy }}"
-          command: [ "/bin/dumb-init", "--" ]
-          args: [ "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode", "-p", "-r", "120", "-l", "STDOUT", "-L", "DEBUG" ]
-          env:
-          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
-          - name: WALLARM_SYNCNODE
-            value: "no"
-          {{- with .Values.postanalytics.heartbeat.extraEnvs }}
-          {{- . | toYaml | nindent 10 }}
-          {{- end }}
-          {{- with .Values.postanalytics.heartbeat.livenessProbe }}
-          livenessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- with .Values.postanalytics.heartbeat.readinessProbe }}
-          readinessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- with .Values.postanalytics.heartbeat.lifecycle }}
-          lifecycle: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.postanalytics.heartbeat.securityContext }}
-          securityContext: {{ .Values.postanalytics.heartbeat.securityContext | toYaml | nindent 12 }}
-          {{- else }}
-          securityContext:
-            privileged: false
-            runAsUser: 101
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-          {{- end }}
-          {{- with .Values.postanalytics.heartbeat.resources }}
-          resources: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-          - mountPath: /etc/wallarm
-            name: wallarm
-          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         - name: appstructure
