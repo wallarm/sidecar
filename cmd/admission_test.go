@@ -9,20 +9,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCheckProfile(t *testing.T) {
+func TestGetProfile(t *testing.T) {
 	tests := []struct {
-		name    string
-		config  Config
-		pod     corev1.Pod
-		wantErr bool
+		name     string
+		config   Config
+		pod      corev1.Pod
+		wantErr  bool
+		wantProf TemplateContext
 	}{
 		{
 			name: "No annotation prefix",
 			config: Config{
 				Settings: map[string]interface{}{},
 			},
-			pod:     corev1.Pod{},
-			wantErr: true,
+			pod:      corev1.Pod{},
+			wantErr:  true,
+			wantProf: nil,
 		},
 		{
 			name: "No profile annotation",
@@ -31,8 +33,9 @@ func TestCheckProfile(t *testing.T) {
 					"annotationPrefix": "test",
 				},
 			},
-			pod:     corev1.Pod{},
-			wantErr: false,
+			pod:      corev1.Pod{},
+			wantErr:  false,
+			wantProf: nil,
 		},
 		{
 			name: "No config profiles",
@@ -48,7 +51,8 @@ func TestCheckProfile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:  true,
+			wantProf: nil,
 		},
 		{
 			name: "Profile not in config",
@@ -67,7 +71,8 @@ func TestCheckProfile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:  true,
+			wantProf: nil,
 		},
 		{
 			name: "Empty profile in config",
@@ -86,7 +91,8 @@ func TestCheckProfile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:  true,
+			wantProf: nil,
 		},
 		{
 			name: "Profile in config",
@@ -107,14 +113,20 @@ func TestCheckProfile(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr:  false,
+			wantProf: TemplateContext{"param": "value"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CheckProfile(&tt.config, &tt.pod); (err != nil) != tt.wantErr {
-				t.Errorf("CheckProfile() error = %v, wantErr %v", err, tt.wantErr)
+			gotProf, err := GetProfile(&tt.config, &tt.pod)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetProfile() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotProf, tt.wantProf) {
+				t.Errorf("GetProfile() = %v, want %v", gotProf, tt.wantProf)
 			}
 		})
 	}

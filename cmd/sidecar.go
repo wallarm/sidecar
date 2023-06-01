@@ -20,6 +20,7 @@ type Sidecar struct {
 type TemplateContext map[string]interface{}
 
 type SidecarContext struct {
+	Profile    *TemplateContext
 	Config     *TemplateContext
 	ObjectMeta *metav1.ObjectMeta
 	PodSpec    *corev1.PodSpec

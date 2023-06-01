@@ -35,33 +35,39 @@ func WhetherMutate(metadata *metav1.ObjectMeta) bool {
 	}
 }
 
-func CheckProfile(config *Config, pod *corev1.Pod) error {
+func GetProfile(config *Config, pod *corev1.Pod) (TemplateContext, error) {
 	prefix, ok := config.Settings["annotationPrefix"]
 	if !ok {
-		return fmt.Errorf("undefined annotation prefix")
+		return nil, fmt.Errorf("undefined annotation prefix")
 	}
 	profileAnnotation := prefix.(string) + "/profile"
-	profile, ok := pod.Annotations[profileAnnotation]
+	profileName, ok := pod.Annotations[profileAnnotation]
 	if !ok {
 		// no need to have profiles in config
-		return nil
+		return nil, nil
 	}
 	configProfiles, ok := config.Settings["profiles"]
 	if !ok || configProfiles == nil || len(configProfiles.(map[string]interface{})) == 0 {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"pod %s/%s has annotation \"%s: %s\", but profiles are not configured",
-			pod.Namespace, pod.GenerateName, profileAnnotation, profile,
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName,
 		)
 	}
-	chosenProfile, ok := configProfiles.(map[string]interface{})[profile]
-	if !ok || chosenProfile == nil || len(chosenProfile.(map[string]interface{})) == 0 {
-		return fmt.Errorf(
+	profile, ok := configProfiles.(map[string]interface{})[profileName]
+	if !ok || profile == nil {
+		return nil, fmt.Errorf(
 			"pod %s/%s has annotation \"%s: %s\", but profile \"%s\" not found in config",
-			pod.Namespace, pod.GenerateName, profileAnnotation, profile, profile,
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName, profileName,
 		)
 	}
-
-	return nil
+	retVal, ok := profile.(map[string]interface{})
+	if !ok || len(retVal) == 0 {
+		return nil, fmt.Errorf(
+			"pod %s/%s has annotation \"%s: %s\", but profile \"%s\" is invalid",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName, profileName,
+		)
+	}
+	return retVal, nil
 }
 
 func AddContainer(target, added []corev1.Container, basePath string) (patch []PatchOperation) {
@@ -178,7 +184,8 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		}
 	}
 
-	if err := CheckProfile(&config, &pod); err != nil {
+	profile, err := GetProfile(&config, &pod)
+	if err != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "mutationreview",
 		}).Warningf("Skip sidecar injection: %s", err.Error())
@@ -191,6 +198,7 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	}
 
 	sidecar, errConstructSidecar := ConstructSidecar(config.Template, SidecarContext{
+		Profile:    &profile,
 		Config:     &config.Settings,
 		Secrets:    &config.Secrets,
 		ObjectMeta: &pod.ObjectMeta,
