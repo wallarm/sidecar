@@ -163,9 +163,6 @@ spec:
         - name: tarantool
           image: {{ include "wallarm-sidecar.image" .Values.postanalytics.tarantool.image }}
           imagePullPolicy: "{{ .Values.postanalytics.tarantool.image.pullPolicy }}"
-          command:
-            - sleep
-            - infinity
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: SLAB_ALLOC_ARENA
