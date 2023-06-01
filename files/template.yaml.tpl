@@ -1,30 +1,19 @@
 initContainers:
-{{ if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
-  {{ template "initIptablesContainer" . }}
+{{- if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
+  {{- template "initIptablesContainer" . }}
 {{- end }}
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
-  {{ template "initHelperContainer" . }}
+{{- if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
+  {{- template "initHelperContainer" . }}
 {{- end }}
 
 containers:
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
+{{- if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   {{ template "helperContainer" . }}
-{{- end }}
+{{- end -}}
   {{ template "proxyContainer" . }}
 
 volumes:
-  - name: wallarm
-    emptyDir: {}
-  - name: wallarm-acl
-    emptyDir: {}
-  - name: wallarm-cache
-    emptyDir: {}
-{{ if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
-  {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
-  - name: "{{ $index }}"
-    {{ toYaml $value | indent 4 }}
-  {{ end }}
-{{- end }}
+{{ template "volumes" . }}
 
 
 {{ define "proxyContainer" }}
@@ -80,8 +69,6 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
       value: "{{ template `applicationPort` . }}"
-    - name: NGINX_PROXY_PASS_PROTOCOL
-      value: "{{ template `applicationProtocol` . }}"
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
     - name: NGINX_STATUS_PATH
@@ -136,6 +123,12 @@ volumes:
     - name: NGINX_EXTRA_MODULES
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-extra-modules`) }}"
     {{- end }}
+    {{ if and .Profile (index .Profile "nginx") -}}
+    {{ if (index .Profile.nginx "servers") -}}
+    - name: NGINX_SERVERS
+      value: "{{ .Profile.nginx.servers | toJson | b64enc }}"
+    {{- end }}
+    {{- end }}
   ports:
     - name: status
       containerPort: {{ getAnnotation .ObjectMeta (withAP "nginx-status-port") .Config.nginx.statusPort }}
@@ -163,6 +156,11 @@ volumes:
       name: wallarm-acl
     - mountPath: /var/lib/nginx/wallarm/
       name: wallarm-cache
+    {{- if and .Profile (index .Profile "sidecar") -}}
+    {{- with .Profile.sidecar.volumeMounts }}
+    {{ . | toYaml | indent 4 }}
+    {{- end }}
+    {{- end -}}
     {{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     - name: "{{ $index }}"
@@ -258,16 +256,6 @@ volumes:
     {{- index .ObjectMeta.Annotations (withAP "application-port") }}
   {{- else }}
     {{- getAppPort .PodSpec .Config.nginx.applicationPort }}
-  {{- end }}
-{{- end }}
-
-{{- define "applicationProtocol" }}
-  {{- if (isSet .ObjectMeta.Annotations (withAP "application-protocol")) }}
-    {{- if eq (index .ObjectMeta.Annotations (withAP "application-protocol")) "https" }}
-https
-    {{- else }}
-http
-    {{- end }}
   {{- end }}
 {{- end }}
 
@@ -428,4 +416,24 @@ http
     {{ toYaml .Config.sidecar.containers.proxy.resources | indent 4 }}
     {{- end }}
   {{- end }}
+{{- end }}
+
+{{- define "volumes" }}
+  - name: wallarm
+    emptyDir: {}
+  - name: wallarm-acl
+    emptyDir: {}
+  - name: wallarm-cache
+    emptyDir: {}
+{{- if and .Profile (index .Profile "sidecar") -}}
+  {{- with .Profile.sidecar.volumes }}
+  {{ . | toYaml | indent 2 }}
+  {{- end }}
+{{- end -}}
+{{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
+  {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
+  - name: "{{ $index }}"
+  {{ toYaml $value | indent 4 }}
+  {{ end }}
+{{- end -}}
 {{- end }}
