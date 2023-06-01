@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestCheckConfigAndPod(t *testing.T) {
+func TestCheckProfile(t *testing.T) {
 	tests := []struct {
 		name    string
 		config  Config
@@ -113,8 +113,8 @@ func TestCheckConfigAndPod(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CheckConfigAndPod(&tt.config, &tt.pod); (err != nil) != tt.wantErr {
-				t.Errorf("CheckConfigAndPod() error = %v, wantErr %v", err, tt.wantErr)
+			if err := CheckProfile(&tt.config, &tt.pod); (err != nil) != tt.wantErr {
+				t.Errorf("CheckProfile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

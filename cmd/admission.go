@@ -35,7 +35,7 @@ func WhetherMutate(metadata *metav1.ObjectMeta) bool {
 	}
 }
 
-func CheckConfigAndPod(config *Config, pod *corev1.Pod) error {
+func CheckProfile(config *Config, pod *corev1.Pod) error {
 	prefix, ok := config.Settings["annotationPrefix"]
 	if !ok {
 		return fmt.Errorf("undefined annotation prefix")
@@ -49,15 +49,15 @@ func CheckConfigAndPod(config *Config, pod *corev1.Pod) error {
 	configProfiles, ok := config.Settings["profiles"]
 	if !ok || configProfiles == nil || len(configProfiles.(map[string]interface{})) == 0 {
 		return fmt.Errorf(
-			"pod %s/%s has annotation %s: %s, but config profiles are absent",
-			pod.Namespace, pod.Name, profileAnnotation, profile,
+			"pod %s/%s has annotation \"%s: %s\", but profiles are not configured",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profile,
 		)
 	}
 	chosenProfile, ok := configProfiles.(map[string]interface{})[profile]
 	if !ok || chosenProfile == nil || len(chosenProfile.(map[string]interface{})) == 0 {
 		return fmt.Errorf(
-			"pod %s/%s has annotation %s: %s, but config profile with this name is absent",
-			pod.Namespace, pod.Name, profileAnnotation, profile,
+			"pod %s/%s has annotation \"%s: %s\", but profile \"%s\" not found in config",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profile, profile,
 		)
 	}
 
@@ -178,11 +178,12 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		}
 	}
 
-	if err := CheckConfigAndPod(&config, &pod); err != nil {
+	if err := CheckProfile(&config, &pod); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"action": "mutationreview",
-		}).Debugf("Error checking config vs pod annotations: %s", err.Error())
+		}).Warningf("Skip sidecar injection: %s", err.Error())
 		return &admissionv1.AdmissionResponse{
+			Allowed: true,
 			Result: &metav1.Status{
 				Message: err.Error(),
 			},
