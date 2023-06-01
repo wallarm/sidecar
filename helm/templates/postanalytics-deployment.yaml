@@ -45,7 +45,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "wallarm-sidecar.postanalytics.serviceAccountName" . }}
-      terminationGracePeriodSeconds: {{ .Values.postanalytics.terminationGracePeriodSeconds | default 30 }}
+      terminationGracePeriodSeconds: {{ .Values.postanalytics.terminationGracePeriodSeconds }}
       {{- with .Values.postanalytics.nodeSelector }}
       nodeSelector: {{ . | toYaml | nindent 8 }}
       {{- end }}

@@ -44,7 +44,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "wallarm-sidecar.controller.serviceAccountName" . }}
-      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds | default 30 }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       {{- with .Values.controller.nodeSelector }}
       nodeSelector: {{ . | toYaml | nindent 8 }}
       {{- end }}
