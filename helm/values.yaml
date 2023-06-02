@@ -65,16 +65,18 @@ config:
     ###
     parseWebsocket: "off"
     ### Whether to decompress compressed data returned in the application response: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     unpackResponse: "on"
     ### Post-analytics node endpoint configuration
-    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     upstream:
       ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
+      ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_connect_attempts
       ###
       connectAttempts: 10
       ### Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
+      ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_reconnect_interval
       ###
       reconnectInterval: 15s
     cron:
@@ -189,7 +191,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.6.0-1"
+      tag: "4.6.2-1"
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -326,15 +328,15 @@ config:
           - listen: "ssl"
             include:
               - "server_name example.io www.example.io"
-              - "ssl_protocols TLSv1 TLSv1.1 TLSv1.2"
+              - "ssl_protocols TLSv1.2 TLSv1.3"
               - "ssl_certificate /etc/nginx/certs/example.io/tls.crt"
               - "ssl_certificate_key /etc/nginx/certs/example.io/tls.key"
           - listen: "ssl http2"
             include:
-              - "server_name: example.com www.example.com"
-              - "ssl_protocols: TLSv1.3"
-              - "ssl_certificate: /etc/nginx/certs/example.com/tls.crt"
-              - "ssl_certificate_key: /etc/nginx/certs/example.com/tls.key"
+              - "server_name example.com www.example.com"
+              - "ssl_protocols TLSv1.3"
+              - "ssl_certificate /etc/nginx/certs/example.com/tls.crt"
+              - "ssl_certificate_key /etc/nginx/certs/example.com/tls.key"
               - "ssl_ciphers ECDHE-ECDSA-AES256-GCM-SHA384"
               - "ssl_conf_command Ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
 
@@ -800,7 +802,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.2.0"
+    tag: "1.3.0"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
