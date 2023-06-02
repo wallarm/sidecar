@@ -20,6 +20,7 @@ type Sidecar struct {
 type TemplateContext map[string]interface{}
 
 type SidecarContext struct {
+	Profile    *TemplateContext
 	Config     *TemplateContext
 	ObjectMeta *metav1.ObjectMeta
 	PodSpec    *corev1.PodSpec
@@ -27,7 +28,7 @@ type SidecarContext struct {
 }
 
 func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, error) {
-	tmplresult := bytes.NewBuffer(make([]byte, 0))
+	tmplResult := bytes.NewBuffer(make([]byte, 0))
 
 	logrus.WithFields(logrus.Fields{
 		"action":      "constructsidecar",
@@ -36,15 +37,16 @@ func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, e
 		"value":       ToJson(sctx),
 	}).Trace()
 
-	if errExecute := tmpl.Execute(tmplresult, sctx); errExecute != nil {
+	if errExecute := tmpl.Execute(tmplResult, sctx); errExecute != nil {
 		return nil, fmt.Errorf("Failed to render template: %s", errExecute.Error())
 	}
 
+	fmt.Printf("%+v\n", tmplResult)
 	logrus.WithFields(logrus.Fields{
 		"action":      "constructsidecar",
-		"variable":    "tmplresult",
+		"variable":    "tmplResult",
 		"description": "template function returns",
-		"value":       tmplresult.String(),
+		"value":       tmplResult.String(),
 	}).Trace()
 
 	logrus.WithFields(logrus.Fields{
@@ -53,7 +55,7 @@ func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, e
 
 	var sidecar Sidecar
 
-	if errUnmarshal := yaml.Unmarshal(tmplresult.Bytes(), &sidecar); errUnmarshal != nil {
+	if errUnmarshal := yaml.Unmarshal(tmplResult.Bytes(), &sidecar); errUnmarshal != nil {
 		return nil, fmt.Errorf("Failed to constuct sidecar patch: %s", errUnmarshal.Error())
 	}
 

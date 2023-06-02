@@ -18,6 +18,10 @@ data:
     ### Postanalytics service crontab
     ###
     {{- range $k, $v := .Values.postanalytics.cron.config }}
+    {{- $timeout := " " }}
+    {{- if (index $v "timeout" | default dict) }}
+    {{- $timeout = printf " timeout %s " $v.timeout }}
+    {{- end }}
     # {{ $k }}
-    {{ $v.schedule }} timeout {{ $v.timeout }} {{ $v.command }}
+    {{ $v.schedule }}{{ $timeout }}{{ $v.command }}
     {{- end }}

@@ -35,6 +35,41 @@ func WhetherMutate(metadata *metav1.ObjectMeta) bool {
 	}
 }
 
+func GetProfile(config *Config, pod *corev1.Pod) (TemplateContext, error) {
+	prefix, ok := config.Settings["annotationPrefix"]
+	if !ok {
+		return nil, fmt.Errorf("undefined annotation prefix")
+	}
+	profileAnnotation := prefix.(string) + "/profile"
+	profileName, ok := pod.Annotations[profileAnnotation]
+	if !ok {
+		// no need to have profiles in config
+		return nil, nil
+	}
+	configProfiles, ok := config.Settings["profiles"]
+	if !ok || configProfiles == nil || len(configProfiles.(map[string]interface{})) == 0 {
+		return nil, fmt.Errorf(
+			"pod %s/%s has annotation \"%s: %s\", but profiles are not configured",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName,
+		)
+	}
+	profile, ok := configProfiles.(map[string]interface{})[profileName]
+	if !ok || profile == nil {
+		return nil, fmt.Errorf(
+			"pod %s/%s has annotation \"%s: %s\", but profile \"%s\" not found in config",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName, profileName,
+		)
+	}
+	retVal, ok := profile.(map[string]interface{})
+	if !ok || len(retVal) == 0 {
+		return nil, fmt.Errorf(
+			"pod %s/%s has annotation \"%s: %s\", but profile \"%s\" is invalid",
+			pod.Namespace, pod.GenerateName, profileAnnotation, profileName, profileName,
+		)
+	}
+	return retVal, nil
+}
+
 func AddContainer(target, added []corev1.Container, basePath string) (patch []PatchOperation) {
 	first := len(target) == 0
 	var value interface{}
@@ -149,7 +184,21 @@ func Mutate(ar *admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 		}
 	}
 
+	profile, err := GetProfile(&config, &pod)
+	if err != nil {
+		logrus.WithFields(logrus.Fields{
+			"action": "mutationreview",
+		}).Warningf("Skip sidecar injection: %s", err.Error())
+		return &admissionv1.AdmissionResponse{
+			Allowed: true,
+			Result: &metav1.Status{
+				Message: err.Error(),
+			},
+		}
+	}
+
 	sidecar, errConstructSidecar := ConstructSidecar(config.Template, SidecarContext{
+		Profile:    &profile,
 		Config:     &config.Settings,
 		Secrets:    &config.Secrets,
 		ObjectMeta: &pod.ObjectMeta,

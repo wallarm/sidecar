@@ -1,30 +1,19 @@
 initContainers:
-{{ if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
-  {{ template "initIptablesContainer" . }}
+{{- if ((getAnnotation .ObjectMeta (withAP "sidecar-injection-iptables-enable") .Config.injectionStrategy.iptablesEnable) | toBool) -}}
+  {{- template "initIptablesContainer" . }}
 {{- end }}
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
-  {{ template "initHelperContainer" . }}
+{{- if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
+  {{- template "initHelperContainer" . }}
 {{- end }}
 
 containers:
-{{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
+{{- if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   {{ template "helperContainer" . }}
-{{- end }}
+{{- end -}}
   {{ template "proxyContainer" . }}
 
 volumes:
-  - name: wallarm
-    emptyDir: {}
-  - name: wallarm-acl
-    emptyDir: {}
-  - name: wallarm-cache
-    emptyDir: {}
-{{ if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
-  {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
-  - name: "{{ $index }}"
-    {{ toYaml $value | indent 4 }}
-  {{ end }}
-{{- end }}
+{{ template "volumes" . }}
 
 
 {{ define "proxyContainer" }}
@@ -134,6 +123,12 @@ volumes:
     - name: NGINX_EXTRA_MODULES
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-extra-modules`) }}"
     {{- end }}
+    {{ if and .Profile (index .Profile "nginx") -}}
+    {{ if (index .Profile.nginx "servers") -}}
+    - name: NGINX_SERVERS
+      value: "{{ .Profile.nginx.servers | toJson | b64enc }}"
+    {{- end }}
+    {{- end }}
   ports:
     - name: status
       containerPort: {{ getAnnotation .ObjectMeta (withAP "nginx-status-port") .Config.nginx.statusPort }}
@@ -161,6 +156,11 @@ volumes:
       name: wallarm-acl
     - mountPath: /var/lib/nginx/wallarm/
       name: wallarm-cache
+    {{- if and .Profile (index .Profile "sidecar") -}}
+    {{- with .Profile.sidecar.volumeMounts }}
+    {{ . | toYaml | indent 4 }}
+    {{- end }}
+    {{- end -}}
     {{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volume-mounts")) }}
     - name: "{{ $index }}"
@@ -304,6 +304,10 @@ volumes:
       value: "{{ .Config.wallarm.cron.syncIpListsSource.timeout }}"
     - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND
       value: "{{ .Config.wallarm.cron.syncIpListsSource.command }}"
+    - name: WALLARM_CRON_SYNC_NODE_SCHEDULE
+      value: "{{ .Config.wallarm.cron.syncNode.schedule }}"
+    - name: WALLARM_CRON_SYNC_NODE_COMMAND
+      value: "{{ .Config.wallarm.cron.syncNode.command }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}
@@ -412,4 +416,24 @@ volumes:
     {{ toYaml .Config.sidecar.containers.proxy.resources | indent 4 }}
     {{- end }}
   {{- end }}
+{{- end }}
+
+{{- define "volumes" }}
+  - name: wallarm
+    emptyDir: {}
+  - name: wallarm-acl
+    emptyDir: {}
+  - name: wallarm-cache
+    emptyDir: {}
+{{- if and .Profile (index .Profile "sidecar") -}}
+  {{- with .Profile.sidecar.volumes }}
+  {{ . | toYaml | indent 2 }}
+  {{- end }}
+{{- end -}}
+{{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
+  {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
+  - name: "{{ $index }}"
+  {{ toYaml $value | indent 4 }}
+  {{ end }}
+{{- end -}}
 {{- end }}

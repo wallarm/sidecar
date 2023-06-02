@@ -10,10 +10,10 @@ CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 
 ### For embedding into the chart
 ###
-SIDECAR_IMAGE    := wallarm/sidecar:4.4.3-1
-TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.4.3-1
-RUBY_IMAGE       := wallarm/ingress-ruby:4.4.3-1
-PYTHON_IMAGE     := wallarm/ingress-python:4.4.3-1
+SIDECAR_IMAGE    := wallarm/sidecar:4.6.0-1
+TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.6.2-1
+RUBY_IMAGE       := wallarm/ingress-ruby:4.6.2-1
+PYTHON_IMAGE     := wallarm/ingress-python:4.6.2-1
 
 ### Contribution routines
 ###
@@ -43,7 +43,7 @@ pod-sh:
 	@$(POD_EXEC) sh
 
 pod-run:
-	@$(POD_EXEC) go run cmd/* \
+	@$(POD_EXEC) go run `ls cmd/*.go | grep -v _test.go` \
 		--listen :8443 \
 		--config /etc/controller/config.yaml \
 		--template /data/files/template.yaml.tpl \
@@ -53,7 +53,7 @@ pod-run:
 		--log-format text-color
 
 pod-test:
-	@$(POD_EXEC) go test cmd/*
+	@$(POD_EXEC) go test cmd/*_test.go
 
 clean stop:
 	@$(BASH) 'docker ps -q | xargs docker stop || true'
@@ -70,12 +70,11 @@ clean-all:
 HELMARGS := --set "config.wallarm.api.token=$(WALLARM_API_TOKEN)" \
 			--set "config.wallarm.api.host=$(WALLARM_API_HOST)" \
 			--set "config.sidecar.image.fullname=$(SIDECAR_IMAGE)" \
-			--set "postanalytics.addnode.image.fullname=$(RUBY_IMAGE)" \
-			--set "postanalytics.exportenv.image.fullname=$(RUBY_IMAGE)" \
+			--set "postanalytics.init.image.fullname=$(RUBY_IMAGE)" \
 			--set "postanalytics.cron.image.fullname=$(RUBY_IMAGE)" \
 			--set "postanalytics.tarantool.image.fullname=$(TARANTOOL_IMAGE)" \
-			--set "postanalytics.heartbeat.image.fullname=$(RUBY_IMAGE)" \
-			--set "postanalytics.appstructure.image.fullname=$(PYTHON_IMAGE)"
+			--set "postanalytics.appstructure.image.fullname=$(PYTHON_IMAGE)" \
+			--set "postanalytics.antibot.image.fullname=$(PYTHON_IMAGE)"
 
 helm-template:
 	@$(HELM) template wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS) --debug
