@@ -41,7 +41,6 @@ func ConstructSidecar(tmpl *template.Template, sctx SidecarContext) (*Sidecar, e
 		return nil, fmt.Errorf("Failed to render template: %s", errExecute.Error())
 	}
 
-	fmt.Printf("%+v\n", tmplResult)
 	logrus.WithFields(logrus.Fields{
 		"action":      "constructsidecar",
 		"variable":    "tmplResult",
