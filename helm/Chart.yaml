@@ -21,7 +21,7 @@ kubeVersion: ">=1.19.16-0"
 annotations:
   artifacthub.io/images: |
     - name: sidecar
-      image: wallarm/sidecar:4.6.0-1
+      image: wallarm/sidecar:4.6.3-1
     - name: sidecar-controller
       image: wallarm/sidecar-controller:1.2.0
     - name: ingress-ruby
