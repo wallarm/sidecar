@@ -1,3 +1,4 @@
+{{- if not .Values.postanalytics.external.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -25,3 +26,4 @@ data:
     # {{ $k }}
     {{ $v.schedule }}{{ $timeout }}{{ $v.command }}
     {{- end }}
+{{- end }}

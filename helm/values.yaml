@@ -353,6 +353,21 @@ imagePullSecrets: []
 ### Configuration for post-analytics module
 ###
 postanalytics:
+  ### Optional configuration of external Tarantool instance. If feature is enabled,
+  ### then Trantool will not be deployed by current Helm chart, external instance will be used instead
+  ###
+  external:
+    ### Set to 'true' to use external Tarantool instance
+    ###
+    enabled: false
+    ### Hostname (FQDN) or IP address of external Tarantool instance (e.g. "tarantool.domain.internal" or "10.10.0.100")
+    ### The hostname must be accessible from Kubernetes cluster where current Helm chart is installed
+    ###
+    host: ""
+    ### Number of TCP port of external Tarantool instance
+    ###
+    port: 3313
+
   ### Number of deployment replicas. Values more that zero is not supported officially
   ### https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#deploymentspec-v1-apps
   ###
