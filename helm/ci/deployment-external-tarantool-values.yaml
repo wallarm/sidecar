@@ -1,0 +1,4 @@
+postanalytics:
+  external:
+    enabled: true
+    host: tarantool.domain.internal

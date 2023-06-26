@@ -152,3 +152,19 @@ wallarm-sidecar-proxy
 - name: WALLARM_COMPONENT_VERSION
   value: {{ .Chart.Version | quote }}
 {{- end -}}
+
+{{- define "wallarm-sidecar.tarantoolHost" -}}
+{{- if .Values.postanalytics.external.enabled }}
+{{- required "Hostname of external Tarantool instance is required" .Values.postanalytics.external.host }}
+{{- else }}
+{{- template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
+{{- end }}
+{{- end -}}
+
+{{- define "wallarm-sidecar.tarantoolPort" -}}
+{{- if .Values.postanalytics.external.enabled }}
+{{- required "Port of external Tarantool instance is required" .Values.postanalytics.external.port }}
+{{- else }}
+{{- .Values.postanalytics.service.port }}
+{{- end }}
+{{- end -}}

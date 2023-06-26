@@ -1,3 +1,4 @@
+{{- if not .Values.postanalytics.external.enabled }}
 {{- if .Values.postanalytics.podDisruptionBudget }}
 {{- if .Values.postanalytics.podDisruptionBudget.enabled }}
 apiVersion: {{ ternary "policy/v1" "policy/v1beta1" (semverCompare ">=1.21.0-0" .Capabilities.KubeVersion.Version) }}
@@ -26,5 +27,6 @@ spec:
   {{- with .Values.postanalytics.podDisruptionBudget.minAvailable }}
   minAvailable: {{ . }}
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
