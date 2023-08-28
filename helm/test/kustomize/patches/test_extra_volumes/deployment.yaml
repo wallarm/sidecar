@@ -1,0 +1,8 @@
+- op: add
+  path: /spec/template/metadata/annotations
+  value:
+    sidecar.wallarm.io/wallarm-mode: block
+    sidecar.wallarm.io/sidecar-injection-iptables-enable: "false"
+    sidecar.wallarm.io/nginx-location-include: "['/nginx_include/location.conf']"
+    sidecar.wallarm.io/proxy-extra-volumes: '[{"name": "nginx-location-extra-config", "configMap": {"name": "nginx-location-config"}}]'
+    sidecar.wallarm.io/proxy-extra-volume-mounts: '[{"name": "nginx-location-extra-config", "mountPath": "/nginx_include/location.conf", "subPath": "location.conf"}]'

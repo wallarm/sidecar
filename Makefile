@@ -160,7 +160,7 @@ cluster-unpause:
 
 integration-test:
 	@$(KUBECTL) wait pods -n pytest --all --for=condition=Ready
-	@$(BASH) 'exec kubectl exec -n pytest -it $$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) -- pytest -n 4 helm/test'
+	@$(BASH) 'exec kubectl exec -n pytest -it $$(kubectl get pods -n pytest -o name | cut -d '/' -f 2) -- pytest -n 6 -rs helm/test'
 
 .PHONY: integration-*
 

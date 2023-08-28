@@ -195,7 +195,7 @@ jobs:
         run: |
           unset KUBERNETES_SERVICE_HOST
           POD_NAME=$(kubectl get pods -n pytest -o name | cut -d '/' -f 2)
-          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 4 helm/test
+          kubectl -n pytest exec -t ${POD_NAME} -- pytest -n 6 helm/test
 
 
   chart-testing:

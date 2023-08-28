@@ -433,7 +433,7 @@ volumes:
 {{- if (isSet .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) -}}
   {{ range $index, $value := fromJson (index .ObjectMeta.Annotations (withAP "proxy-extra-volumes")) }}
   - name: "{{ $index }}"
-  {{ toYaml $value | indent 4 }}
+    {{ toYaml $value | indent 4 }}
   {{ end }}
 {{- end -}}
 {{- end }}
