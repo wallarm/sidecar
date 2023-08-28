@@ -76,7 +76,7 @@ func ToJson(value interface{}) string {
 		logrus.WithFields(logrus.Fields{
 			"action": "templatefunc",
 			"func":   "toJson",
-		}).Infof("Failed to marshall structure %v: %s", value, err.Error())
+		}).Infof("Failed to marshall JSON structure %v: %s", value, err.Error())
 		return ""
 	}
 
@@ -90,7 +90,7 @@ func FromYaml(str string) interface{} {
 		logrus.WithFields(logrus.Fields{
 			"action": "templatefunc",
 			"func":   "fromYaml",
-		}).Infof("Failed to unmarshal %s: %s", strconv.Quote(str), err.Error())
+		}).Infof("Failed to unmarshal Yaml %s: %s", strconv.Quote(str), err.Error())
 		return nil
 	}
 
@@ -104,7 +104,7 @@ func ToYaml(value interface{}) string {
 		logrus.WithFields(logrus.Fields{
 			"action": "templatefunc",
 			"func":   "toYaml",
-		}).Infof("Failed to marshall structure %v: %s", value, err.Error())
+		}).Infof("Failed to marshall YAML structure %v: %s", value, err.Error())
 		return ""
 	}
 
@@ -149,6 +149,6 @@ func B64dec(input string) string {
 }
 
 func WithAnnotationPrefix(suffix string) string {
-    prefix := fmt.Sprintf("%v", config.Settings["annotationPrefix"])
-    return prefix + "/" + suffix
+	prefix := fmt.Sprintf("%v", config.Settings["annotationPrefix"])
+	return prefix + "/" + suffix
 }
