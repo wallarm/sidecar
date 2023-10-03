@@ -60,6 +60,10 @@ config:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_response
     ###
     parseResponse: "on"
+    ### Whether to export statistics on blocked request: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_acl_export_enable
+    ###
+    aclExportEnable: "on"
     ### Whether to analyze WebSocket's messages for attacks: `on` or `off`
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_websocket
     ###
@@ -542,6 +546,10 @@ postanalytics:
       "sync-node":
         schedule: "*/2 * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L DEBUG"
+      "export-blocked-stats":
+        schedule: "* * * * *"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-blocked-stats -l STDOUT -L DEBUG"
+        timeout: 24h
 
     image:
       registry: docker.io

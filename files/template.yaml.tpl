@@ -57,6 +57,8 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-parse-websocket`) .Config.wallarm.parseWebsocket }}"
     - name: WALLARM_UNPACK_RESPONSE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-unpack-response`) .Config.wallarm.unpackResponse }}"
+    - name: WALLARM_ACL_EXPORT_ENABLE
+      value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-acl-export-enable`) .Config.wallarm.aclExportEnable }}"
     - name: WALLARM_TARANTOOL_HOST
       value: "{{ .Config.tarantool.host }}"
     - name: WALLARM_TARANTOOL_PORT
