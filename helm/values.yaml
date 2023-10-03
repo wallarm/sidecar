@@ -26,6 +26,10 @@ config:
       ### Verify CA during connecting to Wallarm API service: `true` or `false`
       ###
       caVerify: true
+      ## The name of Node group, required if API token is used to register the Node
+      ## https://docs.wallarm.com/user-guides/nodes/nodes/#api-and-node-tokens-for-node-creation
+      ##
+      nodeGroup: "defaultSidecarGroup"
       ### Existing secret feature allows to pull Wallarm API token from existing Kubernetes secret
       ###
       existingSecret:

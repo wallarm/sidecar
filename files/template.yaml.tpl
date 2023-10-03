@@ -272,6 +272,8 @@ volumes:
       value: "{{ .Config.wallarm.api.useSSL }}"
     - name: WALLARM_API_CA_VERIFY
       value: "{{ .Config.wallarm.api.caVerify }}"
+    - name: WALLARM_LABELS
+      value: "group={{ getAnnotation .ObjectMeta (withAP `wallarm-node-group`) .Config.wallarm.api.nodeGroup }}"
 {{- end }}
 
 {{- define "wallarmVersion" }}
