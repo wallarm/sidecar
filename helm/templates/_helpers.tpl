@@ -126,6 +126,11 @@ Gives name of image to use
     secretKeyRef:
       key: WALLARM_API_CA_VERIFY
       name: {{ template "wallarm-sidecar.fullname" . }}-credentials
+- name: WALLARM_LABELS
+  valueFrom:
+    secretKeyRef:
+      key: WALLARM_LABELS
+      name: {{ template "wallarm-sidecar.fullname" . }}-credentials
 - name: WALLARM_API_TOKEN
   valueFrom:
     secretKeyRef:

@@ -26,6 +26,10 @@ config:
       ### Verify CA during connecting to Wallarm API service: `true` or `false`
       ###
       caVerify: true
+      ## The name of Node group, required if API token is used to register the Node
+      ## https://docs.wallarm.com/user-guides/nodes/nodes/#api-and-node-tokens-for-node-creation
+      ##
+      nodeGroup: "defaultSidecarGroup"
       ### Existing secret feature allows to pull Wallarm API token from existing Kubernetes secret
       ###
       existingSecret:
@@ -60,6 +64,10 @@ config:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_response
     ###
     parseResponse: "on"
+    ### Whether to export statistics on blocked request: `on` or `off`
+    ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_acl_export_enable
+    ###
+    aclExportEnable: "on"
     ### Whether to analyze WebSocket's messages for attacks: `on` or `off`
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_parse_websocket
     ###
@@ -191,7 +199,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.6.3-2"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -467,7 +475,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.6.4-1"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -542,11 +550,15 @@ postanalytics:
       "sync-node":
         schedule: "*/2 * * * *"
         command: "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L DEBUG"
+      "export-blocked-stats":
+        schedule: "* * * * *"
+        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-blocked-stats -l STDOUT -L DEBUG"
+        timeout: 24h
 
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.6.4-1"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -599,7 +611,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-tarantool
-      tag: "4.6.4-1"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -655,7 +667,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.6.4-1"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -703,7 +715,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.6.4-1"
+      tag: "4.8.0-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###

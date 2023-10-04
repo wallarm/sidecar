@@ -16,7 +16,7 @@ metadata:
     {{- end }}
 data:
   crontab: |-
-    ### Postanalytics service crontab
+    ### Post-analytics service crontab
     ###
     {{- range $k, $v := .Values.postanalytics.cron.config }}
     {{- $timeout := " " }}
