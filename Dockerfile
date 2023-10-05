@@ -1,4 +1,4 @@
-FROM golang:1.20.4-alpine3.18 as builder
+FROM golang:1.21.1-alpine3.18 as builder
 
 RUN apk add --no-cache                         \
         bash                                   \
@@ -25,8 +25,7 @@ ARG GID=65222
 RUN apk update                              && \
     apk upgrade                             && \
     apk add --no-cache                         \
-        bash                                   \
-        curl                                && \
+        bash                                && \
     addgroup -g ${GID} controller           && \
     adduser -h /home/controller                \
         -s /bin/bash -u ${UID} -D              \
