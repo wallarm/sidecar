@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     name: Release Helm chart
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     outputs:
       chart_version: ${{ steps.get_versions.outputs.chart_version }}
     steps:
@@ -23,6 +23,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: |
             kv-gitlab-ci/data/github/shared/github_token token | GITHUB_TOKEN ;
 
@@ -51,7 +52,7 @@ jobs:
 
   update_version:
     name: Update package version
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     needs: release
     steps:
       - name: Import secrets
@@ -62,6 +63,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: |
             kv-gitlab-ci/data/github/shared/versions-repo-creds token_secret | GITLAB_TOKEN ;
             kv-gitlab-ci/data/github/shared/versions-repo-creds token_secret | GITLAB_TOKEN_NAME ;
