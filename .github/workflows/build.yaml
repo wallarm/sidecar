@@ -13,7 +13,7 @@ permissions:
 jobs:
   build:
     name: Build and push images
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     steps:
       - name: Checkout
         uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.0.2
@@ -26,6 +26,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: |
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;

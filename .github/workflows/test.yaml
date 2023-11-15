@@ -121,7 +121,7 @@ jobs:
     name: Integration test
     if: ${{ inputs.run_test }}
     needs: check
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     strategy:
       matrix:
         kubeVersion:
@@ -141,6 +141,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: kv-gitlab-ci/data/github/sidecar api_token
 
       - name: Checkout
@@ -200,7 +201,7 @@ jobs:
 
   chart-testing:
     name: Chart testing - install
-    runs-on: self-hosted-1cpu
+    runs-on: self-hosted-amd64-1cpu
     needs: check
     steps:
       - name: Import secrets
@@ -211,6 +212,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ secrets.VAULT_ROLE }}
           method: kubernetes
+          path: kubernetes-ci
           secrets: kv-gitlab-ci/data/github/sidecar api_token | WALLARM_API_TOKEN
 
       - name: Checkout
