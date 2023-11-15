@@ -475,7 +475,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.8.0-1"
+      tag: "4.8.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -558,7 +558,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-ruby
-      tag: "4.8.0-1"
+      tag: "4.8.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -611,7 +611,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-tarantool
-      tag: "4.8.0-1"
+      tag: "4.8.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -667,7 +667,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.8.0-1"
+      tag: "4.8.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -715,7 +715,7 @@ postanalytics:
     image:
       registry: docker.io
       image: wallarm/ingress-python
-      tag: "4.8.0-1"
+      tag: "4.8.1-1"
       pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
@@ -829,7 +829,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.3.3"
+    tag: "1.3.4"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
