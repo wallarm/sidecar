@@ -8,7 +8,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.0
-	k8s.io/apimachinery v0.29.0
+	k8s.io/apimachinery v0.29.2
 	sigs.k8s.io/yaml v1.4.0
 )
 
