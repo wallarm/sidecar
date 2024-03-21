@@ -28,7 +28,6 @@ volumes:
   env:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
-    {{ template "wallarmCronVariables" . }}
     {{ template "wallarmVersion" . }}
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
@@ -182,7 +181,6 @@ volumes:
   command: ["supervisord", "-c", "/etc/supervisor/supervisord.helper.conf"]
   env:
     {{ template "wallarmApiVariables" . }}
-    {{ template "wallarmCronVariables" . }}
     {{ template "wallarmVersion" . }}
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
@@ -281,37 +279,6 @@ volumes:
       value: "{{ .Config.component.name }}"
     - name: WALLARM_COMPONENT_VERSION
       value: "{{ .Config.component.version }}"
-{{- end }}
-
-{{- define "wallarmCronVariables" }}
-    - name: WALLARM_CRON_EXPORT_ENV_SCHEDULE
-      value: "{{ .Config.wallarm.cron.exportEnvironment.schedule }}"
-    - name: WALLARM_CRON_EXPORT_ENV_TIMEOUT
-      value: "{{ .Config.wallarm.cron.exportEnvironment.timeout }}"
-    - name: WALLARM_CRON_EXPORT_ENV_COMMAND
-      value: "{{ .Config.wallarm.cron.exportEnvironment.command }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_SCHEDULE
-      value: "{{ .Config.wallarm.cron.exportMetrics.schedule }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_TIMEOUT
-      value: "{{ .Config.wallarm.cron.exportMetrics.timeout }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_COMMAND
-      value: "{{ .Config.wallarm.cron.exportMetrics.command }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncIpLists.schedule }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_TIMEOUT
-      value: "{{ .Config.wallarm.cron.syncIpLists.timeout }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_COMMAND
-      value: "{{ .Config.wallarm.cron.syncIpLists.command }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.schedule }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_TIMEOUT
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.timeout }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.command }}"
-    - name: WALLARM_CRON_SYNC_NODE_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncNode.schedule }}"
-    - name: WALLARM_CRON_SYNC_NODE_COMMAND
-      value: "{{ .Config.wallarm.cron.syncNode.command }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}
