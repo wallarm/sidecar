@@ -31,7 +31,7 @@ jobs:
       - name: Build
         run: |
           IMAGE="wallarm/sidecar-controller"
-          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
+          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE} PLATFORMS=linux/amd64 BUILDX_ARGS=--load
           mkdir artifacts
           docker save -o artifacts/docker-image.tar ${IMAGE}:${GITHUB_SHA}
 
