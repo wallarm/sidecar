@@ -229,7 +229,7 @@ volumes:
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP "nginx-listen-port") .Config.nginx.listenPort }}"
-  command: ["iptables"]
+  command: ["iptables-nft"]
   args: ["-t", "nat", "-A", "PREROUTING", "-p", "tcp", "-d", "$(POD_IP)", "--dport", "$(APP_PORT)", "-j", "REDIRECT", "--to-ports", "$(NGINX_PORT)"]
   securityContext:
     {{ toYaml .Config.sidecar.initContainers.iptables.securityContext | indent 4 }}

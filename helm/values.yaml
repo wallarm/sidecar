@@ -273,6 +273,8 @@ config:
         ### Security context for `iptables` container
         ###
         securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
           capabilities:
             add:
               - NET_ADMIN

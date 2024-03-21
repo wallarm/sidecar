@@ -13,7 +13,7 @@ ALLOWED_HTTP_PATH = '/get'
 FORBIDDEN_HTTP_PATH = '/?id=\'or+1=1--a-<script>prompt(1)</script>\''
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 PATCHES_PATH = f'{SCRIPT_PATH}/kustomize/patches'
-WAIT_PODS_TIMEOUT = '120s'
+WAIT_PODS_TIMEOUT = '180s'
 
 print('PATCHES_PATH: ${PATCHES_PATH}')
 patchList = []
@@ -92,11 +92,6 @@ class Tests:
 
         # Register teardown and setup resources for test
         teardown_namespace['namespace'] = namespace
-
-        # Skip tests with ip-tables if run on arm64
-        if ("iptables_enabled" in config) and ("aarch64" in sysconfig.get_platform().split("-")[-1].lower()):
-            pytest.skip(f'Skip {config} test since aarch64')
-            return
 
         helpers.setup_resources(config_path, namespace)
 
