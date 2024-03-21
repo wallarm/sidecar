@@ -178,7 +178,7 @@ volumes:
 - name: sidecar-helper
   image: {{ template "image" . }}
   imagePullPolicy: {{ .Config.sidecar.image.pullPolicy }}
-  command: ["supervisord", "-c", "/etc/supervisor/supervisord.helper.conf"]
+  command: ["/usr/local/run-helper.sh"]
   env:
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmVersion" . }}
