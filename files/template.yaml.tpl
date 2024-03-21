@@ -151,11 +151,11 @@ volumes:
     {{ toYaml .Config.sidecar.containers.proxy.readinessProbe | indent 4 }}
 {{ end }}
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
-    - mountPath: /var/lib/nginx/wallarm/
+    - mountPath: /opt/wallarm/var/lib/nginx/wallarm/
       name: wallarm-cache
     {{- if and .Profile (index .Profile "sidecar") -}}
     {{- with .Profile.sidecar.volumeMounts }}
@@ -185,9 +185,9 @@ volumes:
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
@@ -206,9 +206,9 @@ volumes:
     - name: WALLARM_FALLBACK
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
