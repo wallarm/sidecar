@@ -8,7 +8,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.0
-	k8s.io/apimachinery v0.29.2
+	k8s.io/apimachinery v0.29.3
 	sigs.k8s.io/yaml v1.4.0
 )
 
@@ -29,7 +29,7 @@ require (
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
-	google.golang.org/protobuf v1.32.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/klog/v2 v2.110.1 // indirect
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
