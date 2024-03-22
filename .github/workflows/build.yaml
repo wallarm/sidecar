@@ -33,13 +33,10 @@ jobs:
             kv-gitlab-ci/data/node/build/cosign password | COSIGN_PASSWORD ;
             kv-gitlab-ci/data/node/build/cosign private_key | COSIGN_PRIVATE_KEY ;
 
-      - name: Build image
-        run: make build
-
-      - name: Push image
+      - name: Build and push image
         run: |
           echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USER} --password-stdin
-          make push
+          make build
 
       - name: Sign image
         id: sign
@@ -55,7 +52,7 @@ jobs:
           syft -o spdx-json ${IMAGE_NAME} > ${SBOM_SPDX}
           cosign attach sbom --sbom ${SBOM_SPDX} ${IMAGE_DIGEST}
           cosign sign --yes --key env://COSIGN_PRIVATE_KEY "${IMAGE_URI}.sbom"
-          cosign sign --yes --key env://COSIGN_PRIVATE_KEY ${IMAGE_DIGEST}
+          cosign sign --recursive --yes --key env://COSIGN_PRIVATE_KEY ${IMAGE_DIGEST}
 
           echo "sbom=${SBOM_SPDX}" >> $GITHUB_OUTPUT
 

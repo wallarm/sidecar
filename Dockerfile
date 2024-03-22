@@ -1,4 +1,15 @@
-FROM golang:1.21.1-alpine3.18 as builder
+ARG ALPINE_VERSION
+FROM golang:1.21.1-alpine${ALPINE_VERSION} as builder
+
+MAINTAINER Wallarm Support Team <support@wallarm.com>
+
+LABEL org.opencontainers.image.title="Docker official image for Wallarm Node. API security platform agent"
+LABEL org.opencontainers.image.title="Kubernetes Sidecar schema of Wallarm API Security deployment"
+LABEL org.opencontainers.image.documentation="https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/"
+LABEL org.opencontainers.image.source="https://github.com/wallarm/sidecar"
+LABEL org.opencontainers.image.vendor="Wallarm"
+LABEL org.opencontainers.image.revision="${COMMIT_SHA}"
+LABEL com.wallarm.sidecar-controller.versions.alpine="${ALPINE_VERSION}"
 
 RUN apk add --no-cache                         \
         bash                                   \
@@ -10,15 +21,16 @@ WORKDIR /build
 COPY cmd/ go.mod go.sum ./
 RUN go mod download
 
+ARG TARGETARCH
 ARG CGO_ENABLED=0
 ARG GOOS=linux
-ARG GOARCH=amd64
+ARG GOARCH=$TARGETARCH
 RUN go test -v .                            && \
     go build -a -ldflags="-s -w"               \
         -o sidecar-controller .             && \
     upx -9 sidecar-controller
 
-FROM alpine:3.18
+FROM alpine:${ALPINE_VERSION}
 
 ARG UID=65222
 ARG GID=65222
