@@ -551,7 +551,7 @@ postanalytics:
       ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
-      arena: "0.5"
+      arena: "2.0"
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []

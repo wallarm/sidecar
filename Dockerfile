@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.documentation="https://docs.wallarm.com/installat
 LABEL org.opencontainers.image.source="https://github.com/wallarm/sidecar"
 LABEL org.opencontainers.image.vendor="Wallarm"
 LABEL org.opencontainers.image.revision="${COMMIT_SHA}"
-LABEL com.wallarm.nginx-docker.versions.alpine="${ALPINE_VERSION}"
+LABEL com.wallarm.sidecar-controller.versions.alpine="${ALPINE_VERSION}"
 
 RUN apk add --no-cache                         \
         bash                                   \
