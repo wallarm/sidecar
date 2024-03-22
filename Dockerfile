@@ -27,8 +27,8 @@ ARG GOOS=linux
 ARG GOARCH=$TARGETARCH
 RUN go test -v .                            && \
     go build -a -ldflags="-s -w"               \
-        -o sidecar-controller .
-    #upx -9 sidecar-controller
+        -o sidecar-controller .             && \
+    upx -9 sidecar-controller
 
 FROM alpine:${ALPINE_VERSION}
 
