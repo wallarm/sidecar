@@ -23,11 +23,25 @@ for patchPath in os.listdir(PATCHES_PATH):
 
 class Helpers:
     @staticmethod
-    def subprocess_run(cmd: str) -> subprocess.CompletedProcess:
+    def get_container_logs(namespace: str):
+        describe_cmd = f'kubectl describe po -n {namespace} -l wallarm-sidecar=enabled'
+        describe = subprocess.run(shlex.split(describe_cmd), capture_output=True, text=True).stdout
+        logger.info(f'Describe pods in "{namespace}" namespace: \n\n{describe}')
+        logger.info(f'End of describe pod')
+
+        logs_cmd = f'kubectl logs -n {namespace} -l wallarm-sidecar=enabled --all-containers --ignore-errors --since=1h'
+        logs = subprocess.run(shlex.split(logs_cmd), capture_output=True, text=True).stdout
+        logger.info(f'Logs from "{namespace}" namespace: \n\n{logs}')
+        logger.info(f'End of logs')
+
+    @staticmethod
+    def subprocess_run(cmd: str, namespace=None) -> subprocess.CompletedProcess:
         logger.info(f'Command: {cmd}')
         completed_process = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
         if completed_process.returncode != 0:
             logger.error(completed_process.stderr)
+            if namespace:
+                Helpers.get_container_logs(namespace)
             raise Exception(f'Command: {cmd} '
                             f'Exit code: {completed_process.returncode} '
                             f'Stderr: {completed_process.stderr}')
@@ -52,7 +66,7 @@ class Helpers:
         cmd = f'kubectl --namespace {namespace} ' \
               f'wait --for=condition=Ready pods --all --timeout={WAIT_PODS_TIMEOUT}'
         logger.info('Wait for all Pods ready ...')
-        Helpers.subprocess_run(cmd)
+        Helpers.subprocess_run(cmd, namespace)
 
     @staticmethod
     def delete_namespace(namespace: str) -> None:
