@@ -66,7 +66,7 @@ spec:
         - name: init
           image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
           imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
-          args: [ "register", "fallback" ]
+          args: [ "register"{{- if eq .Values.config.wallarm.fallback "on" }}, "fallback"{{- end }} ]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
