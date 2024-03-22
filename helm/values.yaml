@@ -504,6 +504,29 @@ postanalytics:
     # - name: something
     #   mountPath: /mnt/something
   supervisord:
+    ### Per-script debug level
+    commands:
+      exportAttacks:
+        logLevel: INFO
+      exportCounters:
+        logLevel: ERROR
+      exportEnvironment:
+        logLevel: INFO
+      bruteDetect:
+        logLevel: INFO
+      syncMarkers:
+        logLevel: INFO
+      weakJwtDetect:
+        logLevel: INFO
+      syncNode:
+        logLevel: INFO
+      exportBlockedStat:
+        logLevel: INFO
+      detectCredStuffing:
+        logLevel: INFO
+    ### Supervisord log level (blather|trace|debug|info|warn|error|critical)
+    ### Ref: http://supervisord.org/logging.html
+    logLevel: warn
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []

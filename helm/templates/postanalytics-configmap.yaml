@@ -18,14 +18,15 @@ data:
   supervisord.conf: |-
     [supervisord]
     nodaemon=true
-    loglevel=info
+    loglevel={{ .Values.postanalytics.supervisord.logLevel }}
     logfile=/dev/stdout
     logfile_maxbytes=0
     pidfile=/opt/wallarm/run/supervisor/pid
 
+  {{- with .Values.postanalytics.supervisord.commands }}
     # export-attacks
     [program:export-attacks]
-    command=/opt/wallarm/usr/share/wallarm-common/export-attacks -r -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/export-attacks -r -l STDOUT -L {{ .exportAttacks.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -35,7 +36,7 @@ data:
 
     # export-counters
     [program:export-counters]
-    command=/opt/wallarm/usr/share/wallarm-common/export-counters -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/export-counters -l STDOUT -L {{ .exportCounters.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -45,7 +46,7 @@ data:
 
     # export-environment
     [program:export-environment]
-    command=/opt/wallarm/usr/share/wallarm-common/export-environment -w -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/export-environment -w -l STDOUT -L {{ .exportEnvironment.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -55,7 +56,7 @@ data:
 
     # brute-detect
     [program:brute-detect]
-    command=/opt/wallarm/usr/share/wallarm-common/brute-detect -w -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/brute-detect -w -l STDOUT -L {{ .bruteDetect.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -65,7 +66,7 @@ data:
 
     # sync-markers
     [program:sync-markers]
-    command=/opt/wallarm/usr/share/wallarm-common/sync-markers -w -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/sync-markers -w -l STDOUT -L {{ .syncMarkers.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -75,7 +76,7 @@ data:
 
     # weak-jwt-detect
     [program:weak-jwt-detect]
-    command=/opt/wallarm/usr/share/wallarm-common/weak-jwt-detect -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/weak-jwt-detect -l STDOUT -L {{ .weakJwtDetect.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -85,7 +86,7 @@ data:
 
     # sync-node
     [program:sync-node]
-    command=/opt/wallarm/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L {{ .syncNode.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -95,7 +96,7 @@ data:
 
     # export-blocked-stats
     [program:export-blocked-stats]
-    command=/opt/wallarm/usr/share/wallarm-common/export-blocked-stats -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/export-blocked-stats -l STDOUT -L {{ .exportBlockedStat.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
@@ -105,11 +106,12 @@ data:
 
     # detect-cred-stuffing
     [program:detect-cred-stuffing]
-    command=/opt/wallarm/usr/share/wallarm-common/detect-cred-stuffing -l STDOUT
+    command=/opt/wallarm/usr/share/wallarm-common/detect-cred-stuffing -l STDOUT -L {{ .detectCredStuffing.logLevel }}
     autorestart=true
     startretries=4294967295
     stdout_logfile_maxbytes=0
     stdout_logfile=/dev/stdout
     stderr_logfile_maxbytes=0
     stderr_logfile=/dev/stdout
+  {{- end }}
 {{- end }}
