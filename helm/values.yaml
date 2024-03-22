@@ -76,6 +76,10 @@ config:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     unpackResponse: "on"
+    ### Global setting to turn Wallarm API Firewall component on or off
+    ### https://wallarm.github.io/api-firewall/
+    ###
+    apiFirewallMode: "on"
     ### Post-analytics node endpoint configuration
     ###
     upstream:

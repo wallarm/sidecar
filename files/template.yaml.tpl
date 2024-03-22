@@ -66,6 +66,8 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-reconnect-interval`) .Config.wallarm.upstream.reconnectInterval }}"
+    - name: WALLARM_APIFW_ENABLE
+      value: "{{ getAnnotation .ObjectMeta (withAP `api-firewall-enabled`) .Config.wallarm.apiFirewallMode }}"
     - name: NGINX_LISTEN_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
