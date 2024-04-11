@@ -55,11 +55,7 @@ jobs:
           if [ ${{ github.event.client_payload.upstream_update }} = true ]; then
             UPSTREAM_TAG=${{ github.event.client_payload.upstream_tag }}
             HELM_ARGS+="\
-              --set postanalytics.init.image.tag=${UPSTREAM_TAG} \
-              --set postanalytics.cron.image.tag=${UPSTREAM_TAG} \
-              --set postanalytics.tarantool.image.tag=${UPSTREAM_TAG} \
-              --set postanalytics.heartbeat.image.tag=${UPSTREAM_TAG} \
-              --set postanalytics.appstructure.image.tag=${UPSTREAM_TAG}"
+              --set helper.image.tag=${UPSTREAM_TAG}"
             echo "HELM_ARGS: ${HELM_ARGS}"
           fi
           

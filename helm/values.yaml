@@ -76,6 +76,10 @@ config:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     unpackResponse: "on"
+    ### Global setting to turn Wallarm API Firewall component on or off
+    ### https://wallarm.github.io/api-firewall/
+    ###
+    apiFirewallMode: "on"
     ### Post-analytics node endpoint configuration
     ###
     upstream:
@@ -87,26 +91,6 @@ config:
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_reconnect_interval
       ###
       reconnectInterval: 15s
-    cron:
-      exportEnvironment:
-        schedule: "0 */1 * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT"
-        timeout: 10m
-      exportMetrics:
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-metrics -l STDOUT"
-        timeout: 3h
-      syncIpLists:
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists -l STDOUT"
-        timeout: 3h
-      syncIpListsSource:
-        schedule: "*/5 * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-ip-lists-source -l STDOUT"
-        timeout: 3h
-      syncNode:
-        schedule: "*/2 * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L DEBUG"
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
@@ -199,7 +183,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: "4.8.0-1"
+      tag: "4.10.2-1"
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -293,6 +277,8 @@ config:
         ### Security context for `iptables` container
         ###
         securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
           capabilities:
             add:
               - NET_ADMIN
@@ -357,6 +343,13 @@ config:
 ###
 imagePullSecrets: []
 # - name: secretName
+
+helper:
+  image:
+    registry: "docker.io"
+    image: "wallarm/node-helpers"
+    tag: "4.10.2-2"
+    pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
 ###
@@ -472,11 +465,6 @@ postanalytics:
   ### Container-specific options
   ###
   init:
-    image:
-      registry: docker.io
-      image: wallarm/ingress-ruby
-      tag: "4.8.1-1"
-      pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -519,47 +507,30 @@ postanalytics:
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-  cron:
-    config:
-      ### Cron jobs configuration
-      ###
-      "export-attacks":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-attacks -l STDOUT"
-        timeout: 3h
-      "export-counters":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-counters -l STDOUT"
-        timeout: 11m
-      "export-environment":
-        schedule: "0 */1 * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT"
-        timeout: 10m
-      "brute-detect":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/brute-detect -l STDOUT"
-        timeout: 6m
-      "sync-markers":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/sync-markers -l STDOUT"
-        timeout: 1h
-      "weak-jwt-detect":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/weak-jwt-detect -l STDOUT"
-        timeout: 10m
-      "sync-node":
-        schedule: "*/2 * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/syncnode -f -p -r 120 -l STDOUT -L DEBUG"
-      "export-blocked-stats":
-        schedule: "* * * * *"
-        command: "/opt/wallarm/ruby/usr/share/wallarm-common/export-blocked-stats -l STDOUT -L DEBUG"
-        timeout: 24h
-
-    image:
-      registry: docker.io
-      image: wallarm/ingress-ruby
-      tag: "4.8.1-1"
-      pullPolicy: IfNotPresent
+  supervisord:
+    ### Per-script debug level
+    commands:
+      exportAttacks:
+        logLevel: INFO
+      exportCounters:
+        logLevel: ERROR
+      exportEnvironment:
+        logLevel: INFO
+      bruteDetect:
+        logLevel: INFO
+      syncMarkers:
+        logLevel: INFO
+      weakJwtDetect:
+        logLevel: INFO
+      syncNode:
+        logLevel: INFO
+      exportBlockedStat:
+        logLevel: INFO
+      detectCredStuffing:
+        logLevel: INFO
+    ### Supervisord log level (blather|trace|debug|info|warn|error|critical)
+    ### Ref: http://supervisord.org/logging.html
+    logLevel: warn
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -607,12 +578,7 @@ postanalytics:
       ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
-      arena: "0.5"
-    image:
-      registry: docker.io
-      image: wallarm/ingress-tarantool
-      tag: "4.8.1-1"
-      pullPolicy: IfNotPresent
+      arena: "2.0"
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -664,11 +630,6 @@ postanalytics:
     # - name: something
     #   mountPath: /mnt/something
   appstructure:
-    image:
-      registry: docker.io
-      image: wallarm/ingress-python
-      tag: "4.8.1-1"
-      pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -712,11 +673,6 @@ postanalytics:
     # - name: something
     #   mountPath: /mnt/something
   antibot:
-    image:
-      registry: docker.io
-      image: wallarm/ingress-python
-      tag: "4.8.1-1"
-      pullPolicy: IfNotPresent
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
@@ -829,7 +785,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: "1.3.4"
+    tag: "1.3.5"
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*

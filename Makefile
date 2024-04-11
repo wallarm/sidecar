@@ -1,19 +1,23 @@
 # https://makefiletutorial.com/
 
 -include env.ini
+
+ifndef CI
+	PLATFORMS?=linux/amd64
+	BUILDX_ARGS?=--load
+else
+	PLATFORMS?=linux/amd64,linux/aarch64
+	BUILDX_ARGS?=--push
+endif
+
 .EXPORT_ALL_VARIABLES:
 
 DOCKERFILE       := ./Dockerfile
 TAG   	 		 ?= $(shell cat TAG)
 IMAGE 	  		 ?= wallarm/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
-
-### For embedding into the chart
-###
-SIDECAR_IMAGE    := wallarm/sidecar:4.8.0-1
-TARANTOOL_IMAGE  := wallarm/ingress-tarantool:4.8.1-1
-RUBY_IMAGE       := wallarm/ingress-ruby:4.8.1-1
-PYTHON_IMAGE     := wallarm/ingress-python:4.8.1-1
+COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
+ALPINE_VERSION   = 3.18
 
 ### Contribution routines
 ###
@@ -68,13 +72,7 @@ clean-all:
 ### Helm routines
 ###
 HELMARGS := --set "config.wallarm.api.token=$(WALLARM_API_TOKEN)" \
-			--set "config.wallarm.api.host=$(WALLARM_API_HOST)" \
-			--set "config.sidecar.image.fullname=$(SIDECAR_IMAGE)" \
-			--set "postanalytics.init.image.fullname=$(RUBY_IMAGE)" \
-			--set "postanalytics.cron.image.fullname=$(RUBY_IMAGE)" \
-			--set "postanalytics.tarantool.image.fullname=$(TARANTOOL_IMAGE)" \
-			--set "postanalytics.appstructure.image.fullname=$(PYTHON_IMAGE)" \
-			--set "postanalytics.antibot.image.fullname=$(PYTHON_IMAGE)"
+			--set "config.wallarm.api.host=$(WALLARM_API_HOST)"
 
 helm-template:
 	@$(HELM) template wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS) --debug
@@ -108,8 +106,23 @@ test: fmt vet
 
 ### Build
 ###
-build:
-	@docker build -t $(CONTROLLER_IMAGE) . --force-rm --no-cache --progress=plain
+
+setup_buildx:
+	docker buildx rm multi-arch || true
+	docker buildx create \
+		--name multi-arch \
+		--platform linux/amd64,linux/arm64 \
+		--driver docker-container \
+		--use
+
+build: setup_buildx
+	@docker buildx build \
+		--file Dockerfile \
+		--platform=$(PLATFORMS) \
+		--build-arg ALPINE_VERSION="$(ALPINE_VERSION)" \
+		--build-arg COMMIT_SHA="$(COMMIT_SHA)" \
+		--force-rm --no-cache --progress=plain \
+		--tag $(CONTROLLER_IMAGE) $(BUILDX_ARGS) .
 
 push rmi:
 	@docker $@ $(CONTROLLER_IMAGE)

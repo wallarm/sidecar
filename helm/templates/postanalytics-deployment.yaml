@@ -26,7 +26,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ .Values.postanalytics.cron.config | toJson | sha256sum }}
+        checksum/config: {{ index (include (print .Template.BasePath "/postanalytics-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
         checksum/secret: {{ .Values.config.wallarm.api | toJson | sha256sum }}
         {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
         {{- with .Values.postanalytics.extraAnnotations }}
@@ -64,14 +64,9 @@ spec:
       {{- end }}
       initContainers:
         - name: init
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.init.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.init.image.pullPolicy }}"
-          command:
-          - sh
-          - -c
-          - >
-            /opt/wallarm/ruby/usr/share/wallarm-common/register-node --force --batch --no-export-env  {{- if eq .Values.config.wallarm.fallback "on" }} || true {{- end }};
-            /opt/wallarm/ruby/usr/share/wallarm-common/export-environment -l STDOUT || true
+          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
+          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
+          args: [ "register"{{- if eq .Values.config.wallarm.fallback "on" }}, "fallback"{{- end }} ]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
@@ -102,9 +97,9 @@ spec:
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/wallarm
+          - mountPath: /opt/wallarm/etc/wallarm
             name: wallarm
-          - mountPath: /var/lib/wallarm-acl
+          - mountPath: /opt/wallarm/var/lib/wallarm-acl
             name: wallarm-acl
           {{- with .Values.postanalytics.init.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
@@ -113,28 +108,27 @@ spec:
         {{- . | toYaml | nindent 8 }}
         {{- end }}
       containers:
-        - name: cron
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.cron.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.cron.image.pullPolicy }}"
-          command: ["/bin/dumb-init", "--"]
-          args: ["/bin/supercronic", "-json", "/opt/cron/crontab"]
+        - name: supervisord
+          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
+          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
+          args: ["supervisord"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
-          {{- with .Values.postanalytics.cron.extraEnvs }}
+          {{- with .Values.postanalytics.supervisord.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
-          {{- with .Values.postanalytics.cron.livenessProbe }}
+          {{- with .Values.postanalytics.supervisord.livenessProbe }}
           livenessProbe: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.cron.readinessProbe }}
+          {{- with .Values.postanalytics.supervisord.readinessProbe }}
           readinessProbe: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.cron.lifecycle }}
+          {{- with .Values.postanalytics.supervisord.lifecycle }}
           lifecycle: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- if .Values.postanalytics.cron.securityContext }}
-          securityContext: {{ .Values.postanalytics.cron.securityContext | toYaml | nindent 12 }}
+          {{- if .Values.postanalytics.supervisord.securityContext }}
+          securityContext: {{ .Values.postanalytics.supervisord.securityContext | toYaml | nindent 12 }}
           {{- else }}
           securityContext:
             privileged: false
@@ -144,24 +138,25 @@ spec:
               drop:
               - ALL
           {{- end }}
-          {{- with .Values.postanalytics.cron.resources }}
+          {{- with .Values.postanalytics.supervisord.resources }}
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/wallarm
+          - mountPath: /opt/wallarm/etc/wallarm
             name: wallarm
-          - mountPath: /var/lib/wallarm-acl
+          - mountPath: /opt/wallarm/var/lib/wallarm-acl
             name: wallarm-acl
-          - mountPath: /opt/cron/crontab
-            name: wallarm-cron
-            subPath: crontab
+          - mountPath: /opt/supervisord/supervisord.conf
+            name: wallarm-supervisord
+            subPath: supervisord.conf
             readOnly: true
-          {{- with .Values.postanalytics.cron.extraVolumeMounts }}
+          {{- with .Values.postanalytics.supervisord.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         - name: tarantool
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.tarantool.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.tarantool.image.pullPolicy }}"
+          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
+          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
+          args: ["tarantool"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: SLAB_ALLOC_ARENA
@@ -203,8 +198,9 @@ spec:
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         - name: appstructure
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.appstructure.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.appstructure.image.pullPolicy }}"
+          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
+          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
+          args: ["appstructure"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- with .Values.postanalytics.appstructure.extraEnvs }}
@@ -234,15 +230,15 @@ spec:
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/wallarm
+          - mountPath: /opt/wallarm/etc/wallarm
             name: wallarm
           {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         - name: antibot
-          image: {{ include "wallarm-sidecar.image" .Values.postanalytics.antibot.image }}
-          imagePullPolicy: "{{ .Values.postanalytics.antibot.image.pullPolicy }}"
-          command: ["/opt/wallarm/python/usr/bin/antibotapiextractor"]
+          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
+          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
+          args: ["antibot"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- with .Values.postanalytics.antibot.extraEnvs }}
@@ -272,7 +268,7 @@ spec:
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
           volumeMounts:
-          - mountPath: /etc/wallarm
+          - mountPath: /opt/wallarm/etc/wallarm
             name: wallarm
           {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
@@ -285,7 +281,7 @@ spec:
           emptyDir: {}
         - name: wallarm-acl
           emptyDir: {}
-        - name: wallarm-cron
+        - name: wallarm-supervisord
           configMap:
             name: {{ include "wallarm-sidecar.fullname" . }}-postanalytics
         {{- with .Values.postanalytics.extraVolumes }}

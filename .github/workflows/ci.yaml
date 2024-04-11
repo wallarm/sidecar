@@ -21,7 +21,15 @@ permissions:
 jobs:
   build:
     name: Build
-    runs-on: self-hosted-amd64-1cpu
+    runs-on: ${{ matrix.RUNNER }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - PLATFORM: amd64
+            RUNNER: self-hosted-amd64-1cpu
+          - PLATFORM: aarch64
+            RUNNER: self-hosted-arm64-1cpu
     outputs:
       helm_args: ${{ steps.compute_helm_args.outputs.helm_args }}
     steps:
@@ -31,15 +39,15 @@ jobs:
       - name: Build
         run: |
           IMAGE="wallarm/sidecar-controller"
-          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE}
+          make build TAG=${GITHUB_SHA} IMAGE=${IMAGE} PLATFORMS=linux/${{ matrix.PLATFORM }} BUILDX_ARGS=--load
           mkdir artifacts
-          docker save -o artifacts/docker-image.tar ${IMAGE}:${GITHUB_SHA}
+          docker save -o artifacts/docker-image-${{ matrix.PLATFORM }}.tar ${IMAGE}:${GITHUB_SHA}
 
       - name: Save artifact
         uses: actions/upload-artifact@v3
         with:
           name: docker-artifact
-          path: artifacts/docker-image.tar
+          path: artifacts/docker-image-${{ matrix.PLATFORM }}.tar
           retention-days: 1
 
       - name: Compute Helm arguments
@@ -51,7 +59,7 @@ jobs:
   test:
     name: Test
     needs: build
-    uses: wallarm/sidecar/.github/workflows/test.yaml@main
+    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-11 # TODO: fix, tmp, no dynamic resolving here
     secrets:
       VAULT_URL: ${{ secrets.VAULT_URL }}
       VAULT_ROLE: ${{ secrets.VAULT_ROLE }}
