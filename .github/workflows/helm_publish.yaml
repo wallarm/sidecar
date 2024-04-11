@@ -45,7 +45,7 @@ jobs:
       - name: Get versions
         id: get_versions
         run: |
-          echo "chart_version=$(echo ${GITHUB_REF_NAME} | cut -d '-' -f 3)" >> $GITHUB_OUTPUT
+          echo "chart_version=$(echo ${GITHUB_REF_NAME} | cut -d '-' -f 3,4)" >> $GITHUB_OUTPUT
           echo "app_version=$(yq -r '.appVersion' helm/Chart.yaml)" >> $GITHUB_OUTPUT
 
       - name: Publish
