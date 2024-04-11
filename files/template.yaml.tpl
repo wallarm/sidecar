@@ -28,7 +28,6 @@ volumes:
   env:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
     {{ template "wallarmApiVariables" . }}
-    {{ template "wallarmCronVariables" . }}
     {{ template "wallarmVersion" . }}
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
@@ -67,6 +66,8 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-reconnect-interval`) .Config.wallarm.upstream.reconnectInterval }}"
+    - name: WALLARM_APIFW_ENABLE
+      value: "{{ getAnnotation .ObjectMeta (withAP `api-firewall-enabled`) .Config.wallarm.apiFirewallMode }}"
     - name: NGINX_LISTEN_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
@@ -152,11 +153,11 @@ volumes:
     {{ toYaml .Config.sidecar.containers.proxy.readinessProbe | indent 4 }}
 {{ end }}
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
-    - mountPath: /var/lib/nginx/wallarm/
+    - mountPath: /opt/wallarm/var/lib/nginx/wallarm/
       name: wallarm-cache
     {{- if and .Profile (index .Profile "sidecar") -}}
     {{- with .Profile.sidecar.volumeMounts }}
@@ -179,17 +180,16 @@ volumes:
 - name: sidecar-helper
   image: {{ template "image" . }}
   imagePullPolicy: {{ .Config.sidecar.image.pullPolicy }}
-  command: ["supervisord", "-c", "/etc/supervisor/supervisord.helper.conf"]
+  command: ["/usr/local/run-helper.sh"]
   env:
     {{ template "wallarmApiVariables" . }}
-    {{ template "wallarmCronVariables" . }}
     {{ template "wallarmVersion" . }}
     - name: NGINX_STATUS_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-status-port`) .Config.nginx.statusPort }}"
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
@@ -208,9 +208,9 @@ volumes:
     - name: WALLARM_FALLBACK
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-fallback`) .Config.wallarm.fallback }}"
   volumeMounts:
-    - mountPath: /etc/wallarm
+    - mountPath: /opt/wallarm/etc/wallarm
       name: wallarm
-    - mountPath: /var/lib/wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
@@ -231,7 +231,7 @@ volumes:
       value: "{{ template `applicationPort` . }}"
     - name: NGINX_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP "nginx-listen-port") .Config.nginx.listenPort }}"
-  command: ["iptables"]
+  command: ["iptables-legacy"]
   args: ["-t", "nat", "-A", "PREROUTING", "-p", "tcp", "-d", "$(POD_IP)", "--dport", "$(APP_PORT)", "-j", "REDIRECT", "--to-ports", "$(NGINX_PORT)"]
   securityContext:
     {{ toYaml .Config.sidecar.initContainers.iptables.securityContext | indent 4 }}
@@ -281,37 +281,6 @@ volumes:
       value: "{{ .Config.component.name }}"
     - name: WALLARM_COMPONENT_VERSION
       value: "{{ .Config.component.version }}"
-{{- end }}
-
-{{- define "wallarmCronVariables" }}
-    - name: WALLARM_CRON_EXPORT_ENV_SCHEDULE
-      value: "{{ .Config.wallarm.cron.exportEnvironment.schedule }}"
-    - name: WALLARM_CRON_EXPORT_ENV_TIMEOUT
-      value: "{{ .Config.wallarm.cron.exportEnvironment.timeout }}"
-    - name: WALLARM_CRON_EXPORT_ENV_COMMAND
-      value: "{{ .Config.wallarm.cron.exportEnvironment.command }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_SCHEDULE
-      value: "{{ .Config.wallarm.cron.exportMetrics.schedule }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_TIMEOUT
-      value: "{{ .Config.wallarm.cron.exportMetrics.timeout }}"
-    - name: WALLARM_CRON_EXPORT_METRICS_COMMAND
-      value: "{{ .Config.wallarm.cron.exportMetrics.command }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncIpLists.schedule }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_TIMEOUT
-      value: "{{ .Config.wallarm.cron.syncIpLists.timeout }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_COMMAND
-      value: "{{ .Config.wallarm.cron.syncIpLists.command }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.schedule }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_TIMEOUT
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.timeout }}"
-    - name: WALLARM_CRON_SYNC_IP_LISTS_SOURCE_COMMAND
-      value: "{{ .Config.wallarm.cron.syncIpListsSource.command }}"
-    - name: WALLARM_CRON_SYNC_NODE_SCHEDULE
-      value: "{{ .Config.wallarm.cron.syncNode.schedule }}"
-    - name: WALLARM_CRON_SYNC_NODE_COMMAND
-      value: "{{ .Config.wallarm.cron.syncNode.command }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}

@@ -68,7 +68,8 @@ data:
     pip install pip --upgrade && pip install -r helm/test/requirements.txt
     echo "Installing Kubectl ..."
     apk update && apk add curl
-    curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    ARCH=$([ $(uname -m) = "x86_64" ] && echo amd64 || echo arm64)
+    curl -LO -s "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${ARCH}/kubectl"
     mv kubectl /usr/bin/kubectl && chmod +x /usr/bin/kubectl
     echo "Configuring kube context ..."
     SA="/var/run/secrets/kubernetes.io/serviceaccount"

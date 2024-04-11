@@ -9,11 +9,11 @@ from time import sleep
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_HTTP_PATH = '/get'
+ALLOWED_HTTP_PATH = '/'
 FORBIDDEN_HTTP_PATH = '/?id=\'or+1=1--a-<script>prompt(1)</script>\''
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 PATCHES_PATH = f'{SCRIPT_PATH}/kustomize/patches'
-WAIT_PODS_TIMEOUT = '120s'
+WAIT_PODS_TIMEOUT = '180s'
 
 print('PATCHES_PATH: ${PATCHES_PATH}')
 patchList = []
@@ -23,11 +23,25 @@ for patchPath in os.listdir(PATCHES_PATH):
 
 class Helpers:
     @staticmethod
-    def subprocess_run(cmd: str) -> subprocess.CompletedProcess:
+    def get_container_logs(namespace: str):
+        describe_cmd = f'kubectl describe po -n {namespace} -l wallarm-sidecar=enabled'
+        describe = subprocess.run(shlex.split(describe_cmd), capture_output=True, text=True).stdout
+        logger.info(f'Describe pods in "{namespace}" namespace: \n\n{describe}')
+        logger.info(f'End of describe pod')
+
+        logs_cmd = f'kubectl logs -n {namespace} -l wallarm-sidecar=enabled --all-containers --ignore-errors --since=1h'
+        logs = subprocess.run(shlex.split(logs_cmd), capture_output=True, text=True).stdout
+        logger.info(f'Logs from "{namespace}" namespace: \n\n{logs}')
+        logger.info(f'End of logs')
+
+    @staticmethod
+    def subprocess_run(cmd: str, namespace=None) -> subprocess.CompletedProcess:
         logger.info(f'Command: {cmd}')
         completed_process = subprocess.run(shlex.split(cmd), capture_output=True, text=True)
         if completed_process.returncode != 0:
             logger.error(completed_process.stderr)
+            if namespace:
+                Helpers.get_container_logs(namespace)
             raise Exception(f'Command: {cmd} '
                             f'Exit code: {completed_process.returncode} '
                             f'Stderr: {completed_process.stderr}')
@@ -52,7 +66,7 @@ class Helpers:
         cmd = f'kubectl --namespace {namespace} ' \
               f'wait --for=condition=Ready pods --all --timeout={WAIT_PODS_TIMEOUT}'
         logger.info('Wait for all Pods ready ...')
-        Helpers.subprocess_run(cmd)
+        Helpers.subprocess_run(cmd, namespace)
 
     @staticmethod
     def delete_namespace(namespace: str) -> None:
@@ -92,11 +106,6 @@ class Tests:
 
         # Register teardown and setup resources for test
         teardown_namespace['namespace'] = namespace
-
-        # Skip tests with ip-tables if run on arm64
-        if ("iptables_enabled" in config) and ("aarch64" in sysconfig.get_platform().split("-")[-1].lower()):
-            pytest.skip(f'Skip {config} test since aarch64')
-            return
 
         helpers.setup_resources(config_path, namespace)
 
