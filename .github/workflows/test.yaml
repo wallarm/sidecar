@@ -132,11 +132,11 @@ jobs:
           - 1.23.13
           - 1.24.7
           - 1.25.3
-        PLATFORM: [ amd64 ]
+        ARCH: [ amd64 ]
         RUNNER: [ self-hosted-amd64-1cpu ]
         include:
-          - { kubeVersion: 1.19.16, PLATFORM: aarch64, RUNNER: self-hosted-arm64-1cpu }
-          - { kubeVersion: 1.25.3,  PLATFORM: aarch64, RUNNER: self-hosted-arm64-1cpu }
+          - { kubeVersion: 1.19.16, ARCH: arm64, RUNNER: self-hosted-arm64-1cpu }
+          - { kubeVersion: 1.25.3,  ARCH: arm64, RUNNER: self-hosted-arm64-1cpu }
     steps:
       - name: Import secrets
         uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
@@ -164,17 +164,16 @@ jobs:
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           echo "current-context:" $(kubectl config current-context)
-
-      - name: Restore artifact
+      
+      - name: Load cache
         if: ${{ inputs.load_artifact }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: docker-artifact
-          path: artifacts
+          name: sidecar-${{ matrix.ARCH }}.tar
 
       - name: Load image
         if: ${{ inputs.load_artifact }}
-        run: kind load image-archive artifacts/docker-image-${{ matrix.PLATFORM }}.tar
+        run: kind load image-archive sidecar-${{ matrix.ARCH }}.tar
 
       - name: Install Helm chart
         run: |
@@ -184,9 +183,9 @@ jobs:
             --debug \
             --timeout 5m0s \
             --wait ${{ inputs.helm_args }}
-          kubectl wait --for=condition=Ready pods --all --timeout=5m0s
-          kubectl describe pod -l app.kubernetes.io/component=postanalytics
-          kubectl describe pod -l app.kubernetes.io/component=controller
+          kubectl wait --for=condition=Ready pods --all --timeout=5m0s || (
+          kubectl describe pod -l app.kubernetes.io/component=postanalytics && 
+          kubectl describe pod -l app.kubernetes.io/component=controller && exit 1)
 
       - name: Deploy pytest
         run: |
@@ -230,16 +229,15 @@ jobs:
           kind create cluster --image kindest/node:v1.25.3
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           
-      - name: Restore artifact
+      - name: Load cache
         if: ${{ inputs.load_artifact }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: docker-artifact
-          path: artifacts
+          name: sidecar-amd64.tar
 
       - name: Load image
         if: ${{ inputs.load_artifact }}
-        run: kind load image-archive artifacts/docker-image-amd64.tar
+        run: kind load image-archive sidecar-amd64.tar
 
       - name: Run test
         env:

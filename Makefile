@@ -6,7 +6,7 @@ ifndef CI
 	PLATFORMS?=linux/amd64
 	BUILDX_ARGS?=--load
 else
-	PLATFORMS?=linux/amd64,linux/aarch64
+	PLATFORMS?=linux/amd64,linux/arm64
 	BUILDX_ARGS?=--push
 endif
 
@@ -18,6 +18,8 @@ IMAGE 	  		 ?= wallarm/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
 ALPINE_VERSION   = 3.18
+INJECTION_STRATEGY ?= single
+REGISTRY ?= wallarm
 
 ### Contribution routines
 ###
@@ -116,7 +118,7 @@ setup_buildx:
 		--use
 
 build: setup_buildx
-	@docker buildx build \
+	docker buildx build \
 		--file Dockerfile \
 		--platform=$(PLATFORMS) \
 		--build-arg ALPINE_VERSION="$(ALPINE_VERSION)" \
@@ -131,6 +133,17 @@ dive:
 	@dive $(CONTROLLER_IMAGE)
 
 .PHONY: build push rmi dive
+
+### Test
+###
+
+.PHONY: smoke-test
+smoke-test:  ## Run smoke tests (expects access to a working Kubernetes cluster).
+	@test/smoke/run-smoke-suite.sh
+
+.PHONY: kind-smoke-test
+kind-smoke-test:  ## Run smoke tests using kind.
+	@test/smoke/run.sh
 
 ### Cluster routines
 ###
