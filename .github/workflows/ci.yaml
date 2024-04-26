@@ -80,7 +80,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        k8s: [v1.23.13, v1.27.1]
+        k8s: [v1.27.1]
         ARCH: [amd64, arm64]
         INJECTION_STRATEGY: [single, split]
         include:
@@ -89,6 +89,12 @@ jobs:
           - ARCH: arm64
             RUNNER: self-hosted-arm64-2cpu
     env:
+      ## US preset
+      env_code: ingress-us1
+      CLIENT_ID: 7119
+      ## EU preset
+      # env_code: ingress
+      # CLIENT_ID: 5
       KIND_CLUSTER_NAME: kind-${{ matrix.k8s }}
       KUBECONFIG: $HOME/.kube/kind-config-${{ matrix.k8s }}
     steps:
@@ -102,13 +108,13 @@ jobs:
           method: kubernetes
           path: kubernetes-ci
           secrets: |
-            kv-gitlab-ci/data/github/ingress api_token ;
-            kv-gitlab-ci/data/github/ingress api_host ;
-            kv-gitlab-ci/data/github/ingress api_preset ;
-            kv-gitlab-ci/data/github/ingress user_token ;
-            kv-gitlab-ci/data/github/ingress webhook_uuid ;
-            kv-gitlab-ci/data/github/ingress webhook_api_key ;
-            kv-gitlab-ci/data/github/shared/allure allure_token ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_token ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_host ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_preset ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} user_token ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} webhook_uuid ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} webhook_api_key ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} allure_server_token ;
             kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_name ;
             kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_secret ;
       
@@ -140,7 +146,7 @@ jobs:
           WEBHOOK_UUID: ${{ steps.secrets.outputs.webhook_uuid }}
           ALLURE_UPLOAD_REPORT: true
           ALLURE_GENERATE_REPORT: true
-          ALLURE_TOKEN: ${{ steps.secrets.outputs.allure_token }}
+          ALLURE_TOKEN: ${{ steps.secrets.outputs.allure_server_token }}
           ALLURE_ENVIRONMENT_K8S: ${{ matrix.k8s }}
           ALLURE_ENVIRONMENT_ARCH: ${{ matrix.ARCH }}
         run: |
