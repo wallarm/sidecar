@@ -60,7 +60,8 @@ jobs:
   test:
     name: Test
     needs: build
-    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-53_smoke_tests # TODO: fix, tmp, no dynamic resolving here
+    # TODO switch to main when tests success
+    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-58
     secrets:
       VAULT_URL: ${{ secrets.VAULT_URL }}
       VAULT_ROLE: ${{ secrets.VAULT_ROLE }}
@@ -80,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        k8s: [v1.27.1]
+        k8s: [1.28.7]
         ARCH: [amd64, arm64]
         INJECTION_STRATEGY: [single, split]
         include:
@@ -130,7 +131,7 @@ jobs:
         run: docker load -i sidecar-${{ matrix.ARCH }}.tar
 
       - name: Create cluster
-        run: kind create cluster --image=kindest/node:${{ matrix.k8s }}
+        run: kind create cluster --image=kindest/node:v${{ matrix.k8s }}
 
       - name: Run smoke tests
         env:

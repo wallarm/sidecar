@@ -1,15 +1,21 @@
 ARG ALPINE_VERSION
-FROM golang:1.21.1-alpine${ALPINE_VERSION} as builder
+ARG GOLANG_VERSION
+FROM golang:${GOLANG_VERSION}-alpine${ALPINE_VERSION} as builder
 
-MAINTAINER Wallarm Support Team <support@wallarm.com>
+ARG ALPINE_VERSION
+ARG GOLANG_VERSION
+ARG CONTAINER_VERSION
+ARG COMMIT_SHA
 
-LABEL org.opencontainers.image.title="Docker official image for Wallarm Node. API security platform agent"
-LABEL org.opencontainers.image.title="Kubernetes Sidecar schema of Wallarm API Security deployment"
+LABEL org.opencontainers.image.authors="Wallarm Support Team <support@wallarm.com>"
+LABEL org.opencontainers.image.title="Kubernetes Sidecar controller of Wallarm API Security deployment"
 LABEL org.opencontainers.image.documentation="https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/"
 LABEL org.opencontainers.image.source="https://github.com/wallarm/sidecar"
 LABEL org.opencontainers.image.vendor="Wallarm"
+LABEL org.opencontainers.image.version="${CONTAINER_VERSION}"
 LABEL org.opencontainers.image.revision="${COMMIT_SHA}"
 LABEL com.wallarm.sidecar-controller.versions.alpine="${ALPINE_VERSION}"
+LABEL com.wallarm.sidecar-controller.versions.golang="${GOLANG_VERSION}"
 
 RUN apk add --no-cache                         \
         bash                                   \

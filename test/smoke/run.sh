@@ -19,13 +19,13 @@ export SMOKE_IMAGE_NAME="${SMOKE_IMAGE_NAME:-dkr.wallarm.com/tests/smoke-tests}"
 export SMOKE_IMAGE_TAG="${SMOKE_IMAGE_TAG:-latest}"
 export INJECTION_STRATEGY="${INJECTION_STRATEGY:-single}"
 
-K8S_VERSION=${K8S_VERSION:-v1.25.8}
+K8S_VERSION=${K8S_VERSION:-1.28.7}
 
 set -o errexit
 set -o nounset
 set -o pipefail
 
-cleanup() {
+function cleanup() {
   if [[ "${KUBETEST_IN_DOCKER:-}" == "true" ]]; then
     kind "export" logs --name ${KIND_CLUSTER_NAME} "${ARTIFACTS}/logs" || true
   fi
@@ -34,6 +34,41 @@ cleanup() {
       --verbosity=${KIND_LOG_LEVEL} \
       --name ${KIND_CLUSTER_NAME}
   fi
+}
+
+function get_logs() {
+    echo "#################################"
+    echo "######## Controller logs ########"
+    echo "#################################"
+    kubectl logs -l "app.kubernetes.io/component=controller" --tail=-1 || true
+    echo -e "#################################\n"
+
+    echo "#####################################"
+    echo "######## Post-analytics logs ########"
+    echo -e "#####################################\n"
+    for CONTAINER in antibot appstructure supervisord tarantool ; do
+      echo "#######################################"
+      echo "###### ${CONTAINER} container logs ######"
+      echo -e "#######################################\n"
+      kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1 || true
+      echo -e "#######################################\n"
+    done
+}
+
+function describe_pod() {
+    for COMPONENT in controller postanalytics ; do
+      echo "#######################################"
+      echo "###### Describe ${COMPONENT} pod ######"
+      echo -e "#######################################\n"
+      kubectl describe po -l "app.kubernetes.io/component=${COMPONENT}"
+      echo -e "#######################################\n"
+    done
+}
+
+function get_logs_and_fail() {
+    get_logs
+    describe_pod
+    exit 1
 }
 
 trap cleanup EXIT ERR
@@ -73,7 +108,7 @@ if [ "${SKIP_CLUSTER_CREATION:-false}" = "false" ]; then
       --verbosity=${KIND_LOG_LEVEL} \
       --name ${KIND_CLUSTER_NAME} \
       --retain \
-      --image "kindest/node:${K8S_VERSION}" \
+      --image "kindest/node:v${K8S_VERSION}" \
       --config=<(cat << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -103,14 +138,15 @@ fi
 if [ "${SKIP_IMAGE_LOADING:-false}" = "false" ]; then
   echo "[test-env] copying ${REGISTRY}/sidecar-controller:${TAG} image to cluster..."
   kind load docker-image --name="${KIND_CLUSTER_NAME}" "${REGISTRY}/sidecar-controller:${TAG}"
+  IMAGE_PULL_POLICY="Never"
 else
   TAG=$(cat "${CURDIR}/TAG")
-  export TAG
+  IMAGE_PULL_POLICY="IfNotPresent"
 fi
 
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 
-cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --values -
+cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --debug --values -
 config:
   sidecar:
     image:
@@ -130,9 +166,16 @@ config:
       host: ${WALLARM_API_HOST}
   injectionStrategy:
     schema: ${INJECTION_STRATEGY}
+controller:
+  image:
+    tag: ${TAG}
+    pullPolicy: ${IMAGE_PULL_POLICY}
 EOF
 
-kubectl wait --for=condition=Ready pods --all --timeout=120s
+kubectl wait --for=condition=Ready pods --all --timeout=120s || get_logs_and_fail
+
+# Workaround - sometimes sidecar container is not injected right after controller deployment
+sleep 10
 
 echo "[test-env] deploying test workload ..."
 kubectl apply -f "${DIR}"/workload.yaml --wait
