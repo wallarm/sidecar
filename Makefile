@@ -17,7 +17,14 @@ TAG   	 		 ?= $(shell cat TAG)
 IMAGE 	  		 ?= wallarm/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
-ALPINE_VERSION   = 3.18
+
+### Versions used to build controller image
+###
+ALPINE_VERSION = 3.19
+GOLANG_VERSION = 1.22.2
+
+### Variables used in tests
+###
 INJECTION_STRATEGY ?= single
 REGISTRY ?= wallarm
 
@@ -122,6 +129,7 @@ build: setup_buildx
 		--file Dockerfile \
 		--platform=$(PLATFORMS) \
 		--build-arg ALPINE_VERSION="$(ALPINE_VERSION)" \
+		--build-arg GOLANG_VERSION="$(GOLANG_VERSION)" \
 		--build-arg COMMIT_SHA="$(COMMIT_SHA)" \
 		--force-rm --no-cache --progress=plain \
 		--tag $(CONTROLLER_IMAGE) $(BUILDX_ARGS) .

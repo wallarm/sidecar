@@ -13,7 +13,7 @@ controller:
   image:
     registry: docker.io
     image: golang
-    tag: "1.21.1-alpine3.18"
+    tag: "1.22.2-alpine3.19"
   replicaCount: 1
   command:
     - sleep
