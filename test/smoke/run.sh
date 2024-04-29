@@ -19,7 +19,7 @@ export SMOKE_IMAGE_NAME="${SMOKE_IMAGE_NAME:-dkr.wallarm.com/tests/smoke-tests}"
 export SMOKE_IMAGE_TAG="${SMOKE_IMAGE_TAG:-latest}"
 export INJECTION_STRATEGY="${INJECTION_STRATEGY:-single}"
 
-K8S_VERSION=${K8S_VERSION:-v1.25.8}
+K8S_VERSION=${K8S_VERSION:-1.28.7}
 
 set -o errexit
 set -o nounset
@@ -108,7 +108,7 @@ if [ "${SKIP_CLUSTER_CREATION:-false}" = "false" ]; then
       --verbosity=${KIND_LOG_LEVEL} \
       --name ${KIND_CLUSTER_NAME} \
       --retain \
-      --image "kindest/node:${K8S_VERSION}" \
+      --image "kindest/node:v${K8S_VERSION}" \
       --config=<(cat << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -173,6 +173,9 @@ controller:
 EOF
 
 kubectl wait --for=condition=Ready pods --all --timeout=120s || get_logs_and_fail
+
+# Workaround - sometimes sidecar container is not injected right after controller deployment
+sleep 10
 
 echo "[test-env] deploying test workload ..."
 kubectl apply -f "${DIR}"/workload.yaml --wait

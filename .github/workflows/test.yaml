@@ -105,6 +105,7 @@ jobs:
           - 1.26.15
           - 1.27.13
           - 1.28.9
+          - 1.29.4
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -122,25 +123,26 @@ jobs:
           ignore_missing_schemas: false
 
   test:
-    name: Integration test
-    runs-on: ${{ matrix.RUNNER }}
+    name: Installation test
+    runs-on: self-hosted-amd64-1cpu
     if: ${{ inputs.run_test }}
     needs: check
+    env:
+      ARCH: amd64
     strategy:
       matrix:
         kubeVersion:
           - 1.19.16
           - 1.20.15
           - 1.21.14
-          - 1.22.15
-          - 1.23.13
-          - 1.24.7
-          - 1.25.3
-        ARCH: [ amd64 ]
-        RUNNER: [ self-hosted-amd64-1cpu ]
-        include:
-          - { kubeVersion: 1.19.16, ARCH: arm64, RUNNER: self-hosted-arm64-1cpu }
-          - { kubeVersion: 1.25.3,  ARCH: arm64, RUNNER: self-hosted-arm64-1cpu }
+          - 1.22.17
+          - 1.23.17
+          - 1.24.17
+          - 1.25.16
+          - 1.26.14
+          - 1.27.11
+          - 1.28.7
+          - 1.29.2
     steps:
       - name: Import secrets
         uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
@@ -173,11 +175,11 @@ jobs:
         if: ${{ inputs.load_artifact }}
         uses: actions/download-artifact@v4
         with:
-          name: sidecar-${{ matrix.ARCH }}.tar
+          name: sidecar-${{ env.ARCH }}.tar
 
       - name: Load image
         if: ${{ inputs.load_artifact }}
-        run: kind load image-archive sidecar-${{ matrix.ARCH }}.tar
+        run: kind load image-archive sidecar-${{ env.ARCH }}.tar
 
       - name: Install Helm chart
         run: |
@@ -230,7 +232,7 @@ jobs:
 
       - name: Create cluster
         run: |
-          kind create cluster --image kindest/node:v1.25.3
+          kind create cluster --image kindest/node:v1.28.7
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           
       - name: Load cache
