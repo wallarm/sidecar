@@ -130,6 +130,7 @@ build: setup_buildx
 		--platform=$(PLATFORMS) \
 		--build-arg ALPINE_VERSION="$(ALPINE_VERSION)" \
 		--build-arg GOLANG_VERSION="$(GOLANG_VERSION)" \
+		--build-arg CONTAINER_VERSION="$(TAG)" \
 		--build-arg COMMIT_SHA="$(COMMIT_SHA)" \
 		--force-rm --no-cache --progress=plain \
 		--tag $(CONTROLLER_IMAGE) $(BUILDX_ARGS) .
