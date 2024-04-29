@@ -138,14 +138,15 @@ fi
 if [ "${SKIP_IMAGE_LOADING:-false}" = "false" ]; then
   echo "[test-env] copying ${REGISTRY}/sidecar-controller:${TAG} image to cluster..."
   kind load docker-image --name="${KIND_CLUSTER_NAME}" "${REGISTRY}/sidecar-controller:${TAG}"
+  IMAGE_PULL_POLICY="Never"
 else
   TAG=$(cat "${CURDIR}/TAG")
-  export TAG
+  IMAGE_PULL_POLICY="IfNotPresent"
 fi
 
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 
-cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --values -
+cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --debug --values -
 config:
   sidecar:
     image:
@@ -165,6 +166,10 @@ config:
       host: ${WALLARM_API_HOST}
   injectionStrategy:
     schema: ${INJECTION_STRATEGY}
+controller:
+  image:
+    tag: ${TAG}
+    pullPolicy: ${IMAGE_PULL_POLICY}
 EOF
 
 kubectl wait --for=condition=Ready pods --all --timeout=120s || get_logs_and_fail
