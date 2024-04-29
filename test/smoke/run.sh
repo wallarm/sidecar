@@ -25,7 +25,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-cleanup() {
+function cleanup() {
   if [[ "${KUBETEST_IN_DOCKER:-}" == "true" ]]; then
     kind "export" logs --name ${KIND_CLUSTER_NAME} "${ARTIFACTS}/logs" || true
   fi
@@ -34,6 +34,41 @@ cleanup() {
       --verbosity=${KIND_LOG_LEVEL} \
       --name ${KIND_CLUSTER_NAME}
   fi
+}
+
+function get_logs() {
+    echo "#################################"
+    echo "######## Controller logs ########"
+    echo "#################################"
+    kubectl logs -l "app.kubernetes.io/component=controller" --tail=-1 || true
+    echo -e "#################################\n"
+
+    echo "#####################################"
+    echo "######## Post-analytics logs ########"
+    echo -e "#####################################\n"
+    for CONTAINER in antibot appstructure supervisord tarantool ; do
+      echo "#######################################"
+      echo "###### ${CONTAINER} container logs ######"
+      echo -e "#######################################\n"
+      kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1 || true
+      echo -e "#######################################\n"
+    done
+}
+
+function describe_pod() {
+    for COMPONENT in controller postanalytics ; do
+      echo "#######################################"
+      echo "###### Describe ${COMPONENT} pod ######"
+      echo -e "#######################################\n"
+      kubectl describe po -l "app.kubernetes.io/component=${COMPONENT}"
+      echo -e "#######################################\n"
+    done
+}
+
+function get_logs_and_fail() {
+    get_logs
+    describe_pod
+    exit 1
 }
 
 trap cleanup EXIT ERR
@@ -132,7 +167,7 @@ config:
     schema: ${INJECTION_STRATEGY}
 EOF
 
-kubectl wait --for=condition=Ready pods --all --timeout=120s
+kubectl wait --for=condition=Ready pods --all --timeout=120s || get_logs_and_fail
 
 echo "[test-env] deploying test workload ..."
 kubectl apply -f "${DIR}"/workload.yaml --wait

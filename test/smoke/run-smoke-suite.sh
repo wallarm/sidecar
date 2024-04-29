@@ -49,7 +49,7 @@ function get_logs_and_fail() {
 
 function get_logs() {
     echo "#################################"
-    echo "###### Controller logs ######"
+    echo "######## Controller logs ########"
     echo "#################################"
     kubectl logs -l "app.kubernetes.io/component=controller" --tail=-1
     echo -e "#################################\n"
@@ -57,7 +57,7 @@ function get_logs() {
     for CONTAINER in antibot appstructure supervisord tarantool ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
-      echo "#######################################\n"
+      echo -e "#######################################\n"
       kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1
       echo -e "#######################################\n"
     done
@@ -205,7 +205,7 @@ EOF
 
 echo "Waiting for all pods ready ..."
 sleep 10
-kubectl wait --for=condition=Ready pods --all --timeout=300s
+kubectl wait --for=condition=Ready pods --all --timeout=300s || get_logs_and_fail
 
 echo "Run smoke tests ..."
 GITHUB_VARS=$(env | awk -F '=' '/^GITHUB_/ {vars = vars $1 "=" $2 " ";} END {print vars}')
