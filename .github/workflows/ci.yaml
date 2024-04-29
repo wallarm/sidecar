@@ -60,7 +60,8 @@ jobs:
   test:
     name: Test
     needs: build
-    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-53_smoke_tests # TODO: fix, tmp, no dynamic resolving here
+    # TODO switch to main when tests success
+    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-58
     secrets:
       VAULT_URL: ${{ secrets.VAULT_URL }}
       VAULT_ROLE: ${{ secrets.VAULT_ROLE }}
