@@ -3,6 +3,11 @@ name: Test
 on:
   workflow_dispatch:
     inputs:
+      run_smoke:
+        description: Run smoke tests
+        type: boolean
+        required: true
+        default: true
       run_lint:
         description: Run helm lint
         type: boolean
@@ -38,6 +43,9 @@ on:
         type: boolean
         required: true
       run_ct:
+        type: boolean
+        required: true
+      run_smoke:
         type: boolean
         required: true
       helm_args:
@@ -170,7 +178,7 @@ jobs:
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           echo "current-context:" $(kubectl config current-context)
-      
+
       - name: Load cache
         if: ${{ inputs.load_artifact }}
         uses: actions/download-artifact@v4
@@ -234,7 +242,7 @@ jobs:
         run: |
           kind create cluster --image kindest/node:v1.28.7
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
-          
+
       - name: Load cache
         if: ${{ inputs.load_artifact }}
         uses: actions/download-artifact@v4
@@ -249,3 +257,74 @@ jobs:
         env:
           HELM_ARGS: ${{ inputs.helm_args }}
         run: make ct-install
+  smoke-test:
+    name: Smoke
+    runs-on: ${{ matrix.RUNNER }}
+    if: ${{ inputs.run_smoke }}
+    strategy:
+      fail-fast: false
+      matrix:
+        k8s: [ 1.28.7 ]
+        ARCH: [ amd64, arm64 ]
+        INJECTION_STRATEGY: [ single, split ]
+        include:
+          - ARCH: amd64
+            RUNNER: self-hosted-amd64-2cpu
+          - ARCH: arm64
+            RUNNER: self-hosted-arm64-2cpu
+    env:
+      ## US preset
+      env_code: ingress-us1
+      CLIENT_ID: 7119
+      ## EU preset
+      # env_code: ingress
+      # CLIENT_ID: 5
+      KIND_CLUSTER_NAME: kind-${{ matrix.k8s }}
+      KUBECONFIG: $HOME/.kube/kind-config-${{ matrix.k8s }}
+    steps:
+      - name: Import secrets
+        uses: hashicorp/vault-action@d1720f055e0635fd932a1d2a48f87a666a57906c # v3.0.0
+        id: secrets
+        with:
+          exportEnv: false
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
+          method: kubernetes
+          path: kubernetes-ci
+          secrets: |
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_token ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_host ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} api_preset ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} user_token ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} webhook_uuid ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} webhook_api_key ;
+            kv-gitlab-ci/data/github/${{ env.env_code }} allure_server_token ;
+            kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_name ;
+            kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_secret ;
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create cluster
+        run: kind create cluster --image=kindest/node:v${{ matrix.k8s }}
+
+      - name: Run smoke tests
+        env:
+          SKIP_CLUSTER_CREATION: true
+          SKIP_IMAGE_CREATION: true
+          SKIP_IMAGE_LOADING: true
+          WALLARM_API_TOKEN: ${{ steps.secrets.outputs.api_token }}
+          WALLARM_API_HOST: ${{ steps.secrets.outputs.api_host }}
+          WALLARM_API_PRESET: ${{ steps.secrets.outputs.api_preset }}
+          USER_TOKEN: ${{ steps.secrets.outputs.user_token }}
+          SMOKE_REGISTRY_TOKEN: ${{ steps.secrets.outputs.token_name }}
+          SMOKE_REGISTRY_SECRET: ${{ steps.secrets.outputs.token_secret }}
+          WEBHOOK_API_KEY: ${{ steps.secrets.outputs.webhook_api_key }}
+          WEBHOOK_UUID: ${{ steps.secrets.outputs.webhook_uuid }}
+          ALLURE_UPLOAD_REPORT: true
+          ALLURE_GENERATE_REPORT: true
+          ALLURE_TOKEN: ${{ steps.secrets.outputs.allure_server_token }}
+          ALLURE_ENVIRONMENT_K8S: ${{ matrix.k8s }}
+          ALLURE_ENVIRONMENT_ARCH: ${{ matrix.ARCH }}
+        run: |
+          make kind-smoke-test TAG=${GITHUB_SHA}
