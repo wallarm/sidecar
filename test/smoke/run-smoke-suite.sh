@@ -66,7 +66,7 @@ function get_logs() {
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo "#######################################\n"
-      kubectl logs -l "app.kubernetes.io/component=controller" -c ${CONTAINER} --tail=-1 || true
+      kubectl logs -l "app=workload" -c ${CONTAINER} --tail=-1 || true
       echo -e "#######################################\n"
     done
 
