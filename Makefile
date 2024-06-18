@@ -38,6 +38,9 @@ POD_NAME := $(KUBECTL) get pods -o name -l app.kubernetes.io/component=controlle
 POD_EXEC  = $(KUBECTL) exec -it $(shell $(POD_NAME)) --
 
 init: cluster-start
+	@$(HELM) repo add jetstack https://charts.jetstack.io/
+	@$(HELM) repo update jetstack
+	@$(HELM) upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true -n cert-manager --version v1.11.1 --create-namespace --wait
 	@$(HELM) upgrade --install --wait wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS)
 	@$(KUBECTL) wait pods -n default -l app.kubernetes.io/component=controller --for condition=Ready --timeout=90s
 	@$(BASH) 'exec kubectl exec -it $$(kubectl get pods -o name -l app.kubernetes.io/component=controller | cut -d '/' -f 2) -- apk add git gcc libc-dev'

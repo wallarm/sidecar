@@ -24,3 +24,5 @@ kind/config/kubeconfig
 .tmp.image.tar
 LOCALNOTES.md
 httpbin.yaml
+allure_report
+helm/test/__pycache__/

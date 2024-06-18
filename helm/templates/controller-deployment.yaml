@@ -26,6 +26,7 @@ spec:
     metadata:
       annotations:
         checksum/config: {{ .Values.config | toJson | sha256sum }}
+        checksum/webhook: {{ .Values.controller.admissionWebhook | toJson | sha256sum }}
         {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
         {{- with .Values.controller.extraAnnotations }}
         {{- . | toYaml | nindent 8 }}
