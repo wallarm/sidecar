@@ -130,7 +130,6 @@ jobs:
     env:
       ARCH: amd64
     strategy:
-      fail-fast: false # TODO: tmp debug
       matrix:
         kubeVersion:
           - 1.19.16
