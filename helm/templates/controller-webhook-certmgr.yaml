@@ -1,0 +1,94 @@
+{{- if and .Values.controller.admissionWebhook.certManager.enabled (not .Values.controller.admissionWebhook.secret.enabled) -}}
+{{- if not .Values.controller.admissionWebhook.certManager.issuerRef -}}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-self-signed-issuer
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.admissionWebhook.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.controller.admissionWebhook.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-root-cert
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.admissionWebhook.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.controller.admissionWebhook.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ include "wallarm-sidecar.fullname" . }}-root-cert
+  duration: "43800h0m0s"
+  issuerRef:
+    name: {{ include "wallarm-sidecar.fullname" . }}-self-signed-issuer
+  commonName: "ca.webhook.wallarm-sidecar"
+  isCA: true
+  subject:
+    organizations:
+      - wallarm-sidecar
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "wallarm-sidecar.fullname" . }}-root-issuer
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.admissionWebhook.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.controller.admissionWebhook.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  ca:
+    secretName: {{ include "wallarm-sidecar.fullname" . }}-root-cert
+{{- end }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "wallarm-sidecar.fullname" . }}-admission
+  annotations:
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.admissionWebhook.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.controller.admissionWebhook.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+spec:
+  secretName: {{ template "wallarm-sidecar.fullname" . }}-admission-tls
+  dnsNames:
+  - {{ include "wallarm-sidecar.fullname" . }}-controller
+  - {{ include "wallarm-sidecar.fullname" . }}-controller.{{ .Release.Namespace }}.svc
+  - {{ include "wallarm-sidecar.fullname" . }}-controller.{{ .Release.Namespace }}
+  issuerRef:
+    {{- if .Values.controller.admissionWebhook.certManager.issuerRef }}
+    {{- toYaml .Values.controller.admissionWebhook.certManager.issuerRef | nindent 4 }}
+    {{- else }}
+    name: {{ include "wallarm-sidecar.fullname" . }}-root-issuer
+    {{- end }}
+{{- end }}

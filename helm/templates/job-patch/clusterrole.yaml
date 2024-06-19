@@ -1,0 +1,27 @@
+{{- if and (not .Values.controller.admissionWebhook.certManager.enabled) (not .Values.controller.admissionWebhook.secret.enabled) -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "wallarm-sidecar.fullname" . }}-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- include "wallarm-sidecar.annotations" . | nindent 4 }}
+    {{- with .Values.controller.admissionWebhook.extraAnnotations }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  labels:
+    {{- include "wallarm-sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admission-webhook
+    {{- with .Values.controller.admissionWebhook.extraLabels }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - update
+{{- end }}

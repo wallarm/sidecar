@@ -144,6 +144,11 @@ else
   IMAGE_PULL_POLICY="IfNotPresent"
 fi
 
+echo "[test-env] installing cert-manager"
+helm repo add jetstack https://charts.jetstack.io/
+helm repo update jetstack
+helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true -n cert-manager --version v1.11.1 --create-namespace --wait
+
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 
 cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --debug --values -

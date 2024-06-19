@@ -130,6 +130,7 @@ jobs:
     env:
       ARCH: amd64
     strategy:
+      fail-fast: false # TODO: tmp debug
       matrix:
         kubeVersion:
           - 1.19.16
@@ -189,9 +190,13 @@ jobs:
             --debug \
             --timeout 5m0s \
             --wait ${{ inputs.helm_args }}
+          sleep 5
           kubectl wait --for=condition=Ready pods --all --timeout=5m0s || (
           kubectl describe pod -l app.kubernetes.io/component=postanalytics && 
-          kubectl describe pod -l app.kubernetes.io/component=controller && exit 1)
+          kubectl describe pod -l app.kubernetes.io/component=controller &&
+          kubectl get pods -A &&
+          kubectl get secrets -A &&
+          kubectl get jobs -A && exit 1)
 
       - name: Deploy pytest
         run: |

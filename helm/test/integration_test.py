@@ -91,6 +91,20 @@ def teardown_namespace():
     config = {}
     yield config
     namespace = config['namespace']
+
+    pod_cmd = f"kubectl -n {namespace} get pod -l app=dummy-app -o=name"
+    pod_name = subprocess.run(shlex.split(pod_cmd), capture_output=True, text=True).stdout.removeprefix("pod/")
+    logger.info(f'Pod name: {pod_name}')
+
+    describe_cmd = f"kubectl -n {namespace} describe pod {pod_name}"
+    describe_log = subprocess.run(shlex.split(describe_cmd), capture_output=True, text=True).stdout
+    logger.info(f'Pod description: \n{describe_log}')
+
+    log_cmd = f"kubectl -n {namespace} logs {pod_name} --all-containers"
+    pod_logs = subprocess.run(shlex.split(log_cmd), capture_output=True, text=True).stdout
+    logger.info(f'Pod logs {namespace}: \n{pod_logs}')
+
+    # fyi, this can be commented during testing for debugging purposes
     logger.info(f'Teardown namespace {namespace} ...')
     Helpers.delete_namespace(namespace)
 

@@ -61,7 +61,7 @@ jobs:
     name: Test
     needs: build
     # TODO switch to main when tests success
-    uses: wallarm/sidecar/.github/workflows/test.yaml@DE-58
+    uses: wallarm/sidecar/.github/workflows/test.yaml@NODE-5391
     secrets:
       VAULT_URL: ${{ secrets.VAULT_URL }}
       VAULT_ROLE: ${{ secrets.VAULT_ROLE }}

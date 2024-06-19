@@ -809,22 +809,50 @@ controller:
     objectSelector:
       matchLabels:
         wallarm-sidecar: enabled
-    ### Mutation admission webhook controller TLS secrets. Required for running admission magic.
-    ###
+    ### You can use CA injector in case you have cert-manager installed
+    certManager:
+      enabled: false
+    ### Or you can manually pass caBundle by specifying secret name and contents here
     secret:
-      create: true
-      ### You are welcome to use existing certificates with "ca.crt", "tls.crt" and "tls.key"
-      ### keys. Required if `create` is false.
-      ###
-      existingSecretName: ""
-      ### Extra labels for secret to create. Doesn't make sense if using existing
-      ### certificates
-      ###
-      labels: {}
-      ### Extra annotations for secret to create. Doesn't make sense if using existing
-      ### certificates
-      ###
-      annotations: {}
+      enabled: false
+      # ca: LS0...
+      # crt: LS0...
+      # key: LS0...
+    ### Or you can fall back to the default option which is the cert-gen helper job
+    createSecretJob:
+      # -- Security context for secret creation containers
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        allowPrivilegeEscalation: false
+        seccompProfile:
+          type: RuntimeDefault
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+      resources: {}
+    patchWebhookJob:
+      # -- Security context for webhook patch containers
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        allowPrivilegeEscalation: false
+        seccompProfile:
+          type: RuntimeDefault
+        capabilities:
+          drop:
+            - ALL
+        readOnlyRootFilesystem: true
+      resources: {}
+    patch:
+      image:
+        registry: registry.k8s.io
+        image: ingress-nginx/kube-webhook-certgen
+        tag: v1.4.1
+        pullPolicy: IfNotPresent
+      # -- Security context for secret creation & webhook patch pods
+      securityContext: {}
     extraLabels: {}
     extraAnnotations: {}
   ### Number of deployment replicas. It is recommended to use more that one pods

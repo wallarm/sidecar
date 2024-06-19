@@ -78,19 +78,6 @@ Create the name of the service account for controller
 {{- end -}}
 
 {{/*
-  Generate certificates for controller
-*/}}
-{{- define "wallarm-sidecar.controller.certificates" -}}
-{{- $serviceName := printf "%s-controller" (include "wallarm-sidecar.fullname" .) -}}
-{{- $altNames := list (printf "%s.%s.svc" $serviceName .Release.Namespace) (printf "%s.%s" $serviceName .Release.Namespace) $serviceName  -}}
-{{- $ca := genCA (printf "*.%s.svc" .Release.Namespace) 3650 -}}
-{{- $cert := genSignedCert (printf "%s.%s.svc" $serviceName .Release.Namespace) nil $altNames 3650 $ca -}}
-ca: {{ $ca.Cert | b64enc }}
-crt: {{ $cert.Cert | b64enc }}
-key: {{ $cert.Key | b64enc }}
-{{- end -}}
-
-{{/*
 Gives name of image to use
 */}}
 {{- define "wallarm-sidecar.image" -}}
