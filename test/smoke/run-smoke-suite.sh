@@ -54,7 +54,7 @@ function get_logs() {
     kubectl logs -l "app.kubernetes.io/component=controller" --tail=-1
     echo -e "#################################\n"
   
-    for CONTAINER in antibot appstructure supervisord tarantool ; do
+    for CONTAINER in appstructure supervisord tarantool ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo -e "#######################################\n"

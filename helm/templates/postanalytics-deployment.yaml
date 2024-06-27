@@ -26,7 +26,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ index (include (print .Template.BasePath "/postanalytics-configmap.yaml") . | fromYaml) "data" | toYaml | sha256sum }}
+        checksum/config: {{ .Values.config.cron | toJson | sha256sum }}
         checksum/secret: {{ .Values.config.wallarm.api | toJson | sha256sum }}
         {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
         {{- with .Values.postanalytics.extraAnnotations }}
@@ -66,7 +66,7 @@ spec:
         - name: init
           image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
           imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
-          args: [ "register"{{- if eq .Values.config.wallarm.fallback "on" }}, "fallback"{{- end }} ]
+          args: [ "register", "post_analytic"{{- if eq .Values.config.wallarm.fallback "on" }}, "fallback"{{- end }} ]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
@@ -111,7 +111,7 @@ spec:
         - name: supervisord
           image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
           imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
-          args: ["supervisord"]
+          args: ["wcli", "run", {{ include "wallarm-sidecar.wcli-args" . }}]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
@@ -146,10 +146,6 @@ spec:
             name: wallarm
           - mountPath: /opt/wallarm/var/lib/wallarm-acl
             name: wallarm-acl
-          - mountPath: /opt/supervisord/supervisord.conf
-            name: wallarm-supervisord
-            subPath: supervisord.conf
-            readOnly: true
           {{- with .Values.postanalytics.supervisord.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
@@ -235,44 +231,6 @@ spec:
           {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
-        - name: antibot
-          image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
-          imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
-          args: ["antibot"]
-          env:
-          {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
-          {{- with .Values.postanalytics.antibot.extraEnvs }}
-          {{- . | toYaml | nindent 10 }}
-          {{- end }}
-          {{- with .Values.postanalytics.antibot.livenessProbe }}
-          livenessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- with .Values.postanalytics.antibot.readinessProbe }}
-          readinessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- with .Values.postanalytics.antibot.lifecycle }}
-          lifecycle: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if .Values.postanalytics.antibot.securityContext }}
-          securityContext: {{ .Values.postanalytics.antibot.securityContext | toYaml | nindent 12 }}
-          {{- else }}
-          securityContext:
-            privileged: false
-            runAsUser: 101
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-              - ALL
-          {{- end }}
-          {{- with .Values.postanalytics.antibot.resources }}
-          resources: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-          - mountPath: /opt/wallarm/etc/wallarm
-            name: wallarm
-          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
-          {{- . | toYaml | nindent 10 }}
-          {{- end }}
         {{- with .Values.postanalytics.extraContainers }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}
@@ -281,9 +239,6 @@ spec:
           emptyDir: {}
         - name: wallarm-acl
           emptyDir: {}
-        - name: wallarm-supervisord
-          configMap:
-            name: {{ include "wallarm-sidecar.fullname" . }}-postanalytics
         {{- with .Values.postanalytics.extraVolumes }}
         {{- . | toYaml | nindent 8 }}
         {{- end }}

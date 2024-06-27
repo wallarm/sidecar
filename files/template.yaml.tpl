@@ -23,7 +23,7 @@ volumes:
   {{ if eq (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
   command: ["/usr/local/run-nginx.sh"]
   {{- else }}
-  command: ["/usr/local/run-node.sh"]
+  command: ["/usr/local/run-node.sh", "run", {{ template "wcli-args" . }}]
   {{- end }}
   env:
     {{ if ne (getAnnotation .ObjectMeta (withAP "sidecar-injection-schema") .Config.injectionStrategy.schema) "split" -}}
@@ -180,7 +180,7 @@ volumes:
 - name: sidecar-helper
   image: {{ template "image" . }}
   imagePullPolicy: {{ .Config.sidecar.image.pullPolicy }}
-  command: ["/usr/local/run-helper.sh"]
+  command: ["/usr/local/run-helper.sh", "run", {{ template "wcli-args" . }}]
   env:
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmVersion" . }}
@@ -410,3 +410,15 @@ volumes:
   {{ end }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Wcli arguments building
+*/}}
+{{- define "wcli-args" -}}
+"-log-level", "{{ .Config.cron.logLevel }}",{{ " " }}
+{{- with .Config.cron.commands -}}
+{{- range $name, $value := . -}}
+"job:{{ $name }}", "-log-level", "{{ $value.logLevel }}",{{ " " }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
