@@ -160,3 +160,15 @@ wallarm-sidecar-proxy
 {{- .Values.postanalytics.service.port }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Wcli arguments building
+*/}}
+{{- define "wallarm-sidecar.wcli-args" -}}
+"-log-level", "{{ .Values.config.cron.logLevel }}",{{ " " }}
+{{- with .Values.config.cron.commands -}}
+{{- range $name, $value := . -}}
+"job:{{ $name }}", "-log-level", "{{ $value.logLevel }}",{{ " " }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
