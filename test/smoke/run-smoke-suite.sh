@@ -53,7 +53,10 @@ function get_logs() {
     echo "#################################"
     kubectl logs -l "app.kubernetes.io/component=controller" --tail=-1
     echo -e "#################################\n"
-  
+
+    echo "#################################"
+    echo "######## Post-analytics Pod #####"
+    echo "#################################"
     for CONTAINER in antibot appstructure supervisord tarantool ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
@@ -61,6 +64,10 @@ function get_logs() {
       kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1
       echo -e "#######################################\n"
     done
+
+    echo "#################################"
+    echo "######## Application Pod ########"
+    echo -e "#################################\n"
 
     echo "####################################################"
     echo "###### List directory /opt/wallarm/etc/wallarm #####"
@@ -79,6 +86,12 @@ function get_logs() {
     echo "############################################################"
     kubectl exec "${POD}" -c sidecar-proxy -- sh -c "ls -laht /opt/wallarm/var/lib/wallarm-acl" || true
     echo -e "############################################################\n"
+
+    echo "#################################"
+    echo "######## Application Pod Logs ###"
+    echo -e "#################################\n"
+    kubectl logs -l "wallarm-sidecar=enabled" --all-containers --ignore-errors --since=1h
+    echo -e "#################################\n"
 }
 
 

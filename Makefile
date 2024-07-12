@@ -146,16 +146,20 @@ dive:
 
 .PHONY: build push rmi dive
 
-### Test
+### Smoke test routines
 ###
 
-.PHONY: smoke-test
-smoke-test:  ## Run smoke tests (expects access to a working Kubernetes cluster).
+### Run smoke tests (expects access to a working Kind Kubernetes cluster).
+###
+smoke-test:
 	@test/smoke/run-smoke-suite.sh
 
-.PHONY: kind-smoke-test
-kind-smoke-test:  ## Run smoke tests using kind.
+### Crate Kind Kubernetes cluster and run smoke tests using kind
+###
+kind-smoke-test:
 	@test/smoke/run.sh
+
+.PHONY: smoke-test kind-smoke-test
 
 ### Cluster routines
 ###

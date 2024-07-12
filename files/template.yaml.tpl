@@ -191,6 +191,8 @@ volumes:
       name: wallarm
     - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-api
+      name: wallarm-api
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
   resources:
@@ -212,6 +214,8 @@ volumes:
       name: wallarm
     - mountPath: /opt/wallarm/var/lib/wallarm-acl
       name: wallarm-acl
+    - mountPath: /opt/wallarm/var/lib/wallarm-api
+      name: wallarm-api
   securityContext:
     {{ toYaml .Config.sidecar.securityContext | indent 4 }}
   resources:
@@ -397,6 +401,8 @@ volumes:
   - name: wallarm-acl
     emptyDir: {}
   - name: wallarm-cache
+    emptyDir: {}
+  - name: wallarm-api
     emptyDir: {}
 {{- if and .Profile (index .Profile "sidecar") -}}
   {{- with .Profile.sidecar.volumes }}
