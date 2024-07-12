@@ -20,8 +20,8 @@ COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
 
 ### Versions used to build controller image
 ###
-ALPINE_VERSION = 3.19
-GOLANG_VERSION = 1.22.2
+ALPINE_VERSION = 3.20
+GOLANG_VERSION = 1.22.5
 
 ### Variables used in tests
 ###
