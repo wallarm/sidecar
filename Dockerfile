@@ -1,6 +1,6 @@
 ARG ALPINE_VERSION
 ARG GOLANG_VERSION
-FROM golang:${GOLANG_VERSION}-alpine${ALPINE_VERSION} as builder
+FROM golang:${GOLANG_VERSION}-alpine${ALPINE_VERSION} AS builder
 
 RUN apk add --no-cache                         \
         bash                                   \
