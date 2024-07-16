@@ -88,6 +88,10 @@ volumes:
       value: "{{ .Config.nginx.realIpHeader }}"
     - name: NGINX_SET_REAL_IP_FROM
       value: '{{ toJson .Config.nginx.setRealIpFrom }}'
+    - name: NGINX_WORKER_PROCESSES
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-worker-processes`) .Config.nginx.workerProcesses }}"
+    - name: NGINX_WORKER_CONNECTIONS
+      value: "{{ getAnnotation .ObjectMeta (withAP `nginx-worker-connections`) .Config.nginx.workerConnections }}"
     - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE
       value: "{{ .Config.nginx.tarantoolUpstream.keepalive }}"
     - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE_REQUESTS

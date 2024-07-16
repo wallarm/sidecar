@@ -154,6 +154,14 @@ config:
       - 172.16.0.0/12
       - 127.0.0.0/8
       - fd00::/8
+    ### Nginx directive 'worker_processes' http://nginx.org/en/docs/ngx_core_module.html#worker_processes
+    ### Defines the number of worker processes
+    ###
+    workerProcesses: auto
+    ### Nginx directive 'worker_connections' http://nginx.org/en/docs/ngx_core_module.html#worker_connections
+    ### Sets the maximum number of simultaneous connections that can be opened by a worker process
+    ###
+    workerConnections: 4096
     ### Parameters for Tarantool upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
     ###
     tarantoolUpstream:
@@ -355,7 +363,7 @@ helper:
 ###
 postanalytics:
   ### Optional configuration of external Tarantool instance. If feature is enabled,
-  ### then Trantool will not be deployed by current Helm chart, external instance will be used instead
+  ### then Tarantool will not be deployed by current Helm chart, external instance will be used instead
   ###
   external:
     ### Set to 'true' to use external Tarantool instance
