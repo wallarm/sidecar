@@ -145,6 +145,7 @@ jobs:
           SMOKE_REGISTRY_SECRET: ${{ steps.secrets.outputs.token_secret }}
           WEBHOOK_API_KEY: ${{ steps.secrets.outputs.webhook_api_key }}
           WEBHOOK_UUID: ${{ steps.secrets.outputs.webhook_uuid }}
+          ALLURE_PROJECT_ID: 10
           ALLURE_UPLOAD_REPORT: true
           ALLURE_GENERATE_REPORT: true
           ALLURE_TOKEN: ${{ steps.secrets.outputs.allure_server_token }}
