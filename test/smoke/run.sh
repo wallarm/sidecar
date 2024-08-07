@@ -27,6 +27,17 @@ export INJECTION_STRATEGY="${INJECTION_STRATEGY:-single}"
 
 K8S_VERSION=${K8S_VERSION:-1.28.7}
 
+DOCKERHUB_REGISTRY_SERVER="https://index.docker.io/v1/"
+
+# This will prevent the secret for index.docker.io from being used if the DOCKERHUB_USER is not set.
+if [ "${DOCKERHUB_USER:-false}" = "false" ]; then
+  DOCKERHUB_REGISTRY_SERVER="fake_docker_registry_server"
+fi
+
+DOCKERHUB_SECRET_NAME="dockerhub-secret"
+DOCKERHUB_USER="${DOCKERHUB_USER:-fake_user}"
+DOCKERHUB_PASSWORD="${DOCKERHUB_PASSWORD:-fake_password}"
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -72,6 +83,15 @@ EOF
   fi
 fi
 
+# create docker-registry secret
+echo "[test-env] creating secret docker-registry ..."
+kubectl create secret docker-registry ${DOCKERHUB_SECRET_NAME} \
+    --docker-server=${DOCKERHUB_REGISTRY_SERVER} \
+    --docker-username="${DOCKERHUB_USER}" \
+    --docker-password="${DOCKERHUB_PASSWORD}" \
+    --docker-email=docker-pull@unexists.unexists
+
+
 if [ "${SKIP_IMAGE_CREATION:-false}" = "false" ]; then
   echo "[test-env] building sidecar image..."
   make -C "${DIR}"/../../ build TAG=${TAG}
@@ -87,6 +107,9 @@ else
   IMAGE_PULL_POLICY="IfNotPresent"
 fi
 
+
+
+
 echo "[test-env] installing cert-manager"
 helm repo add jetstack https://charts.jetstack.io/
 helm repo update jetstack
@@ -95,6 +118,8 @@ helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 
 cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --debug --values -
+imagePullSecrets:
+  - name: ${DOCKERHUB_SECRET_NAME}
 config:
   sidecar:
     image:
