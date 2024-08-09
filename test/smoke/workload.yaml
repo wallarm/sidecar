@@ -118,6 +118,8 @@ spec:
         sidecar.wallarm.io/proxy-extra-volume-mounts: '[{"name": "nginx-http-extra-config", "mountPath": "/nginx_include/sidecar-config.conf", "subPath": "sidecar-include.conf"}]'
         sidecar.wallarm.io/nginx-server-include: "['/nginx_include/sidecar-config.conf']"
     spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
       containers:
         - name: nginx
           image: nginx:stable-alpine

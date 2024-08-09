@@ -37,8 +37,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Import secrets
+        uses: hashicorp/vault-action@130d1f5f4fe645bb6c83e4225c04d64cfb62de6e # v2.5.0
+        id: secrets
+        with:
+          exportEnv: true
+          url: ${{ secrets.VAULT_URL }}
+          role: ${{ secrets.VAULT_ROLE }}
+          method: kubernetes
+          path: kubernetes-ci
+          secrets: |
+            kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
+            kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
+
       - name: Build
         run: |
+          echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USER} --password-stdin
           IMAGE="wallarm/sidecar-controller"
           make build TAG=${GITHUB_SHA} IMAGE=${IMAGE} PLATFORMS=linux/${{ matrix.ARCH }} BUILDX_ARGS=--load
           docker save -o sidecar-${{ matrix.ARCH }}.tar ${IMAGE}:${GITHUB_SHA}
@@ -117,6 +131,8 @@ jobs:
             kv-gitlab-ci/data/github/${{ env.env_code }} allure_server_token ;
             kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_name ;
             kv-gitlab-ci/data/github/shared/smoke-tests-registry-creds token_secret ;
+            kv-gitlab-ci/data/github/shared/dockerhub-creds user ;
+            kv-gitlab-ci/data/github/shared/dockerhub-creds password ;
       
       - name: Checkout
         uses: actions/checkout@v4
@@ -136,6 +152,8 @@ jobs:
         env:
           SKIP_CLUSTER_CREATION: true
           SKIP_IMAGE_CREATION: true
+          DOCKERHUB_USER: ${{ steps.secrets.outputs.user }}
+          DOCKERHUB_PASSWORD: ${{ steps.secrets.outputs.password }}
           INJECTION_STRATEGY: ${{ matrix.INJECTION_STRATEGY }}
           WALLARM_API_TOKEN: ${{ steps.secrets.outputs.api_token }}
           WALLARM_API_HOST: ${{ steps.secrets.outputs.api_host }}
@@ -145,6 +163,7 @@ jobs:
           SMOKE_REGISTRY_SECRET: ${{ steps.secrets.outputs.token_secret }}
           WEBHOOK_API_KEY: ${{ steps.secrets.outputs.webhook_api_key }}
           WEBHOOK_UUID: ${{ steps.secrets.outputs.webhook_uuid }}
+          ALLURE_PROJECT_ID: 10
           ALLURE_UPLOAD_REPORT: true
           ALLURE_GENERATE_REPORT: true
           ALLURE_TOKEN: ${{ steps.secrets.outputs.allure_server_token }}
