@@ -61,7 +61,15 @@ function get_logs() {
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo -e "#######################################\n"
-      kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1
+      kubectl logs -l "app.kubernetes.io/component=postanalytics" -c ${CONTAINER} --tail=-1 || true
+      echo -e "#######################################\n"
+    done
+
+    for CONTAINER in sidecar-init-iptables sidecar-init-helper nginx; do
+      echo "#######################################"
+      echo "###### ${CONTAINER} container logs ######"
+      echo "#######################################\n"
+      kubectl logs -l "app=workload" -c ${CONTAINER} --tail=-1 || true
       echo -e "#######################################\n"
     done
 
