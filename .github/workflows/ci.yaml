@@ -104,11 +104,11 @@ jobs:
             RUNNER: self-hosted-arm64-2cpu
     env:
       ## US preset
-      env_code: ingress-us1
-      CLIENT_ID: 7119
+      # env_code: ingress-us1
+      # CLIENT_ID: 7119
       ## EU preset
-      # env_code: ingress
-      # CLIENT_ID: 5
+      env_code: ingress-eu1
+      CLIENT_ID: 5
       KIND_CLUSTER_NAME: kind-${{ matrix.k8s }}
       KUBECONFIG: $HOME/.kube/kind-config-${{ matrix.k8s }}
     steps:
