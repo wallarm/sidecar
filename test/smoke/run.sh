@@ -153,7 +153,7 @@ sleep 10
 
 echo "[test-env] deploying test workload ..."
 kubectl apply -f "${DIR}"/workload.yaml --wait
-kubectl wait --for=condition=Ready pods --all --timeout=140s
+kubectl wait --for=condition=Ready pods --all --timeout=140s || (kubectl describe po -l "app.kubernetes.io/component=workload" && exit 1)
 
 echo "[test-env] running smoke tests suite ..."
 make -C "${DIR}"/../../ smoke-test
