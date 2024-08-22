@@ -54,6 +54,12 @@ class Helpers:
         Helpers.subprocess_run(cmd)
 
     @staticmethod
+    def copy_docker_reg(namespace: str, docker_reg_name: str, source_docker_reg_namespace: str) -> None:
+        cmd = f"kubectl get secret {docker_reg_name} -n {source_docker_reg_namespace} -o yaml | sed 's/namespace: {source_docker_reg_namespace}/namespace: {namespace}/g' | kubectl apply -n {namespace} -f -"
+        logger.info('Copy dockerhub-secret ...')
+        Helpers.subprocess_run(cmd)
+
+    @staticmethod
     def create_resources(path: str, namespace: str) -> None:
         cmd = f'kubectl --namespace {namespace} create -k {path}/'
         logger.info('Create resources ...')
@@ -75,8 +81,9 @@ class Helpers:
         Helpers.subprocess_run(cmd)
 
     @staticmethod
-    def setup_resources(path: str, namespace: str) -> None:
+    def setup_resources(path: str, namespace: str, docker_reg_name: str, source_docker_reg_namespace: str) -> None:
         Helpers.create_namespace(namespace)
+        #Helpers.copy_docker_reg(namespace, docker_reg_name, source_docker_reg_namespace)
         Helpers.create_resources(path, namespace)
         Helpers.wait_pods(namespace)
 
@@ -118,10 +125,13 @@ class Tests:
         allowed_url = base_url + ALLOWED_HTTP_PATH
         forbidden_url = base_url + FORBIDDEN_HTTP_PATH
 
+        source_docker_reg_namespace = "pytest"
+        docker_reg_name = "dockerhub-secret"
+
         # Register teardown and setup resources for test
         teardown_namespace['namespace'] = namespace
 
-        helpers.setup_resources(config_path, namespace)
+        helpers.setup_resources(config_path, namespace, docker_reg_name, source_docker_reg_namespace)
 
         # Need delay here to ensure that service is ready to send traffic to pods
         sleep(2)

@@ -9,3 +9,5 @@ config:
 
 controller:
   replicaCount: 1
+imagePullSecrets:
+  - name: dockerhub-secret
