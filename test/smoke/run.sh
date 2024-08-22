@@ -27,9 +27,10 @@ export INJECTION_STRATEGY="${INJECTION_STRATEGY:-single}"
 
 K8S_VERSION=${K8S_VERSION:-1.28.7}
 
-DOCKERHUB_REGISTRY_SERVER="https://index.docker.io/v1/"
 
 # This will prevent the secret for index.docker.io from being used if the DOCKERHUB_USER is not set.
+DOCKERHUB_REGISTRY_SERVER="https://index.docker.io/v1/"
+
 if [ "${DOCKERHUB_USER:-false}" = "false" ]; then
   DOCKERHUB_REGISTRY_SERVER="fake_docker_registry_server"
 fi
@@ -152,7 +153,7 @@ sleep 10
 
 echo "[test-env] deploying test workload ..."
 kubectl apply -f "${DIR}"/workload.yaml --wait
-kubectl wait --for=condition=Ready pods --all --timeout=140s
+kubectl wait --for=condition=Ready pods --all --timeout=140s || (kubectl describe po -l "app.kubernetes.io/component=workload" && exit 1)
 
 echo "[test-env] running smoke tests suite ..."
 make -C "${DIR}"/../../ smoke-test

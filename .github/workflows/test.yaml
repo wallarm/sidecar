@@ -154,9 +154,9 @@ jobs:
           method: kubernetes
           path: kubernetes-ci
           secrets: |
-            kv-gitlab-ci/data/github/sidecar api_token ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
+            kv-gitlab-ci/data/github/sidecar api_token ;
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -174,11 +174,6 @@ jobs:
           kubectl cluster-info
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
           echo "current-context:" $(kubectl config current-context)
-          echo "[test-env] creating secret docker-registry ..."
-          kubectl create secret docker-registry dockerhub-secret \
-            --docker-username="${DOCKERHUB_USER}" \
-            --docker-password="${DOCKERHUB_PASSWORD}" \
-            --docker-email=docker-pull@unexists.unexists
       
       - name: Load cache
         if: ${{ inputs.load_artifact }}
@@ -193,6 +188,11 @@ jobs:
       - name: Install Helm chart
         run: |
           unset KUBERNETES_SERVICE_HOST
+          echo "[test-env] creating secret docker-registry ..."
+          kubectl create secret docker-registry dockerhub-secret \
+            --docker-username="${DOCKERHUB_USER}" \
+            --docker-password="${DOCKERHUB_PASSWORD}" \
+            --docker-email=docker-pull@unexists.unexists
           helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
             --set config.wallarm.api.token=${API_TOKEN} \
             --debug \
@@ -209,6 +209,11 @@ jobs:
       - name: Deploy pytest
         run: |
           unset KUBERNETES_SERVICE_HOST
+          kubectl create namespace pytest
+          kubectl -n pytest create secret docker-registry dockerhub-secret \
+            --docker-username="${DOCKERHUB_USER}" \
+            --docker-password="${DOCKERHUB_PASSWORD}" \
+            --docker-email=docker-pull@unexists.unexists
           kubectl apply -f kind/docker/manifests/init/pytest.yaml
           while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
             sleep 1
@@ -237,9 +242,9 @@ jobs:
           method: kubernetes
           path: kubernetes-ci
           secrets: |
-            kv-gitlab-ci/data/github/sidecar api_token | WALLARM_API_TOKEN ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds user | DOCKERHUB_USER ;
             kv-gitlab-ci/data/github/shared/dockerhub-creds password | DOCKERHUB_PASSWORD ;
+            kv-gitlab-ci/data/github/sidecar api_token | WALLARM_API_TOKEN ;
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -251,11 +256,6 @@ jobs:
           echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USER} --password-stdin
           kind create cluster --image kindest/node:v1.28.7
           kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
-          echo "[test-env] creating secret docker-registry ..."
-          kubectl create secret docker-registry dockerhub-secret \
-            --docker-username="${DOCKERHUB_USER}" \
-            --docker-password="${DOCKERHUB_PASSWORD}" \
-            --docker-email=docker-pull@unexists.unexists
           
       - name: Load cache
         if: ${{ inputs.load_artifact }}
