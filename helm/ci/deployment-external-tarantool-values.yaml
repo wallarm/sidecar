@@ -1,3 +1,5 @@
+imagePullSecrets:
+  - name: dockerhub-secret
 postanalytics:
   external:
     enabled: true
