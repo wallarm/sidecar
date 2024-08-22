@@ -21,6 +21,8 @@ spec:
       labels:
         app.kubernetes.io/name: pytest
     spec:
+      imagePullSecrets:
+        - name: dockerhub-secret
       serviceAccountName: pytest
       containers:
       - name: pytest
