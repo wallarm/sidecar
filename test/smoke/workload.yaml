@@ -112,6 +112,7 @@ spec:
       labels:
         app: workload
         wallarm-sidecar: enabled
+        app.kubernetes.io/component: workload
       annotations:
         sidecar.wallarm.io/wallarm-mode: "block"
         sidecar.wallarm.io/proxy-extra-volumes: '[{"name": "nginx-http-extra-config", "configMap": {"name": "sidecar-config"}}]'
