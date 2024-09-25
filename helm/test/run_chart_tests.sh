@@ -23,8 +23,21 @@ CT_NAMESPACE="ct"
 SECRET_NAME="wallarm-api-token"
 SECRET_KEY="token"
 
+# This will prevent the secret for index.docker.io from being used if the DOCKERHUB_USER is not set.
+DOCKERHUB_REGISTRY_SERVER="https://index.docker.io/v1/"
+
+if [ "${DOCKERHUB_USER:-false}" = "false" ]; then
+  DOCKERHUB_REGISTRY_SERVER="fake_docker_registry_server"
+fi
+
+DOCKERHUB_SECRET_NAME="dockerhub-secret"
+DOCKERHUB_USER="${DOCKERHUB_USER:-fake_user}"
+DOCKERHUB_PASSWORD="${DOCKERHUB_PASSWORD:-fake_password}"
+
 HELM_EXTRA_ARGS="--timeout 180s"
-HELM_EXTRA_SET_ARGS="--set config.wallarm.api.token=${WALLARM_API_TOKEN} ${HELM_ARGS:-}"
+HELM_EXTRA_SET_ARGS="--set config.wallarm.api.token=${WALLARM_API_TOKEN} \
+  --set imagePullSecrets[0].name=${DOCKERHUB_SECRET_NAME} \
+  ${HELM_ARGS:-}"
 
 # Handle the case when we run chart testing with '--upgrade' option
 if [[ "${CT_MODE:-}" == "upgrade" ]]; then
@@ -41,6 +54,15 @@ fi
 if ! kubectl -n ${CT_NAMESPACE} get secret "${SECRET_NAME}" &> /dev/null; then
   echo "Creating secret ${SECRET_NAME}..."
   kubectl -n ${CT_NAMESPACE} create secret generic "${SECRET_NAME}" --from-literal="${SECRET_KEY}"="${WALLARM_API_TOKEN}"
+fi
+
+if ! kubectl -n ${CT_NAMESPACE} get secret "${DOCKERHUB_SECRET_NAME}" &> /dev/null; then
+  echo "Creating secret ${DOCKERHUB_SECRET_NAME}..."
+  kubectl -n ${CT_NAMESPACE} create secret docker-registry "${DOCKERHUB_SECRET_NAME}" \
+              --docker-server=${DOCKERHUB_REGISTRY_SERVER} \
+              --docker-username="${DOCKERHUB_USER}" \
+              --docker-password="${DOCKERHUB_PASSWORD}" \
+              --docker-email=docker-pull@unexists.unexists
 fi
 
 cat <<EOF > ct.sh
