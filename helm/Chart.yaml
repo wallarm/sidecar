@@ -1,7 +1,7 @@
 apiVersion: v2
 name: wallarm-sidecar
-version: 5.0.2
-appVersion: 5.0.2
+version: 5.0.3
+appVersion: 5.0.3
 description: Sidecar controller for Kubernetes. Injects sidecar proxy based on NGINX with Wallarm module and helper services.
 home: https://github.com/wallarm/sidecar
 icon: https://static.wallarm.com/wallarm-logo.svg
@@ -21,8 +21,8 @@ kubeVersion: ">=1.19.16-0"
 annotations:
   artifacthub.io/images: |
     - name: sidecar
-      image: wallarm/sidecar:5.0.2-1
+      image: wallarm/sidecar:5.0.3-1
     - name: sidecar-controller
-      image: wallarm/sidecar-controller:1.3.9
+      image: wallarm/sidecar-controller:1.3.11
     - name: node-helpers
-      image: wallarm/node-helpers:5.0.2-1
+      image: wallarm/node-helpers:5.0.3-1
