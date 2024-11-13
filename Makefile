@@ -84,7 +84,8 @@ clean-all:
 ### Helm routines
 ###
 HELMARGS := --set "config.wallarm.api.token=$(WALLARM_API_TOKEN)" \
-			--set "config.wallarm.api.host=$(WALLARM_API_HOST)"
+			--set "config.wallarm.api.host=$(WALLARM_API_HOST)"   \
+			--set "config.wallarm.api.nodeGroup=$(NODE_GROUP_NAME)"   \
 
 helm-template:
 	@$(HELM) template wallarm-sidecar ./helm -f ./helm/values.dev.yaml $(HELMARGS) --debug

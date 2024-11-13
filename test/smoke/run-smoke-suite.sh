@@ -57,16 +57,8 @@ if ! kubectl get secret "${SMOKE_IMAGE_PULL_SECRET_NAME}" &> /dev/null; then
     --docker-email=docker-pull@unexists.unexists
 fi
 
-echo "Retrieving Wallarm Node UUID ..."
-POD=$(kubectl get pod -l app=workload -o=name | cut -d/ -f 2)
-NODE_UUID=$(kubectl exec "${POD}" -c sidecar-proxy -- cat /opt/wallarm/etc/wallarm/node.yaml | grep uuid | awk '{print $2}' | xargs)
-if [[ -z "${NODE_UUID}" ]]; then
-  echo "Failed to retrieve Wallarm Node UUID"
-  get_logs_and_fail
-fi
-echo "Node UUID: ${NODE_UUID}"
-
 echo "Retrieving Wallarm NODE_VERSION ..."
+POD=$(kubectl get pod -l app=workload -o=name | cut -d/ -f 2)
 NODE_VERSION=$(kubectl get pod ${POD} -o jsonpath="{.spec.containers[?(@.name=='sidecar-proxy')].image}" | awk -F ":" '{print $2}')
 echo "Node version: ${NODE_VERSION}"
 
@@ -89,7 +81,7 @@ spec:
   - command: [sleep, infinity]
     env:
     - {name: NODE_BASE_URL, value: "${NODE_BASE_URL}"}
-    - {name: NODE_UUID, value: "${NODE_UUID}"}
+    - {name: NODE_GROUP_NAME, value: "${NODE_GROUP_NAME}"}
     - {name: WALLARM_API_HOST, value: "${WALLARM_API_HOST}"}
     - {name: WALLARM_API_PRESET, value: "${WALLARM_API_PRESET}"}
     - {name: API_CA_VERIFY, value: "${WALLARM_API_CA_VERIFY}"}
