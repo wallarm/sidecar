@@ -1,7 +1,10 @@
 #!/bin/bash
 
-#import functions
+# import functions
 source "${PWD}/test/smoke/functions.sh"
+
+# generate unique group name
+export NODE_GROUP_NAME="github-sidecar-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 12; echo)"
 
 # check if all mandatory vars was defined
 check_mandatory_vars
@@ -138,6 +141,7 @@ config:
     api:
       token: ${WALLARM_API_TOKEN}
       host: ${WALLARM_API_HOST}
+      nodeGroup: ${NODE_GROUP_NAME}
   injectionStrategy:
     schema: ${INJECTION_STRATEGY}
 controller:

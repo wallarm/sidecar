@@ -157,7 +157,7 @@ jobs:
           DOCKERHUB_USER: ${{ steps.secrets.outputs.user }}
           DOCKERHUB_PASSWORD: ${{ steps.secrets.outputs.password }}
           INJECTION_STRATEGY: ${{ matrix.INJECTION_STRATEGY }}
-          WALLARM_API_TOKEN: ${{ steps.secrets.outputs.api_token }}
+          WALLARM_API_TOKEN: ${{ steps.secrets.outputs.user_token }}
           WALLARM_API_HOST: ${{ steps.secrets.outputs.api_host }}
           WALLARM_API_PRESET: ${{ steps.secrets.outputs.api_preset }}
           USER_TOKEN: ${{ steps.secrets.outputs.user_token }}
