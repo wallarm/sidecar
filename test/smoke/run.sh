@@ -161,3 +161,4 @@ kubectl wait --for=condition=Ready pods --all --timeout=140s || (kubectl describ
 
 echo "[test-env] running smoke tests suite ..."
 make -C "${DIR}"/../../ smoke-test
+

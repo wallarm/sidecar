@@ -152,3 +152,25 @@ func WithAnnotationPrefix(suffix string) string {
 	prefix := fmt.Sprintf("%v", config.Settings["annotationPrefix"])
 	return prefix + "/" + suffix
 }
+
+func ToInt64(input interface{}) (int64, error) {
+    switch v := input.(type) {
+    case string:
+        num, err := strconv.ParseInt(v, 10, 64)
+        if err != nil {
+            fmt.Println("Error converting string to int64:", err)
+            return 0, err
+        }
+        return num, nil
+    case int:
+        return int64(v), nil
+    case int64:
+        return v, nil
+    case float64:
+        return int64(v), nil
+    case float32:
+        return int64(v), nil
+    default:
+        return 0, fmt.Errorf("unsupported type: %T", v)
+    }
+}

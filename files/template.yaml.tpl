@@ -67,7 +67,19 @@ volumes:
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-reconnect-interval`) .Config.wallarm.upstream.reconnectInterval }}"
     - name: WALLARM_APIFW_ENABLE
-      value: "{{ getAnnotation .ObjectMeta (withAP `api-firewall-enabled`) .Config.wallarm.apiFirewallMode }}"
+      value: "{{ getAnnotation .ObjectMeta (withAP `api-firewall-enabled`) .Config.wallarm.apiFirewall.mode }}"
+    - name: APIFW_READ_BUFFER_SIZE
+      value: "{{ .Config.wallarm.apiFirewall.readBufferSize | int64 }}"
+    - name: APIFW_WRITE_BUFFER_SIZE
+      value: "{{ .Config.wallarm.apiFirewall.writeBufferSize | int64 }}"
+    - name: APIFW_MAX_REQUEST_BODY_SIZE
+      value: "{{ .Config.wallarm.apiFirewall.maxRequestBodySize | int64 }}"
+    - name: APIFW_DISABLE_KEEPALIVE
+      value: "{{ .Config.wallarm.apiFirewall.disableKeepalive }}"
+    - name: APIFW_MAX_CONNS_PER_IP
+      value: "{{ .Config.wallarm.apiFirewall.maxConnectionsPerIp }}"
+    - name: APIFW_MAX_REQUESTS_PER_CONN
+      value: "{{ .Config.wallarm.apiFirewall.maxRequestsPerConnection }}"
     - name: NGINX_LISTEN_PORT
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-listen-port`) .Config.nginx.listenPort }}"
     - name: NGINX_PROXY_PASS_PORT
