@@ -1,7 +1,7 @@
 nameOverride: ""
 fullnameOverride: ""
 ###
-### Global config options
+#### Global config options
 ###
 
 config:
@@ -80,6 +80,8 @@ config:
     ### https://wallarm.github.io/api-firewall/
     ###
     apiFirewallMode: "on"
+    apiFirewall:
+      mode: "on"
     ### Post-analytics node endpoint configuration
     ###
     upstream:
