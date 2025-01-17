@@ -76,10 +76,6 @@ config:
     ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_unpack_response
     ###
     unpackResponse: "on"
-    ### Global setting to turn Wallarm API Firewall component on or off
-    ### https://wallarm.github.io/api-firewall/
-    ###
-    apiFirewallMode: "on"
     ### Post-analytics node endpoint configuration
     ###
     upstream:
@@ -91,6 +87,32 @@ config:
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_reconnect_interval
       ###
       reconnectInterval: 15s
+    apiFirewall:
+      ### Global setting to turn Wallarm API Firewall component on or off
+      ### https://wallarm.github.io/api-firewall/
+      ###
+      mode: "on"
+      ### Per-connection buffer size (in bytes) for requests' reading. This also limits the maximum header size.
+      ### Increase this buffer if your clients send multi-KB RequestURIs and/or multi-KB headers (for example, BIG cookies)
+      ###
+      readBufferSize: 8192
+      ### Per-connection buffer size (in bytes) for responses' writing.
+      ###
+      writeBufferSize: 8192
+      ### Maximum request body size (in bytes). The server rejects requests with bodies exceeding this limit.
+      ###
+      maxRequestBodySize: 4194304
+      ### Whether to disable keep-alive connections. The server will close all the incoming connections after sending
+      ## the first response to client if this option is set to 'true'
+      ###
+      disableKeepalive: false
+      ### Maximum number of concurrent client connections allowed per IP. '0' means unlimited
+      ###
+      maxConnectionsPerIp: 0
+      ### Maximum number of requests served per connection. The server closes connection after the last request.
+      ### 'Connection: close' header is added to the last response. '0' means unlimited
+      ###
+      maxRequestsPerConnection: 0
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
@@ -765,7 +787,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: 1.3.11
+    tag: 1.4.0
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*

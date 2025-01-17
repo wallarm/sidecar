@@ -113,7 +113,7 @@ function get_logs() {
     echo "#################################"
     echo "######## Post-analytics Pod #####"
     echo "#################################"
-    for CONTAINER in antibot appstructure supervisord tarantool ; do
+    for CONTAINER in appstructure supervisord tarantool ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo -e "#######################################\n"

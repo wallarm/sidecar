@@ -229,6 +229,7 @@ func (c *Config) InitTemplate(templatefile string) error {
 		"b64dec":               B64dec,
 		"withAnnotationPrefix": WithAnnotationPrefix,
 		"withAP":               WithAnnotationPrefix,
+		"int64":                ToInt64,
 	}
 
 	tmpl, errNewTemplate := template.New("basic").Funcs(tmplfuncs).Parse(string(content))
