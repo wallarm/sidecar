@@ -134,3 +134,5 @@ EXEC_CMD="env $GITHUB_VARS $RUN_TESTS -n ${PYTEST_WORKERS} ${PYTEST_ARGS}"
 kubectl exec pytest ${EXEC_ARGS} -- ${EXEC_CMD} || get_logs_and_fail
 extra_debug_logs
 clean_allure_report
+
+kubectl get pod ${POD} -o yaml
