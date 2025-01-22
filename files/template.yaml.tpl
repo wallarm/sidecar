@@ -101,6 +101,10 @@ volumes:
       value: "{{ .Config.nginx.tarantoolUpstream.server.maxConns }}"
     - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_CONNS
       value: "{{ .Config.nginx.tarantoolUpstream.server.failTimeout }}"
+    - name: NGINX_LOGS_EXTENDED
+      value: "{{ .Config.nginx.logs.extended }}"
+    - name: NGINX_LOGS_FORMAT
+      value: "{{ .Config.nginx.logs.format }}"
     {{ if (isSet .ObjectMeta.Annotations (withAP "nginx-http-include")) -}}
     - name: NGINX_HTTP_INCLUDE
       value: "{{ index .ObjectMeta.Annotations (withAP `nginx-http-include`) }}"

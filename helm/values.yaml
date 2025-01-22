@@ -176,6 +176,10 @@ config:
       - 172.16.0.0/12
       - 127.0.0.0/8
       - fd00::/8
+    ### Nginx sidecar-proxy log config
+    logs:
+      extended: false
+      format: text
     ### Nginx directive 'worker_processes' http://nginx.org/en/docs/ngx_core_module.html#worker_processes
     ### Defines the number of worker processes
     ###
@@ -787,7 +791,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: 1.4.1
+    tag: 1.6.0
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*

@@ -23,6 +23,6 @@ annotations:
     - name: sidecar
       image: wallarm/sidecar:5.2.11
     - name: sidecar-controller
-      image: wallarm/sidecar-controller:1.4.1
+      image: wallarm/sidecar-controller:1.6.0
     - name: node-helpers
       image: wallarm/node-helpers:5.2.11
