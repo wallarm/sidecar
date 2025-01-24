@@ -75,7 +75,7 @@ function get_controller_logs_and_fail() {
     echo "#####################################"
     echo "######## Post-analytics logs ########"
     echo -e "#####################################\n"
-    for CONTAINER in antibot appstructure supervisord tarantool ; do
+    for CONTAINER in antibot appstructure supervisord wstore ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo -e "#######################################\n"
@@ -113,7 +113,7 @@ function get_logs() {
     echo "#################################"
     echo "######## Post-analytics Pod #####"
     echo "#################################"
-    for CONTAINER in appstructure supervisord tarantool ; do
+    for CONTAINER in appstructure supervisord wstore ; do
       echo "#######################################"
       echo "###### ${CONTAINER} container logs ######"
       echo -e "#######################################\n"

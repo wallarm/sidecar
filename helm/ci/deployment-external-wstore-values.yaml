@@ -3,4 +3,4 @@ imagePullSecrets:
 postanalytics:
   external:
     enabled: true
-    host: tarantool.domain.internal
+    host: wstore.domain.internal

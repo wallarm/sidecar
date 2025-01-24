@@ -17,9 +17,9 @@ data:
   config.yaml: |-
     settings:
       {{- toYaml .Values.config | nindent 6 }}
-      tarantool:
-        host: {{ template "wallarm-sidecar.tarantoolHost" . }}
-        port: {{ template "wallarm-sidecar.tarantoolPort" . }}
+      wstore:
+        host: {{ template "wallarm-sidecar.wstoreHost" . }}
+        port: {{ template "wallarm-sidecar.wstorePort" . }}
       component:
         name: {{ template "wallarm-sidecar.componentName" . }}
         version: {{ .Chart.Version }}
