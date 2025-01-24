@@ -13,6 +13,7 @@
 vendor/*
 build/_output
 deploy/tmp
+.DS_Store
 
 # GOPATH
 .go

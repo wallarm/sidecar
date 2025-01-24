@@ -34,9 +34,9 @@ spec:
     {{- include "wallarm-sidecar.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: postanalytics
   ports:
-  - name: tarantool
+  - name: wstore
     port: {{ .Values.postanalytics.service.port }}
-    targetPort: tarantool
+    targetPort: wstore
     protocol: TCP
     {{- if has (.Values.postanalytics.service.type | default "ClusterIP") (list "NodePort" "LoadBalancer") -}}
     {{- with .Values.postanalytics.service.nodePort }}

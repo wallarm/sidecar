@@ -59,10 +59,10 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-unpack-response`) .Config.wallarm.unpackResponse }}"
     - name: WALLARM_ACL_EXPORT_ENABLE
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-acl-export-enable`) .Config.wallarm.aclExportEnable }}"
-    - name: WALLARM_TARANTOOL_HOST
-      value: "{{ .Config.tarantool.host }}"
-    - name: WALLARM_TARANTOOL_PORT
-      value: "{{ .Config.tarantool.port }}"
+    - name: WALLARM_WSTORE_HOST
+      value: "{{ .Config.wstore.host }}"
+    - name: WALLARM_WSTORE_PORT
+      value: "{{ .Config.wstore.port }}"
     - name: WALLARM_UPSTREAM_CONNECT_ATTEMPTS
       value: "{{ getAnnotation .ObjectMeta (withAP `wallarm-upstream-connect-attempts`) .Config.wallarm.upstream.connectAttempts }}"
     - name: WALLARM_UPSTREAM_RECONNECT_INTERVAL
@@ -91,16 +91,16 @@ volumes:
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-worker-processes`) .Config.nginx.workerProcesses }}"
     - name: NGINX_WORKER_CONNECTIONS
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-worker-connections`) .Config.nginx.workerConnections }}"
-    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE
-      value: "{{ .Config.nginx.tarantoolUpstream.keepalive }}"
-    - name: NGINX_TARANTOOL_UPSTREAM_KEEPALIVE_REQUESTS
-      value: "{{ .Config.nginx.tarantoolUpstream.keepaliveRequests }}"
-    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_FAILS
-      value: "{{ .Config.nginx.tarantoolUpstream.server.maxFails }}"
-    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_FAIL_TIMEOUT
-      value: "{{ .Config.nginx.tarantoolUpstream.server.maxConns }}"
-    - name: NGINX_TARANTOOL_UPSTREAM_SERVER_MAX_CONNS
-      value: "{{ .Config.nginx.tarantoolUpstream.server.failTimeout }}"
+    - name: NGINX_WSTORE_UPSTREAM_KEEPALIVE
+      value: "{{ .Config.nginx.postanalyticsUpstream.keepalive }}"
+    - name: NGINX_WSTORE_UPSTREAM_KEEPALIVE_REQUESTS
+      value: "{{ .Config.nginx.postanalyticsUpstream.keepaliveRequests }}"
+    - name: NGINX_WSTORE_UPSTREAM_SERVER_MAX_FAILS
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.maxFails }}"
+    - name: NGINX_WSTORE_UPSTREAM_SERVER_FAIL_TIMEOUT
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.maxConns }}"
+    - name: NGINX_WSTORE_UPSTREAM_SERVER_MAX_CONNS
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.failTimeout }}"
     - name: NGINX_LOGS_EXTENDED
       value: "{{ .Config.nginx.logs.extended }}"
     - name: NGINX_LOGS_FORMAT
@@ -448,8 +448,8 @@ volumes:
 Wcli arguments building
 */}}
 {{- define "wcli-args" -}}
-"-log-level", "{{ .Config.cron.logLevel }}",{{ " " }}
-{{- with .Config.cron.commands -}}
+"-log-level", "{{ .Config.wcli.logLevel }}",{{ " " }}
+{{- with .Config.wcli.commands -}}
 {{- range $name, $value := . -}}
 "job:{{ $name }}", "-log-level", "{{ $value.logLevel }}",{{ " " }}
 {{- end -}}

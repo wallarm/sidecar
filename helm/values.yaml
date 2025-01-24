@@ -79,11 +79,11 @@ config:
     ### Post-analytics node endpoint configuration
     ###
     upstream:
-      ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
+      ### Defines the number of immediate reconnects to the Wstore or Wallarm API
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_connect_attempts
       ###
       connectAttempts: 10
-      ### Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
+      ### Defines the interval between attempts to reconnect to the Wstore or Wallarm API
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_reconnect_interval
       ###
       reconnectInterval: 15s
@@ -188,9 +188,9 @@ config:
     ### Sets the maximum number of simultaneous connections that can be opened by a worker process
     ###
     workerConnections: 4096
-    ### Parameters for Tarantool upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
+    ### Parameters for Wstore upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
     ###
-    tarantoolUpstream:
+    postanalyticsUpstream:
       ### 'keepalive' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
       ###
       keepalive: 16
@@ -217,7 +217,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 5.2.11
+      tag: 6.0.0-wstore
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -369,7 +369,7 @@ config:
               - "ssl_conf_command Ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256"
 
   ### Wcli jobs
-  cron:
+  wcli:
     ### General log level
     logLevel: warn
     ### Per-job log levels
@@ -420,24 +420,24 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 5.2.11
+    tag: 5.3.0-wstore
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
 ###
 postanalytics:
-  ### Optional configuration of external Tarantool instance. If feature is enabled,
-  ### then Tarantool will not be deployed by current Helm chart, external instance will be used instead
+  ### Optional configuration of external Wstore instance. If feature is enabled,
+  ### then Wstore will not be deployed by current Helm chart, external instance will be used instead
   ###
   external:
-    ### Set to 'true' to use external Tarantool instance
+    ### Set to 'true' to use external Wstore instance
     ###
     enabled: false
-    ### Hostname (FQDN) or IP address of external Tarantool instance (e.g. "tarantool.domain.internal" or "10.10.0.100")
+    ### Hostname (FQDN) or IP address of external Wstore instance (e.g. "wstore.domain.internal" or "10.10.0.100")
     ### The hostname must be accessible from Kubernetes cluster where current Helm chart is installed
     ###
     host: ""
-    ### Number of TCP port of external Tarantool instance
+    ### Number of TCP port of external Wstore instance
     ###
     port: 3313
 
@@ -622,9 +622,9 @@ postanalytics:
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-  tarantool:
+  wstore:
     config:
-      ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
+      ### The allocated memory size in GB for Wstore in-memory storage. Detailed recommendations are provided
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
       arena: "2.0"
@@ -791,7 +791,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: 1.6.0
+    tag: 1.7.0
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
