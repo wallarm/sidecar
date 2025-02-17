@@ -26,3 +26,4 @@ LOCALNOTES.md
 httpbin.yaml
 allure_report
 helm/test/__pycache__/
+.DS_Store
