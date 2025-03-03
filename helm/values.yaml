@@ -79,11 +79,11 @@ config:
     ### Post-analytics node endpoint configuration
     ###
     upstream:
-      ### Defines the number of immediate reconnects to the Tarantool or Wallarm API
+      ### Defines the number of immediate reconnects to the wstore or Wallarm API
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_connect_attempts
       ###
       connectAttempts: 10
-      ### Defines the interval between attempts to reconnect to the Tarantool or Wallarm API
+      ### Defines the interval between attempts to reconnect to the wstore or Wallarm API
       ### https://docs.wallarm.com/admin-en/configure-parameters-en/#wallarm_upstream_reconnect_interval
       ###
       reconnectInterval: 15s
@@ -188,9 +188,9 @@ config:
     ### Sets the maximum number of simultaneous connections that can be opened by a worker process
     ###
     workerConnections: 4096
-    ### Parameters for Tarantool upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
+    ### Parameters for wstore upstream. Refer to upstream module docs fo details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#upstream
     ###
-    tarantoolUpstream:
+    wstoreUpstream:
       ### 'keepalive' parameter. Refer to docs for details https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
       ###
       keepalive: 16
@@ -426,18 +426,18 @@ helper:
 ### Configuration for post-analytics module
 ###
 postanalytics:
-  ### Optional configuration of external Tarantool instance. If feature is enabled,
-  ### then Tarantool will not be deployed by current Helm chart, external instance will be used instead
+  ### Optional configuration of external wstore instance. If feature is enabled,
+  ### then wstore will not be deployed by current Helm chart, external instance will be used instead
   ###
   external:
-    ### Set to 'true' to use external Tarantool instance
+    ### Set to 'true' to use external wstore instance
     ###
     enabled: false
-    ### Hostname (FQDN) or IP address of external Tarantool instance (e.g. "tarantool.domain.internal" or "10.10.0.100")
+    ### Hostname (FQDN) or IP address of external wstore instance (e.g. "wstore.domain.internal" or "10.10.0.100")
     ### The hostname must be accessible from Kubernetes cluster where current Helm chart is installed
     ###
     host: ""
-    ### Number of TCP port of external Tarantool instance
+    ### Number of TCP port of external wstore instance
     ###
     port: 3313
 
@@ -622,9 +622,9 @@ postanalytics:
     extraVolumeMounts: []
     # - name: something
     #   mountPath: /mnt/something
-  tarantool:
+  wstore:
     config:
-      ### The allocated memory size in GB for Tarantool in-memory storage. Detailed recommendations are provided
+      ### The allocated memory size in GB for wstore in-memory storage. Detailed recommendations are provided
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
       arena: "2.0"

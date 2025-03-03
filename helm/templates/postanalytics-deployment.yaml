@@ -149,32 +149,35 @@ spec:
           {{- with .Values.postanalytics.supervisord.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
-        - name: tarantool
+        - name: wstore
           image: {{ include "wallarm-sidecar.image" .Values.helper.image }}
           imagePullPolicy: "{{ .Values.helper.image.pullPolicy }}"
-          args: ["tarantool"]
+          args: ["wstore"]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: SLAB_ALLOC_ARENA
-            value: {{ .Values.postanalytics.tarantool.config.arena | quote }}
-          {{- with .Values.postanalytics.tarantool.extraEnvs }}
+            value: {{ .Values.postanalytics.wstore.config.arena | quote }}
+          {{- with .Values.postanalytics.wstore.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
+          volumeMounts:
+          - mountPath: /opt/wallarm/etc/wallarm
+            name: wallarm
           ports:
-            - name: tarantool
+            - name: wstore
               containerPort: {{ .Values.postanalytics.service.port }}
               protocol: TCP
-          {{- with .Values.postanalytics.tarantool.livenessProbe }}
+          {{- with .Values.postanalytics.wstore.livenessProbe }}
           livenessProbe: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.tarantool.readinessProbe }}
+          {{- with .Values.postanalytics.wstore.readinessProbe }}
           readinessProbe: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.tarantool.lifecycle }}
+          {{- with .Values.postanalytics.wstore.lifecycle }}
           lifecycle: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- if .Values.postanalytics.tarantool.securityContext }}
-          securityContext: {{ .Values.postanalytics.tarantool.securityContext | toYaml | nindent 12 }}
+          {{- if .Values.postanalytics.wstore.securityContext }}
+          securityContext: {{ .Values.postanalytics.wstore.securityContext | toYaml | nindent 12 }}
           {{- else }}
           securityContext:
             privileged: false
@@ -186,10 +189,10 @@ spec:
               add:
               - NET_BIND_SERVICE
           {{- end }}
-          {{- with .Values.postanalytics.tarantool.resources }}
+          {{- with .Values.postanalytics.wstore.resources }}
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          {{- with .Values.postanalytics.wstore.extraVolumeMounts }}
           volumeMounts:
           {{- . | toYaml | nindent 10 }}
           {{- end }}
@@ -228,7 +231,7 @@ spec:
           volumeMounts:
           - mountPath: /opt/wallarm/etc/wallarm
             name: wallarm
-          {{- with .Values.postanalytics.tarantool.extraVolumeMounts }}
+          {{- with .Values.postanalytics.wstore.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         {{- with .Values.postanalytics.extraContainers }}

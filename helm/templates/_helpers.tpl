@@ -145,17 +145,17 @@ wallarm-sidecar-proxy
   value: {{ .Chart.Version | quote }}
 {{- end -}}
 
-{{- define "wallarm-sidecar.tarantoolHost" -}}
+{{- define "wallarm-sidecar.wstoreHost" -}}
 {{- if .Values.postanalytics.external.enabled }}
-{{- required "Hostname of external Tarantool instance is required" .Values.postanalytics.external.host }}
+{{- required "Hostname of external wstore instance is required" .Values.postanalytics.external.host }}
 {{- else }}
 {{- template "wallarm-sidecar.fullname" . }}-postanalytics.{{ .Release.Namespace }}.svc
 {{- end }}
 {{- end -}}
 
-{{- define "wallarm-sidecar.tarantoolPort" -}}
+{{- define "wallarm-sidecar.wstorePort" -}}
 {{- if .Values.postanalytics.external.enabled }}
-{{- required "Port of external Tarantool instance is required" .Values.postanalytics.external.port }}
+{{- required "Port of external wstore instance is required" .Values.postanalytics.external.port }}
 {{- else }}
 {{- .Values.postanalytics.service.port }}
 {{- end }}
