@@ -34,10 +34,13 @@ DOCKERHUB_SECRET_NAME="dockerhub-secret"
 DOCKERHUB_USER="${DOCKERHUB_USER:-fake_user}"
 DOCKERHUB_PASSWORD="${DOCKERHUB_PASSWORD:-fake_password}"
 
+CT_CONFIG="${CT_CONFIG:-$HOME/.kube/kind-config-ct-$KIND_CLUSTER_NAME}"
+
 HELM_EXTRA_ARGS="--timeout 180s"
-HELM_EXTRA_SET_ARGS="--set config.wallarm.api.token=${WALLARM_API_TOKEN} \
+HELM_EXTRA_SET_ARGS="--set config.wallarm.api.host=${WALLARM_API_HOST} \
+  --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
   --set imagePullSecrets[0].name=${DOCKERHUB_SECRET_NAME} \
-  ${HELM_ARGS:-}"
+  --set controller.image.fullname=${IMAGE}:${TAG}"
 
 # Handle the case when we run chart testing with '--upgrade' option
 if [[ "${CT_MODE:-}" == "upgrade" ]]; then
@@ -81,12 +84,28 @@ chmod +x ct.sh
 echo "Running helm chart tests..."
 trap cleanup EXIT
 
+if [[ "${CI:-}" == "true" ]]; then
+  KIND_NODES=$(kind get nodes --name="${KIND_CLUSTER_NAME}")
+  for NODE in $KIND_NODES; do
+      docker exec "${NODE}" bash -c "cat >> /etc/containerd/config.toml <<EOF
+[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"registry-1.docker.io\".auth]
+  username = \"$DOCKERHUB_USER\"
+  password = \"$DOCKERHUB_PASSWORD\"
+[plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"$CI_REGISTRY\".auth]
+  username = \"$CI_REGISTRY_USER\"
+  password = \"$CI_REGISTRY_PASSWORD\"
+EOF
+systemctl restart containerd"
+  done
+fi
+
+kind get kubeconfig --internal --name $KIND_CLUSTER_NAME > $CT_CONFIG
 docker run \
     --rm \
     --interactive \
-    --network host \
+    --network kind \
     --name ct \
-    --volume "${KUBECONFIG}:/root/.kube/config" \
+    --volume "${CT_CONFIG}:/root/.kube/config" \
     --volume "${CURDIR}:/workdir" \
     --workdir /workdir \
     --entrypoint /workdir/ct.sh \

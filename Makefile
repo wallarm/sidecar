@@ -14,7 +14,8 @@ endif
 
 DOCKERFILE       := ./Dockerfile
 TAG   	 		 ?= $(shell cat TAG)
-IMAGE 	  		 ?= wallarm/sidecar-controller
+REGISTRY		 ?= wallarm
+IMAGE 	  		 ?= $(REGISTRY)/sidecar-controller
 CONTROLLER_IMAGE = $(IMAGE):$(TAG)
 COMMIT_SHA ?= git-$(shell git rev-parse --short HEAD)
 
@@ -26,7 +27,6 @@ GOLANG_VERSION = 1.22.5
 ### Variables used in tests
 ###
 INJECTION_STRATEGY ?= single
-REGISTRY ?= wallarm
 
 ### Contribution routines
 ###
@@ -145,7 +145,10 @@ push rmi:
 dive:
 	@dive $(CONTROLLER_IMAGE)
 
-.PHONY: build push rmi dive
+sign:
+	.gitlab/image-sign.sh
+
+.PHONY: build push rmi dive sign
 
 ### Smoke test routines
 ###

@@ -18,6 +18,7 @@ fi
 
 export TAG=${TAG:-1.0.0-dev}
 export ARCH=${ARCH:-amd64}
+export REGISTRY=${REGISTRY:-wallarm}
 
 export KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-sidecar-smoke-test}
 export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/kind-config-$KIND_CLUSTER_NAME}"
@@ -98,7 +99,7 @@ kubectl create secret docker-registry ${DOCKERHUB_SECRET_NAME} \
 
 if [ "${SKIP_IMAGE_CREATION:-false}" = "false" ]; then
   echo "[test-env] building sidecar image..."
-  make -C "${DIR}"/../../ build TAG=${TAG}
+  make -C "${DIR}"/../../ build REGISTRY=${REGISTRY} TAG=${TAG}
 fi
 
 # If this variable is set to 'true' we use public images instead local build.
@@ -146,7 +147,7 @@ config:
     schema: ${INJECTION_STRATEGY}
 controller:
   image:
-    tag: ${TAG}
+    fullname: ${IMAGE}:${TAG}
     pullPolicy: ${IMAGE_PULL_POLICY}
 EOF
 
