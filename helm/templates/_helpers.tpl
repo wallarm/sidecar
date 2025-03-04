@@ -165,8 +165,8 @@ wallarm-sidecar-proxy
 Wcli arguments building
 */}}
 {{- define "wallarm-sidecar.wcli-args" -}}
-"-log-level", "{{ .Values.config.cron.logLevel }}",{{ " " }}
-{{- with .Values.config.cron.commands -}}
+"-log-level", "{{ .Values.config.wcli.logLevel }}",{{ " " }}
+{{- with .Values.config.wcli.commands -}}
 {{- range $name, $value := . -}}
 "job:{{ $name }}", "-log-level", "{{ $value.logLevel }}",{{ " " }}
 {{- end -}}

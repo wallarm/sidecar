@@ -26,7 +26,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ .Values.config.cron | toJson | sha256sum }}
+        checksum/config: {{ .Values.config.wcli | toJson | sha256sum }}
         checksum/secret: {{ .Values.config.wallarm.api | toJson | sha256sum }}
         {{- include "wallarm-sidecar.annotations" . | nindent 8 }}
         {{- with .Values.postanalytics.extraAnnotations }}
@@ -160,9 +160,6 @@ spec:
           {{- with .Values.postanalytics.wstore.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
-          volumeMounts:
-          - mountPath: /opt/wallarm/etc/wallarm
-            name: wallarm
           ports:
             - name: wstore
               containerPort: {{ .Values.postanalytics.service.port }}
@@ -192,8 +189,10 @@ spec:
           {{- with .Values.postanalytics.wstore.resources }}
           resources: {{ . | toYaml | nindent 12 }}
           {{- end }}
-          {{- with .Values.postanalytics.wstore.extraVolumeMounts }}
           volumeMounts:
+          - mountPath: /opt/wallarm/etc/wallarm
+            name: wallarm
+          {{- with .Values.postanalytics.wstore.extraVolumeMounts }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
         - name: appstructure

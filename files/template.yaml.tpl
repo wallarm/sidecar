@@ -92,15 +92,15 @@ volumes:
     - name: NGINX_WORKER_CONNECTIONS
       value: "{{ getAnnotation .ObjectMeta (withAP `nginx-worker-connections`) .Config.nginx.workerConnections }}"
     - name: NGINX_WSTORE_UPSTREAM_KEEPALIVE
-      value: "{{ .Config.nginx.wstoreUpstream.keepalive }}"
+      value: "{{ .Config.nginx.postanalyticsUpstream.keepalive }}"
     - name: NGINX_WSTORE_UPSTREAM_KEEPALIVE_REQUESTS
-      value: "{{ .Config.nginx.wstoreUpstream.keepaliveRequests }}"
+      value: "{{ .Config.nginx.postanalyticsUpstream.keepaliveRequests }}"
     - name: NGINX_WSTORE_UPSTREAM_SERVER_MAX_FAILS
-      value: "{{ .Config.nginx.wstoreUpstream.server.maxFails }}"
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.maxFails }}"
     - name: NGINX_WSTORE_UPSTREAM_SERVER_FAIL_TIMEOUT
-      value: "{{ .Config.nginx.wstoreUpstream.server.maxConns }}"
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.maxConns }}"
     - name: NGINX_WSTORE_UPSTREAM_SERVER_MAX_CONNS
-      value: "{{ .Config.nginx.wstoreUpstream.server.failTimeout }}"
+      value: "{{ .Config.nginx.postanalyticsUpstream.server.failTimeout }}"
     - name: NGINX_LOGS_EXTENDED
       value: "{{ .Config.nginx.logs.extended }}"
     - name: NGINX_LOGS_FORMAT
@@ -448,8 +448,8 @@ volumes:
 Wcli arguments building
 */}}
 {{- define "wcli-args" -}}
-"-log-level", "{{ .Config.cron.logLevel }}",{{ " " }}
-{{- with .Config.cron.commands -}}
+"-log-level", "{{ .Config.wcli.logLevel }}",{{ " " }}
+{{- with .Config.wcli.commands -}}
 {{- range $name, $value := . -}}
 "job:{{ $name }}", "-log-level", "{{ $value.logLevel }}",{{ " " }}
 {{- end -}}
