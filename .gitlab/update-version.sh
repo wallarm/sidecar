@@ -7,7 +7,17 @@ GITLAB_REPO_URL="https://${GITLAB_TOKEN_NAME}:${GITLAB_TOKEN}@${GITLAB_HOST}/${G
 
 git clone ${GITLAB_REPO_URL}
 cd packages_versions
-git checkout -b ${PR_BRANCH}
+
+# Check if the branch exists remotely; if yes, check it out and rebase,
+# otherwise create a new branch.
+if git ls-remote --exit-code --heads origin ${PR_BRANCH} >/dev/null 2>&1; then
+    echo "Branch ${PR_BRANCH} exists remotely. Checking out and rebasing..."
+    git checkout ${PR_BRANCH}
+    git pull --rebase origin ${PR_BRANCH}
+else
+    git checkout -b ${PR_BRANCH}
+fi
+
 git config --local user.name 'project_808_bot'
 git config --local user.email 'project808_bot@noreply.${GITLAB_HOST}'
 cd packages_versions
@@ -21,6 +31,7 @@ fi
 jq '.body."'"$COMPONENT_NAME"'" += ["'"$COMPONENT_VERSION"'"]' latest.json > latest.new.json
 VERSIONS=$(jq '.body."'"$COMPONENT_NAME"'" | sort_by( split("[^0-9]+") | map(tonumber? // 0) )' latest.new.json)
 jq --argjson versions "$VERSIONS" '.body["'"$COMPONENT_NAME"'"] = $versions' latest.new.json > latest.json
+
 git add latest.json
 COMMIT_MESSAGE="Bump ${COMPONENT_NAME} version to ${COMPONENT_VERSION}"
 git commit -m "${COMMIT_MESSAGE}"
