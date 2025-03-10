@@ -217,7 +217,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 5.3.8
+      tag: 5.3.10
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
