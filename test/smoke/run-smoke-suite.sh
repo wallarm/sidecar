@@ -35,8 +35,8 @@ WALLARM_API_CA_VERIFY="${WALLARM_API_CA_VERIFY:-true}"
 WALLARM_API_HOST="${WALLARM_API_HOST:-api.wallarm.com}"
 WALLARM_API_PRESET="${WALLARM_API_PRESET:-eu1}"
 NODE_BASE_URL="${NODE_BASE_URL:-http://workload.default.svc.cluster.local}"
-PYTEST_ARGS=$(echo "${PYTEST_ARGS:---allure-features=Node}" | xargs)
-PYTEST_WORKERS="${PYTEST_WORKERS:-15}"
+PYTEST_PARAMS=$(echo "[test-env] ${PYTEST_PARAMS:---allure-features=Node}" | xargs)
+PYTEST_PROCESSES="${PYTEST_PROCESSES:-15}"
 #TODO We need it here just to don't let test fail. Remove this variable when test will be fixed.
 HOSTNAME_OLD_NODE="smoke-tests-old-node"
 
@@ -49,7 +49,7 @@ else
 fi
 
 if ! kubectl get secret "${SMOKE_IMAGE_PULL_SECRET_NAME}" &> /dev/null; then
-  echo "Creating secret with pytest registry credentials ..."
+  echo "[test-env] Creating secret with pytest registry credentials ..."
   kubectl create secret docker-registry ${SMOKE_IMAGE_PULL_SECRET_NAME} \
     --docker-server="${SMOKE_REGISTRY_NAME}" \
     --docker-username="${SMOKE_REGISTRY_TOKEN}" \
@@ -57,15 +57,15 @@ if ! kubectl get secret "${SMOKE_IMAGE_PULL_SECRET_NAME}" &> /dev/null; then
     --docker-email=docker-pull@unexists.unexists
 fi
 
-echo "Retrieving Wallarm NODE_VERSION ..."
+echo "[test-env] Retrieving Wallarm NODE_VERSION ..."
 POD=$(kubectl get pod -l app=workload -o=name | cut -d/ -f 2)
 NODE_VERSION=$(kubectl get pod ${POD} -o jsonpath="{.spec.containers[?(@.name=='sidecar-proxy')].image}" | awk -F ":" '{print $2}')
-echo "Node version: ${NODE_VERSION}"
+echo "[test-env] Node version: ${NODE_VERSION}"
 
 RAND_NUM="${RANDOM}${RANDOM}${RANDOM}"
 RAND_NUM=${RAND_NUM:0:10}
 
-echo "Deploying pytest pod ..."
+echo "[test-env] Deploying pytest pod ..."
 
 kubectl apply -f - << EOF
 apiVersion: v1
@@ -97,20 +97,17 @@ spec:
     - {name: ALLURE_TOKEN, value: "${ALLURE_TOKEN:-}"}
     - {name: ALLURE_RESULTS, value: "${ALLURE_RESULTS}"}
     - {name: NODE_VERSION, value: "${NODE_VERSION:-}"}
+    - {name: PYTEST_PARAMS, value: "${PYTEST_PARAMS}"}
+    - {name: PYTEST_PROCESSES, value: "${PYTEST_PROCESSES}"}
+    - {name: ALLURE_TESTPLAN_PATH, value: "./testplan.json"}
+    - {name: RUN_TESTS_RC_FILE, value: "run_tests_rc"}
+    - {name: DIST, value: "worksteal"}
     - name: ALLURE_LAUNCH_TAGS
-      value: >
-        USER:${GITHUB_ACTOR:-local},
-        WORKFLOW:${GITHUB_WORKFLOW:-local},
-        RUN_ID:${GITHUB_RUN_ID:-local},
-        BRANCH:${GITHUB_REF_NAME:-local},
-        JOB:${GITHUB_JOB:-local},
-        K8S:${ALLURE_ENVIRONMENT_K8S:-},
-        ARCH:${ALLURE_ENVIRONMENT_ARCH:-},
-        GITHUB_REPO:${GITHUB_REPOSITORY:-}
+      value: "USR:${GITLAB_USER_NAME}, SRC:${CI_PIPELINE_SOURCE}, GITLAB_REPO:${CI_PROJECT_NAME}"
     - name: ALLURE_LAUNCH_NAME
       value: >
-        ${GITHUB_WORKFLOW:-local}-${GITHUB_RUN_ID:-local}-${GITHUB_JOB:-local}-
-        ${ALLURE_ENVIRONMENT_K8S:-}-${ALLURE_ENVIRONMENT_ARCH:-}
+        ${CI_COMMIT_REF_NAME} #${CI_COMMIT_SHORT_SHA} on ${WALLARM_API_PRESET} ${CI_PIPELINE_ID} 
+        ${ALLURE_ENVIRONMENT_K8S}-${ALLURE_ENVIRONMENT_ARCH}
     image: "${SMOKE_IMAGE_NAME}:${SMOKE_IMAGE_TAG}"
     imagePullPolicy: IfNotPresent
     name: pytest
@@ -121,15 +118,32 @@ spec:
     hostPath: {path: /allure_report, type: DirectoryOrCreate}
 EOF
 
-echo "Waiting for all pods ready ..."
+echo "[test-env] Waiting for all pods ready ..."
 sleep 10
 kubectl wait --for=condition=Ready pods --all --timeout=300s || get_logs_and_fail
 
-echo "Run smoke tests ..."
-GITHUB_VARS=$(env | awk -F '=' '/^GITHUB_/ {vars = vars $1 "=" $2 " ";} END {print vars}')
-RUN_TESTS=$([ "$ALLURE_UPLOAD_REPORT" = "true" ] && echo "allurectl watch --job-uid ${RAND_NUM} -- pytest" || echo "pytest")
+echo "[test-env] Run smoke tests ..."
 
-EXEC_CMD="env $GITHUB_VARS $RUN_TESTS -n ${PYTEST_WORKERS} ${PYTEST_ARGS}"
+GITLAB_VARS=()
+while IFS= read -r line; do
+  [[ -n "$line" ]] && GITLAB_VARS+=("$line")
+done < <(printenv | grep -E '^(GITLAB_|ALLURE_)')
+
+EXEC_CMD=(
+  env
+  "${GITLAB_VARS[@]}"
+  /usr/local/bin/test-entrypoint.sh
+)
+
+if [ "$ALLURE_UPLOAD_REPORT" = "true" ]; then
+  EXEC_CMD+=(ci)
+else
+  EXEC_CMD+=(pytest ${PYTEST_PARAMS})
+fi
+
+# Execute with proper array handling
+kubectl exec pytest "${EXEC_ARGS[@]}" -- "${EXEC_CMD[@]}" || get_logs_and_fail
+
 # shellcheck disable=SC2086
 kubectl exec pytest ${EXEC_ARGS} -- ${EXEC_CMD} || get_logs_and_fail
 extra_debug_logs
