@@ -4,7 +4,7 @@
 source "${PWD}/test/smoke/functions.sh"
 
 # generate unique group name
-export NODE_GROUP_NAME="github-sidecar-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 12; echo)"
+export NODE_GROUP_NAME="gitlab-sidecar-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 12; echo)"
 
 # check if all mandatory vars was defined
 check_mandatory_vars
