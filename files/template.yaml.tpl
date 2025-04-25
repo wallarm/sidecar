@@ -312,6 +312,8 @@ volumes:
       value: "{{ .Config.wallarm.apiFirewall.maxConnectionsPerIp }}"
     - name: APIFW_MAX_REQUESTS_PER_CONN
       value: "{{ .Config.wallarm.apiFirewall.maxRequestsPerConnection }}"
+    - name: APIFW_API_MODE_MAX_ERRORS_IN_RESPONSE
+      value: "{{ .Config.wallarm.apiFirewall.maxErrorsInResponse }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}

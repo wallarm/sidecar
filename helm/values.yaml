@@ -113,6 +113,10 @@ config:
       ### 'Connection: close' header is added to the last response. '0' means unlimited
       ###
       maxRequestsPerConnection: 0
+      ### Maximum number of errors limiting apiFirewall response size 
+      ### to prevent it from exceeding the configured subrequest threshold.
+      ###
+      maxErrorsInResponse: 3
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
@@ -791,7 +795,7 @@ controller:
   image:
     registry: docker.io
     image: wallarm/sidecar-controller
-    tag: 1.6.1
+    tag: 1.6.2
     pullPolicy: IfNotPresent
   # -- Admission webhook configuration
   # @default -- *See below for details*
