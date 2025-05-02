@@ -19,6 +19,7 @@ fi
 export TAG=${TAG:-1.0.0-dev}
 export ARCH=${ARCH:-amd64}
 export REGISTRY=${REGISTRY:-wallarm}
+export HELM_ARGS=${HELM_ARGS:-}
 
 export KIND_CLUSTER_NAME=${KIND_CLUSTER_NAME:-sidecar-smoke-test}
 export KUBECONFIG="${KUBECONFIG:-$HOME/.kube/kind-config-$KIND_CLUSTER_NAME}"
@@ -122,7 +123,7 @@ helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true
 
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 
-cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait --debug --values -
+cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait ${HELM_ARGS} --debug --values -
 imagePullSecrets:
   - name: ${DOCKERHUB_SECRET_NAME}
 config:

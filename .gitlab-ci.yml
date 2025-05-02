@@ -20,15 +20,30 @@ variables:
     value: amd64
   WALLARM_API_PRESET:
     description: "Wallarm api preset"
-    value: audit
+    value: eu1
     options:
       - audit
       - eu1
       - us1
 
+  ### For doc purposes only ###
+  ## Variables used implicitly, only in upstream-triggered pipeline
+  # AIO_VERSION:
+  #   description: AIO version to extract the nginx module from, and is also used as appVersion in chart; do not confuse with TAG, which in dynamically calculated
+
 
 workflow:
   rules:
+    - if: $AIO_VERSION =~ /^([0-9]+.[0-9]+.[0-9]+-rc).*$/
+      variables:
+        X_CI_BUILD_KIND: "upstream" # supposed to be triggered by AIO rc
+        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
+        CHART_TYPE: "release-candidate"
+    - if: $AIO_VERSION
+      variables:
+        X_CI_BUILD_KIND: "upstream" # supposed to be triggered by AIO (final) releases
+        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
+        CHART_TYPE: "release"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH =~ /^stable\/.*$/
       changes:
         - TAG
@@ -53,6 +68,7 @@ workflow:
 
 .x-vault-login: &x_vault_login
   - | # login to (new) vault-common.i.gcp.wallarm.space
+    echo "(var) ARCH=$ARCH | (uname) ARCH=$(uname -m)"
     [ "$ARCH" = "arm64" ] && VAULT_PATH=kubernetes-infra-ci || VAULT_PATH=kubernetes
     export VAULT_ADDR=https://vault-common.i.gcp.wallarm.space
     vault write -field=token \
@@ -155,10 +171,9 @@ BUILD:
 
 SMOKE:
   stage: test
-  needs: [BUILD]
   tags: [$RUNNER]
   rules:
-    - if: $X_CI_BUILD_KIND == "develop"
+    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
   parallel:
     matrix:
       - ARCH: amd64
@@ -181,10 +196,10 @@ SMOKE:
     ALLURE_UPLOAD_REPORT: true
     ALLURE_GENERATE_REPORT: true
     ALLURE_ENVIRONMENT_ARCH: $ARCH
-  script: 
+  script:
     - *update-kind
     - |
-      if [ $K8S = "latest" ]; then 
+      if [ $K8S = "latest" ]; then
         export K8S=$(curl https://registry.hub.docker.com/v2/repositories/kindest/node/tags/?page_size=1  | jq -r  .results[].name);
       fi
     - |
@@ -192,9 +207,9 @@ SMOKE:
       export KUBECONFIG=$HOME/.kube/kind-config-$K8S
       export ALLURE_ENVIRONMENT_K8S=$K8S
     - |
-      if [ -n "$TAG" ]; then 
-        export TAG="$(cat TAG)" 
-        export REGISTRY=docker.io/wallarm; 
+      if [ -z "$TAG" ]; then
+        export TAG="$(cat TAG)"
+        export REGISTRY=docker.io/wallarm
       fi
     - docker pull ${REGISTRY}/sidecar-controller:${TAG}
     - kind create cluster --image=kindest/node:$K8S
@@ -203,7 +218,7 @@ SMOKE:
 LINT:
   stage: test
   rules:
-    - if: $X_CI_BUILD_KIND == "develop"
+    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
   script: |
     helm version
     helm lint helm/. --debug
@@ -211,7 +226,7 @@ LINT:
 VALIDATE:
   stage: test
   rules:
-    - if: $X_CI_BUILD_KIND == "develop"
+    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
   parallel:
     matrix:
       - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
@@ -230,7 +245,7 @@ INSTALLATION:
   extends:
     - .before-test
   rules:
-    - if: $X_CI_BUILD_KIND == "develop"
+    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
   parallel:
     matrix:
       - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
@@ -238,6 +253,7 @@ INSTALLATION:
     DOCKERHUB_USER: $X_CREDS_DOCKERHUB_WALLARMCICD_USER
     DOCKERHUB_PASSWORD: $X_CREDS_DOCKERHUB_WALLARMCICD_PASSWORD
   script: |
+    [ -z "$TAG" ] && export TAG=$(cat TAG) && export REGISTRY=docker.io/wallarm
     kind create cluster \
       --config ${CI_PROJECT_DIR}/helm/test/kind/kind.yaml \
       --image kindest/node:v$K8S \
@@ -257,7 +273,7 @@ INSTALLATION:
       --docker-username="${DOCKERHUB_USER}" \
       --docker-password="${DOCKERHUB_PASSWORD}" \
       --docker-email=docker-pull@unexists.unexists
-    helm install wallarm-sidecar ./helm -f helm/values.test.yaml \
+    helm install wallarm-sidecar ./helm -f helm/values.test.yaml ${HELM_ARGS:-} \
       --set config.wallarm.api.host=${WALLARM_API_HOST} \
       --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
       --set controller.image.fullname=${REGISTRY}/sidecar-controller:${TAG} \
@@ -293,12 +309,13 @@ CHART:
   extends:
     - .before-test
   rules:
-    - if: $X_CI_BUILD_KIND == "develop"
+    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
   variables:
     DOCKERHUB_USER: $X_CREDS_DOCKERHUB_WALLARMCICD_USER
     DOCKERHUB_PASSWORD: $X_CREDS_DOCKERHUB_WALLARMCICD_PASSWORD
     K8S: 1.28.7
   script: |
+    [ -z "$TAG" ] && export TAG=$(cat TAG) && export REGISTRY=docker.io/wallarm
     docker pull ${REGISTRY}/sidecar-controller:${TAG}
 
     kind create cluster --image kindest/node:v$K8S
@@ -331,7 +348,7 @@ SIGN_DOCKER:
 HELM_PUBLISH:
   stage: publish
   rules:
-   - if: $X_CI_BUILD_KIND == "chart"
+   - if: $X_CI_BUILD_KIND =~ /^(chart|upstream)$/
   extends:
     - .before-helm-publish
   variables:
@@ -344,11 +361,25 @@ HELM_PUBLISH:
     INDEX_DIR: .
   # Git tags start with prefix and we crop it to get the chart version
   script: |
-    CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -d '-' -f 3,4)
+    if [[ $X_CI_BUILD_KIND == "chart" ]]; then
+      echo "Classic(tag) chart publishing flow..."
+
+      CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -d '-' -f 3,4)
+      export CHART_VERSION
+      echo "CHART_VERSION=$CHART_VERSION" >> chart.env
+    else
+      echo "Upstream-based chart publishing flow..."
+      .gitlab/calculate-version.sh && source version.env
+      curl -Lo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64 && chmod +x /usr/bin/yq
+      yq e -i '.appVersion = "'$AIO_VERSION'"' helm/Chart.yaml
+      sed -E -i "s|(wallarm/sidecar):.*|\1:$AIO_VERSION|" helm/Chart.yaml
+      sed -E -i "s|(wallarm/node-helpers):.*|\1:$AIO_VERSION|" helm/Chart.yaml
+      yq e -i '.config.sidecar.image.tag = "'$AIO_VERSION'"' helm/values.yaml
+      yq e -i '.helper.image.tag = "'$AIO_VERSION'"' helm/values.yaml
+    fi
     export CHART_VERSION
     echo "CHART_VERSION=$CHART_VERSION" >> chart.env
 
-    echo "Chart type: $CHART_TYPE"
     echo "Publishing Helm chart version: $CHART_VERSION"
 
     .gitlab/chart-publish.sh
@@ -361,7 +392,7 @@ UPDATE_VERSION:
   image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/devops/docker/gitlab-runner/gitlab-runner:v1.11.6
   needs: [HELM_PUBLISH]
   rules:
-    - if: $X_CI_BUILD_KIND == "chart" && $CHART_TYPE == "release"
+    - if: $CHART_TYPE == "release"
   extends:
     - .before-update-versions
   variables:

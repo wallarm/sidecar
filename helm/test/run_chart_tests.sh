@@ -36,9 +36,11 @@ DOCKERHUB_PASSWORD="${DOCKERHUB_PASSWORD:-fake_password}"
 
 CT_CONFIG="${CT_CONFIG:-$HOME/.kube/kind-config-ct-$KIND_CLUSTER_NAME}"
 
+export HELM_ARGS=${HELM_ARGS:-}
 HELM_EXTRA_ARGS="--timeout 180s"
 HELM_EXTRA_SET_ARGS="--set config.wallarm.api.host=${WALLARM_API_HOST} \
   --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
+  ${HELM_ARGS} \
   --set imagePullSecrets[0].name=${DOCKERHUB_SECRET_NAME} \
   --set controller.image.fullname=${IMAGE}:${TAG}"
 
