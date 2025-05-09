@@ -6,8 +6,13 @@ if [[ ! $AIO_VERSION =~ "rc" ]]; then
 
     helm repo add wallarm https://charts.wallarm.com && helm repo update wallarm
     LATEST=$(helm search repo wallarm/wallarm-sidecar --version ^${MAJOR}.${MINOR} -o json | jq -r '.[].version')
-    LATEST_PATCH=$(cut -d'.' -f3 <<< $LATEST)
-    echo "Detected latest release as $LATEST"
+
+    if [ -z "$LATEST" ]; then
+        LATEST_PATCH=-1
+    else
+        LATEST_PATCH=$(cut -d'.' -f3 <<< $LATEST)
+    fi
+    echo "Detected latest release as ${LATEST:-none}"
 
     if [ $PATCH -gt $LATEST_PATCH ]; then
         echo "Chart with version $AIO_VERSION doesn't exist yet, re-using AIO_VERSION for the new chart version"
