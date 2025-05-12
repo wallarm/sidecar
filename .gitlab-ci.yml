@@ -13,7 +13,7 @@ variables:
     value: 'develop'
     options:
       - 'develop'
-      - 'production'
+      - 'production-local'
       - 'chart'
   ARCH:
     description: default architecture (mandatory var in test scripts)
@@ -27,7 +27,7 @@ variables:
       - us1
 
   ### For doc purposes only ###
-  ## Variables used implicitly, only in upstream-triggered pipeline
+  ## Variables used implicitly, only in upstream-triggered pipelines (KINDs production|release-candidate)
   # AIO_VERSION:
   #   description: AIO version to extract the nginx module from, and is also used as appVersion in chart; do not confuse with TAG, which in dynamically calculated
 
@@ -36,19 +36,17 @@ workflow:
   rules:
     - if: $AIO_VERSION =~ /^([0-9]+.[0-9]+.[0-9]+-rc).*$/
       variables:
-        X_CI_BUILD_KIND: "upstream" # supposed to be triggered by AIO rc
         HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
         CHART_TYPE: "release-candidate"
     - if: $AIO_VERSION
       variables:
-        X_CI_BUILD_KIND: "upstream" # supposed to be triggered by AIO (final) releases
         HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
         CHART_TYPE: "release"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH =~ /^stable\/.*$/
       changes:
         - TAG
       variables:
-        X_CI_BUILD_KIND: "production"
+        X_CI_BUILD_KIND: "production-local"
         REGISTRY: docker.io/wallarm
     - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME =~ /^stable\/.*$/ || $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
       variables:
@@ -160,7 +158,7 @@ BUILD:
   stage: build
   tags: [infra-c2r4-dind-amd]
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|production)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production-local)$/
   extends:
     - .before-build
   script: |
@@ -173,7 +171,7 @@ SMOKE:
   stage: test
   tags: [$RUNNER]
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
       - ARCH: amd64
@@ -218,7 +216,7 @@ SMOKE:
 LINT:
   stage: test
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   script: |
     helm version
     helm lint helm/. --debug
@@ -226,7 +224,7 @@ LINT:
 VALIDATE:
   stage: test
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
       - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
@@ -245,7 +243,7 @@ INSTALLATION:
   extends:
     - .before-test
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
       - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
@@ -309,7 +307,7 @@ CHART:
   extends:
     - .before-test
   rules:
-    - if: $X_CI_BUILD_KIND =~ /^(develop|upstream)$/
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   variables:
     DOCKERHUB_USER: $X_CREDS_DOCKERHUB_WALLARMCICD_USER
     DOCKERHUB_PASSWORD: $X_CREDS_DOCKERHUB_WALLARMCICD_PASSWORD
@@ -333,7 +331,7 @@ SIGN_DOCKER:
   image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/devops/docker/gitlab-runner/gitlab-runner:v1.11.6
   needs: [BUILD]
   rules:
-    - if: $X_CI_BUILD_KIND == "production"
+    - if: $X_CI_BUILD_KIND == "production-local"
   extends:
     - .before-sign-docker
   variables:
@@ -348,7 +346,7 @@ SIGN_DOCKER:
 HELM_PUBLISH:
   stage: publish
   rules:
-   - if: $X_CI_BUILD_KIND =~ /^(chart|upstream)$/
+   - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
   extends:
     - .before-helm-publish
   variables:
