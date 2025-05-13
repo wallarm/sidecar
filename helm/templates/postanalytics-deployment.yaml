@@ -114,6 +114,8 @@ spec:
           args: ["wcli", "run", {{ include "wallarm-sidecar.wcli-args" . }}]
           env:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
+          - name: WALLARM_ATTACKS_DETAILED_EXPORT
+            value: "{{ .Values.postanalytics.supervisord.attacks_detailed_export }}"
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
           {{- with .Values.postanalytics.supervisord.extraEnvs }}
           {{- . | toYaml | nindent 10 }}

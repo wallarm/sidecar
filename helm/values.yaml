@@ -580,6 +580,8 @@ postanalytics:
     # - name: something
     #   mountPath: /mnt/something
   supervisord:
+    ### How attacks are exported to the cloud
+    attacks_detailed_export: true
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []
