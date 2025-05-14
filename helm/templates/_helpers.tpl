@@ -172,3 +172,18 @@ Wcli arguments building
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "wallarm-sidecar.wstoreTlsVariables" -}}
+- name: WALLARM_WSTORE__SERVICE__TLS__ENABLED
+  value: "{{ .Values.postanalytics.wstore.tls.enabled }}"
+- name: WALLARM_WSTORE__SERVICE__TLS__CERT_FILE
+  value: "{{ .Values.postanalytics.wstore.tls.certFile }}"
+- name: WALLARM_WSTORE__SERVICE__TLS__KEY_FILE
+  value: "{{ .Values.postanalytics.wstore.tls.keyFile }}"
+- name: WALLARM_WSTORE__SERVICE__TLS__CA_CERT_FILE
+  value: "{{ .Values.postanalytics.wstore.tls.caCertFile }}"
+- name: WALLARM_WSTORE__SERVICE__TLS__MUTUAL_TLS__ENABLED
+  value: "{{ .Values.postanalytics.wstore.tls.mutualTLS.enabled }}"
+- name: WALLARM_WSTORE__SERVICE__TLS__MUTUAL_TLS__CLIENT_CA_CERT_FILE
+  value: "{{ .Values.postanalytics.wstore.tls.mutualTLS.clientCACertFile }}"
+{{- end -}}

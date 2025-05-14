@@ -630,6 +630,15 @@ postanalytics:
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
       arena: "2.0"
+    ### TLS configuration settings (optional)
+    tls:
+      enabled: false
+    #   certFile: "/root/test-tls-certs/server.crt"
+    #   keyFile: "/root/test-tls-certs/server.key"
+    #   caCertFile: "/root/test-tls-certs/ca.crt"
+    #   mutualTLS:
+    #     enabled: false
+    #     clientCACertFile: "/root/test-tls-certs/ca.crt"
     ### Additional environment variables to pass to the container
     ###
     extraEnvs: []

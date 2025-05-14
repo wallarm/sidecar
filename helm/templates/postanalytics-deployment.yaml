@@ -159,6 +159,9 @@ spec:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: SLAB_ALLOC_ARENA
             value: {{ .Values.postanalytics.wstore.config.arena | quote }}
+          {{- if .Values.postanalytics.wstore.tls.enabled }}
+            {{ include "wallarm-sidecar.wstoreTlsVariables" . | nindent 12 }}
+          {{- end }}
           {{- with .Values.postanalytics.wstore.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
           {{- end }}
