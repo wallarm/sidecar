@@ -1,6 +1,7 @@
 # https://makefiletutorial.com/
 
 -include env.ini
+-include .env
 
 ifndef CI
 	PLATFORMS?=linux/amd64
