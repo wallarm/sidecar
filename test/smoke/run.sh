@@ -30,7 +30,8 @@ export SMOKE_IMAGE_NAME="${SMOKE_IMAGE_NAME:-dkr.wallarm.com/tests/smoke-tests}"
 export SMOKE_IMAGE_TAG="${SMOKE_IMAGE_TAG:-latest}"
 export INJECTION_STRATEGY="${INJECTION_STRATEGY:-single}"
 
-K8S_VERSION=${K8S_VERSION:-1.28.7}
+K8S_VERSION=${K8S_VERSION:-v1.29.14} # highest supported version, check actual here https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
+K8S=${K8S:-v1.29.14}
 
 
 # This will prevent the secret for index.docker.io from being used if the DOCKERHUB_USER is not set.
@@ -68,7 +69,7 @@ if [ "${SKIP_CLUSTER_CREATION:-false}" = "false" ]; then
       --verbosity=${KIND_LOG_LEVEL} \
       --name ${KIND_CLUSTER_NAME} \
       --retain \
-      --image "kindest/node:v${K8S_VERSION}" \
+      --image "kindest/node:${K8S_VERSION}" \
       --config=<(cat << EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -91,11 +92,15 @@ fi
 
 # create docker-registry secret
 echo "[test-env] creating secret docker-registry ..."
-kubectl create secret docker-registry ${DOCKERHUB_SECRET_NAME} \
+if kubectl get secret ${DOCKERHUB_SECRET_NAME} &>/dev/null; then
+  echo "[test-env] secret ${DOCKERHUB_SECRET_NAME} already exists, skipping creation."
+else
+  kubectl create secret docker-registry ${DOCKERHUB_SECRET_NAME} \
     --docker-server=${DOCKERHUB_REGISTRY_SERVER} \
     --docker-username="${DOCKERHUB_USER}" \
     --docker-password="${DOCKERHUB_PASSWORD}" \
     --docker-email=docker-pull@unexists.unexists
+fi
 
 
 if [ "${SKIP_IMAGE_CREATION:-false}" = "false" ]; then
@@ -119,10 +124,19 @@ fi
 echo "[test-env] installing cert-manager"
 helm repo add jetstack https://charts.jetstack.io/
 helm repo update jetstack
-helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true -n cert-manager --version v1.11.1 --create-namespace --wait
+if [[ "$K8S" == 1.19* || "$K8S" == v1.19* ]]; then
+  CERT_MANAGER_VERSION="v1.9.1"       # for kubernetes 1.19
+  docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1
+  kind load docker-image \
+       registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.4.1 \
+       --name "${KIND_CLUSTER_NAME}"
+
+else
+  CERT_MANAGER_VERSION="v1.11.1"      # for kubernetes 1.20 and higher
+fi
+helm upgrade --install cert-manager jetstack/cert-manager --set installCRDs=true -n cert-manager --version "${CERT_MANAGER_VERSION}" --create-namespace --wait
 
 echo "[test-env] installing Helm chart using TAG=${TAG} ..."
-
 cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait ${HELM_ARGS} --debug --values -
 imagePullSecrets:
   - name: ${DOCKERHUB_SECRET_NAME}
@@ -152,7 +166,13 @@ controller:
     pullPolicy: ${IMAGE_PULL_POLICY}
 EOF
 
-kubectl wait --for=condition=Ready pods --all --timeout=120s || get_controller_logs_and_fail
+echo "[test-env] waiting for postanalytics pod(s) ..."
+kubectl wait --for=condition=Ready pods -l app.kubernetes.io/component=postanalytics --timeout=120s \
+  || get_controller_logs_and_fail
+
+echo "[test-env] waiting for controller pod(s) ..."
+kubectl wait --for=condition=Ready pods -l app.kubernetes.io/component=controller --timeout=120s \
+  || get_controller_logs_and_fail
 
 # Workaround - sometimes sidecar container is not injected right after controller deployment
 sleep 10
@@ -163,4 +183,3 @@ kubectl wait --for=condition=Ready pods --all --timeout=140s || (kubectl describ
 
 echo "[test-env] running smoke tests suite ..."
 make -C "${DIR}"/../../ smoke-test
-

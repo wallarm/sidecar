@@ -149,7 +149,7 @@ workflow:
 
 .update_kind: &update-kind
   - LATEST_KIND_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r .tag_name)
-  - curl -Lo ./kind_latest https://kind.sigs.k8s.io/dl/${LATEST_KIND_VERSION}/kind-linux-${ARCH} 
+  - curl -s -Lo ./kind_latest https://kind.sigs.k8s.io/dl/${LATEST_KIND_VERSION}/kind-linux-${ARCH}
   - chmod +x ./kind_latest
   - sudo mv ./kind_latest /usr/local/bin/kind
 
@@ -177,11 +177,11 @@ SMOKE:
       - ARCH: amd64
         INJECTION_STRATEGY: [single, split]
         RUNNER: infra-c2r4-dind-amd
-        K8S: [v1.28.7, latest]
+        K8S: [v1.19, v1.29] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
       - ARCH: arm64
         INJECTION_STRATEGY: [single, split]
         RUNNER: infra-c2r4-dind-arm
-        K8S: [v1.28.7, latest]
+        K8S: [v1.19, v1.29] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
   extends:
     - .before-test
   variables:
@@ -197,9 +197,9 @@ SMOKE:
   script:
     - *update-kind
     - |
-      if [ $K8S = "latest" ]; then
-        export K8S=$(curl https://registry.hub.docker.com/v2/repositories/kindest/node/tags/?page_size=1  | jq -r  .results[].name);
-      fi
+      export KINDEST_NODE_IMAGE=kindest/node:$(curl -s "https://registry.hub.docker.com/v2/repositories/kindest/node/tags?page_size=1000" \
+      | jq -r --arg k "${K8S}." '.results[].name | select(startswith($k))' | sort -V | tail -n 1)
+    - kind --version
     - |
       export KIND_CLUSTER_NAME=kind-$K8S
       export KUBECONFIG=$HOME/.kube/kind-config-$K8S
@@ -209,8 +209,8 @@ SMOKE:
         export TAG="$(cat TAG)"
         export REGISTRY=docker.io/wallarm
       fi
-    - docker pull ${REGISTRY}/sidecar-controller:${TAG}
-    - kind create cluster --image=kindest/node:$K8S
+    - docker pull -q ${REGISTRY}/sidecar-controller:${TAG}
+    - kind create cluster --image=$KINDEST_NODE_IMAGE
     - make kind-smoke-test
 
 LINT:
@@ -261,7 +261,7 @@ INSTALLATION:
     kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
     echo "current-context:" $(kubectl config current-context)
 
-    docker pull ${REGISTRY}/sidecar-controller:${TAG}
+    docker pull -q ${REGISTRY}/sidecar-controller:${TAG}
     kind load docker-image ${REGISTRY}/sidecar-controller:${TAG}
 
     unset KUBERNETES_SERVICE_HOST
@@ -314,7 +314,7 @@ CHART:
     K8S: 1.28.7
   script: |
     [ -z "$TAG" ] && export TAG=$(cat TAG) && export REGISTRY=docker.io/wallarm
-    docker pull ${REGISTRY}/sidecar-controller:${TAG}
+    docker pull -q ${REGISTRY}/sidecar-controller:${TAG}
 
     kind create cluster --image kindest/node:v$K8S
     kubectl wait --for=condition=Ready pods --all --timeout=180s -n kube-system
