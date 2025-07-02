@@ -11,3 +11,17 @@ controller:
   replicaCount: 1
 imagePullSecrets:
   - name: dockerhub-secret
+
+postanalytics:
+  init:
+    extraEnvs:
+      - name: WALLARM_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.uid
+  supervisord:
+    extraEnvs:
+      - name: WALLARM_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.uid
