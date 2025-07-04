@@ -217,7 +217,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 6.1.0
+      tag: 6.3.0-rc0
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -420,7 +420,7 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 6.1.0
+    tag: 6.3.0-rc0
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
@@ -630,6 +630,9 @@ postanalytics:
       ### here: https://docs.wallarm.com/admin-en/configuration-guides/allocate-resources-for-waf-node/
       ###
       arena: "2.0"
+      # Address that wstore should bind to.
+      # Leave empty to keep localhost binding.
+      serviceAddress: "[::]:3313"
     ### TLS configuration settings (optional)
     tls:
       enabled: false
