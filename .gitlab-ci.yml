@@ -2,7 +2,7 @@ default:
   id_tokens:
     VAULT_ID_TOKEN:
       aud: https://gl.wallarm.com
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/common-runner:v0.3.2
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/common:v0.5.0
   tags: [node-c05r1-stable-amd]
 
 stages:
@@ -112,15 +112,9 @@ workflow:
   before_script:
     - *x_docker_login_public
 
-.update_kind: &update-kind
-  - LATEST_KIND_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | jq -r .tag_name)
-  - curl -s -Lo ./kind_latest https://kind.sigs.k8s.io/dl/${LATEST_KIND_VERSION}/kind-linux-${ARCH}
-  - chmod +x ./kind_latest
-  - sudo mv ./kind_latest /usr/local/bin/kind
-
-
 BUILD:
   stage: build
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/docker:v0.5.0
   tags: [node-c2r4-stable-dind-amd]
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production-local)$/
@@ -134,6 +128,7 @@ BUILD:
 
 SMOKE:
   stage: test
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   tags: [$RUNNER]
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
@@ -160,7 +155,6 @@ SMOKE:
     ALLURE_GENERATE_REPORT: true
     ALLURE_ENVIRONMENT_ARCH: $ARCH
   script:
-    - *update-kind
     - |
       export KINDEST_NODE_IMAGE=kindest/node:$(curl -s "https://registry.hub.docker.com/v2/repositories/kindest/node/tags?page_size=1000" \
       | jq -r --arg k "${K8S}." '.results[].name | select(startswith($k))' | sort -V | tail -n 1)
@@ -180,6 +174,7 @@ SMOKE:
 
 LINT:
   stage: test
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   script: |
@@ -188,22 +183,19 @@ LINT:
 
 VALIDATE:
   stage: test
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
       - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
-  variables:
-    KUBEVAL_SCHEMA_LOCATION: https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/
   script: |
-    curl -Lo kubeval.tgz https://github.com/instrumenta/kubeval/releases/download/v0.16.1/kubeval-linux-amd64.tar.gz && tar xf kubeval.tgz && chmod +x ./kubeval
-
     helm template helm/. > result-$K8S.yaml --kube-version $K8S --debug
-
-    ./kubeval -d result-$K8S.yaml --kubernetes-version $K8S --ignore-missing-schemas=false -o stdout --strict=true --openshift=false
+    kubeval -d result-$K8S.yaml --kubernetes-version $K8S --ignore-missing-schemas=false -o stdout --strict=true --openshift=false
 
 INSTALLATION:
   stage: test
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   tags: [node-c2r4-stable-dind-amd]
   extends:
     - .before-test
@@ -268,6 +260,7 @@ INSTALLATION:
 
 CHART:
   stage: test
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   tags: [node-c2r4-stable-dind-amd]
   extends:
     - .before-test
@@ -292,7 +285,7 @@ CHART:
 
 SIGN_DOCKER:
   stage: publish
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/devops/docker/gitlab-runner/gitlab-runner:v1.11.6
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/docker:v0.5.0
   needs: [BUILD]
   rules:
     - if: $X_CI_BUILD_KIND == "production-local"
@@ -312,6 +305,7 @@ SIGN_DOCKER:
 
 HELM_PUBLISH:
   stage: publish
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   rules:
    - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
   secrets:
@@ -335,7 +329,6 @@ HELM_PUBLISH:
     else
       echo "Upstream-based chart publishing flow..."
       .gitlab/calculate-version.sh && source version.env
-      curl -Lo /usr/bin/yq https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64 && chmod +x /usr/bin/yq
       yq e -i '.appVersion = "'$AIO_VERSION'"' helm/Chart.yaml
       sed -E -i "s|(wallarm/sidecar):.*|\1:$AIO_VERSION|" helm/Chart.yaml
       sed -E -i "s|(wallarm/node-helpers):.*|\1:$AIO_VERSION|" helm/Chart.yaml
@@ -354,7 +347,7 @@ HELM_PUBLISH:
 
 UPDATE_VERSION:
   stage: publish
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/devops/docker/gitlab-runner/gitlab-runner:v1.11.6
+  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/gitlab:v0.5.0
   needs: [HELM_PUBLISH]
   rules:
     - if: $CHART_TYPE == "release"
