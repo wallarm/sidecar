@@ -98,7 +98,7 @@ main() {
   fi
 
   locate
-  download
+  #download
   get_dependencies
   dependencies
   if [[ "$LINTING" != "off" ]]; then
