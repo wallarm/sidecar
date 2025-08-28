@@ -14,6 +14,7 @@ variables:
   VAULT_SERVER_URL: https://vault-common.i.gcp.wallarm.space
   VAULT_AUTH_ROLE: gitlab-ci_node-team_wallarm-node
   VAULT_AUTH_PATH: jwt-gitlab
+  RUNNER_K8S_IMAGE: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
   X_CI_BUILD_KIND:
     description: "What we want to run, usually 'develop' flow"
     value: 'develop'
@@ -128,7 +129,7 @@ BUILD:
 
 SMOKE:
   stage: test
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   tags: [$RUNNER]
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
@@ -174,7 +175,7 @@ SMOKE:
 
 LINT:
   stage: test
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   script: |
@@ -183,7 +184,7 @@ LINT:
 
 VALIDATE:
   stage: test
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   rules:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
@@ -195,7 +196,7 @@ VALIDATE:
 
 INSTALLATION:
   stage: test
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   tags: [node-c2r4-stable-dind-amd]
   extends:
     - .before-test
@@ -260,7 +261,7 @@ INSTALLATION:
 
 CHART:
   stage: test
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   tags: [node-c2r4-stable-dind-amd]
   extends:
     - .before-test
@@ -305,7 +306,7 @@ SIGN_DOCKER:
 
 HELM_PUBLISH:
   stage: publish
-  image: europe-docker.pkg.dev/wallarm-infra/wallarm-cloud-europe/wallarm-node/node-gitlab-runner/tests-k8s:v0.5.0
+  image: $RUNNER_K8S_IMAGE
   rules:
    - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
   secrets:
