@@ -116,6 +116,15 @@ spec:
           {{- include "wallarm-sidecar.credentials" . | nindent 10 }}
           - name: WALLARM_ATTACKS_DETAILED_EXPORT
             value: "{{ .Values.postanalytics.supervisord.attacks_detailed_export }}"
+          {{- if .Values.config.wcli.metrics.enabled }}
+          - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+            value: "{{ .Values.config.wcli.metrics.listenAddress }}"
+          - name: WALLARM_WCLI__METRICS__ENDPOINT
+            value: "{{ .Values.config.wcli.metrics.endpoint }}"
+          {{- else }}
+          - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+            value: ""
+          {{- end }}
           {{- include "wallarm-sidecar.version" . | nindent 10 }}
           {{- with .Values.postanalytics.supervisord.extraEnvs }}
           {{- . | toYaml | nindent 10 }}
