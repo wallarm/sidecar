@@ -30,6 +30,15 @@ volumes:
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmVersion" . }}
     {{ template "wallarmApiFwVariables" . }}
+    {{- if .Config.wcli.metrics.enabled }}
+    - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+      value: "{{ .Config.wcli.metrics.listenAddress }}"
+    - name: WALLARM_WCLI__METRICS__ENDPOINT
+      value: "{{ .Config.wcli.metrics.endpoint }}"
+    {{- else }}
+    - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+      value: ""
+    {{- end }}
     {{- end  }}
     {{ if (isSet .ObjectMeta.Annotations (withAP "wallarm-application")) -}}
     - name: WALLARM_APPLICATION
@@ -194,6 +203,15 @@ volumes:
     {{ template "wallarmApiVariables" . }}
     {{ template "wallarmVersion" . }}
     {{ template "wallarmApiFwVariables" . }}
+    {{- if .Config.wcli.metrics.enabled }}
+    - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+      value: "{{ .Config.wcli.metrics.listenAddress }}"
+    - name: WALLARM_WCLI__METRICS__ENDPOINT
+      value: "{{ .Config.wcli.metrics.endpoint }}"
+    {{- else }}
+    - name: WALLARM_WCLI__METRICS__LISTEN_ADDRESS
+      value: ""
+    {{- end }}
     - name: WALLARM_APIFW_ENABLE
       value: "{{ getAnnotation .ObjectMeta (withAP `api-firewall-enabled`) .Config.wallarm.apiFirewall.mode }}"
     - name: NGINX_STATUS_PORT
@@ -312,6 +330,12 @@ volumes:
       value: "{{ .Config.wallarm.apiFirewall.maxConnectionsPerIp }}"
     - name: APIFW_MAX_REQUESTS_PER_CONN
       value: "{{ .Config.wallarm.apiFirewall.maxRequestsPerConnection }}"
+    - name: APIFW_METRICS_ENABLED
+      value: "{{ .Config.wallarm.apiFirewall.metrics.enabled }}"
+    - name: APIFW_METRICS_ENDPOINT_NAME
+      value: "{{ .Config.wallarm.apiFirewall.metrics.endpointName }}"
+    - name: APIFW_METRICS_HOST
+      value: "{{ .Config.wallarm.apiFirewall.metrics.host }}"
 {{- end }}
 
 {{- define "helperContainer.resources" }}

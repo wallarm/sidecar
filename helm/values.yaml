@@ -113,6 +113,22 @@ config:
       ### 'Connection: close' header is added to the last response. '0' means unlimited
       ###
       maxRequestsPerConnection: 0
+      ### Prometheus metrics configuration for API Firewall
+      ### Available starting from Node 6.5.1
+      ###
+      metrics:
+        ### Enable/disable Prometheus metrics endpoint
+        ###
+        enabled: false
+        ### The path at which the Prometheus metrics endpoint is exposed
+        ### Default: "metrics"
+        ###
+        endpointName: "metrics"
+        ### IP address and/or port for the Prometheus metrics endpoint
+        ### When specifying a port, prefix it with a colon (:)
+        ### Default: ":9010"
+        ###
+        host: ":9010"
   ### Default Annotation prefix which is used in sidecar template to overwrite default values
   annotationPrefix: sidecar.wallarm.io
   ### Default sidecar injection strategy. Parameters in this section can be overwritten individually
@@ -217,7 +233,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 6.3.0-rc0
+      tag: 6.5.1-rc1
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -404,6 +420,21 @@ config:
         logLevel: INFO
       syncnode:
         logLevel: INFO
+    ### Prometheus metrics configuration for wcli
+    ### Available starting from Node 6.5.1
+    ###
+    metrics:
+      ### Enable/disable wcli metrics endpoint
+      ###
+      enabled: true
+      ### IP address and port for the wcli metrics endpoint
+      ### Default: "localhost:9003"
+      ###
+      listenAddress: "localhost:9003"
+      ### The path at which the wcli metrics endpoint is exposed
+      ### Default: "/metrics"
+      ###
+      endpoint: "/metrics"
 
 
 ###
@@ -420,7 +451,7 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 6.3.0-rc0
+    tag: 6.5.1-rc1
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
