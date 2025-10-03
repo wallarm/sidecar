@@ -302,7 +302,8 @@ SIGN_DOCKER:
   artifacts:
     expire_in: 30 days
     paths:
-      - $CI_PROJECT_DIR/*.json
+      - $CI_PROJECT_DIR/sbom_*.json
+      - $CI_PROJECT_DIR/provenance_*.json
 
 HELM_PUBLISH:
   stage: publish
