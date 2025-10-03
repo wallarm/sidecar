@@ -662,8 +662,8 @@ postanalytics:
       ###
       arena: "2.0"
       # Address that wstore should bind to.
-      # Leave empty to keep localhost binding.
-      serviceAddress: "[::]:3313"
+      serviceAddress: "0.0.0.0:3313"
+      serviceProtocol: "tcp4"
     ### TLS configuration settings (optional)
     tls:
       enabled: false
