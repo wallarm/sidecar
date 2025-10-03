@@ -138,6 +138,8 @@ build: setup_buildx
 		--build-arg CONTAINER_VERSION="$(TAG)" \
 		--build-arg COMMIT_SHA="$(COMMIT_SHA)" \
 		--force-rm --no-cache --progress=plain \
+		--provenance=true \
+		--sbom=true \
 		--tag $(CONTROLLER_IMAGE) $(BUILDX_ARGS) .
 
 push rmi:
