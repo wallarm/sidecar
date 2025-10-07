@@ -233,7 +233,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 6.5.1
+      tag: 6.6.0
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -428,9 +428,9 @@ config:
       ###
       enabled: true
       ### IP address and port for the wcli metrics endpoint
-      ### Default: "localhost:9003"
+      ### Default: ":9003"
       ###
-      listenAddress: "localhost:9003"
+      listenAddress: ":9003"
       ### The path at which the wcli metrics endpoint is exposed
       ### Default: "/metrics"
       ###
@@ -451,7 +451,7 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 6.5.1
+    tag: 6.6.0
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
