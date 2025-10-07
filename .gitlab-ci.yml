@@ -325,7 +325,7 @@ HELM_PUBLISH:
     if [[ $X_CI_BUILD_KIND == "chart" ]]; then
       echo "Classic(tag) chart publishing flow..."
 
-      CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -d '-' -f 3,4)
+      CHART_VERSION=$(echo $CI_COMMIT_TAG | cut -d '-' -f 3-)
       export CHART_VERSION
       echo "CHART_VERSION=$CHART_VERSION" >> chart.env
     else
