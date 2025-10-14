@@ -187,3 +187,16 @@ Wcli arguments building
 - name: WALLARM_WSTORE__SERVICE__TLS__MUTUAL_TLS__CLIENT_CA_CERT_FILE
   value: "{{ .Values.postanalytics.wstore.tls.mutualTLS.clientCACertFile }}"
 {{- end -}}
+
+{{- define "wallarm-sidecar.wstoreVariables" -}}
+- name: SLAB_ALLOC_ARENA
+  value: "{{ .Values.postanalytics.wstore.config.arena }}"
+- name: WALLARM_WSTORE__METRICS__LISTEN_ADDRESS
+  value: "{{ .Values.postanalytics.wstore.config.metrics.listenAddress }}"
+- name: WALLARM_WSTORE__METRICS__PROTOCOL
+  value: "{{ .Values.postanalytics.wstore.config.metrics.protocol }}"
+- name: WALLARM_WSTORE__SERVICE__ADDRESS
+  value: "{{ .Values.postanalytics.wstore.config.serviceAddress }}"
+- name: WALLARM_WSTORE__SERVICE__PROTOCOL
+  value: "{{ .Values.postanalytics.wstore.config.serviceProtocol }}"
+{{- end -}}
