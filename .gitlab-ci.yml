@@ -232,7 +232,7 @@ INSTALLATION:
     helm install wallarm-sidecar ./helm -f helm/values.test.yaml ${HELM_ARGS:-} \
       --set config.wallarm.api.host=${WALLARM_API_HOST} \
       --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
-      --set controller.image.fullname=${REGISTRY}/sidecar-controller:${TAG} \
+      --set-string controller.image.fullname=${REGISTRY}/sidecar-controller:${TAG} \
       --debug \
       --timeout 5m0s \
       --wait
