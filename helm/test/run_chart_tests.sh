@@ -42,7 +42,7 @@ HELM_EXTRA_SET_ARGS="--set config.wallarm.api.host=${WALLARM_API_HOST} \
   --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
   ${HELM_ARGS} \
   --set imagePullSecrets[0].name=${DOCKERHUB_SECRET_NAME} \
-  --set controller.image.fullname=${IMAGE}:${TAG}"
+  --set-string controller.image.fullname=${IMAGE}:${TAG}"
 
 # Handle the case when we run chart testing with '--upgrade' option
 if [[ "${CT_MODE:-}" == "upgrade" ]]; then

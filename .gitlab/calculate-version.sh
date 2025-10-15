@@ -1,11 +1,14 @@
 #!/bin/bash
 
+set -e
+set -o pipefail
+
 if [[ ! $AIO_VERSION =~ "rc" ]]; then
     IFS=- read -r VERSION SUFFIX <<< "$AIO_VERSION"
     IFS=. read -r MAJOR MINOR PATCH <<< "$VERSION"
 
-    helm repo add wallarm https://charts.wallarm.com && helm repo update wallarm
-    LATEST=$(helm search repo wallarm/wallarm-sidecar --version ^${MAJOR}.${MINOR} -o json | jq -r '.[].version')
+    helm repo add wallarm https://charts.wallarm.com && helm repo update wallarm || exit 1
+    LATEST=$(helm search repo wallarm/wallarm-sidecar --version ${MAJOR}.${MINOR} -o json | jq -r '.[].version')
 
     if [ -z "$LATEST" ]; then
         LATEST_PATCH=-1
@@ -27,4 +30,5 @@ else
     TAG=$AIO_VERSION
 fi
 
+echo "Chosen CHART_VERSION $TAG"
 echo "CHART_VERSION=$TAG" > version.env
