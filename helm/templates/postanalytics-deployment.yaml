@@ -186,12 +186,24 @@ spec:
             - name: wstore
               containerPort: {{ .Values.postanalytics.service.port }}
               protocol: TCP
-          {{- with .Values.postanalytics.wstore.livenessProbe }}
-          livenessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
-          {{- with .Values.postanalytics.wstore.readinessProbe }}
-          readinessProbe: {{ . | toYaml | nindent 12 }}
-          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5005
+            initialDelaySeconds: {{ .Values.postanalytics.wstore.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postanalytics.wstore.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.postanalytics.wstore.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.postanalytics.wstore.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.postanalytics.wstore.livenessProbe.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5005
+            initialDelaySeconds: {{ .Values.postanalytics.wstore.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.postanalytics.wstore.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.postanalytics.wstore.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.postanalytics.wstore.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.postanalytics.wstore.readinessProbe.failureThreshold }}
           {{- with .Values.postanalytics.wstore.lifecycle }}
           lifecycle: {{ . | toYaml | nindent 12 }}
           {{- end }}
