@@ -451,7 +451,7 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 6.6.0
+    tag: 6.6.2-wstore-health-check
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
@@ -711,16 +711,21 @@ postanalytics:
     ### default values for this
     ###
     livenessProbe:
-      tcpSocket:
-        port: 3313
-      initialDelaySeconds: 10
-      timeoutSeconds: 1
-      periodSeconds: 10
       failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 10
       successThreshold: 1
+      timeoutSeconds: 1
     ### Readiness probe for the container. Disabled by default
     ###
-    readinessProbe: {}
+    readinessProbe:
+      failureThreshold: 3
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 1
+
+
     ## Additional volumes that should be mounted to the container
     ##
     extraVolumeMounts: []
