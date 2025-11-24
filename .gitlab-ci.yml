@@ -137,12 +137,12 @@ SMOKE:
     matrix:
       - ARCH: amd64
         INJECTION_STRATEGY: [single, split]
-        K8S: [v1.19, v1.29] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
+        K8S: [v1.26, v1.34] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
         RUNNER: node-c4r8-stable-dind-amd
       - ARCH: arm64
         INJECTION_STRATEGY: [single, split]
         RUNNER: node-c4r8-stable-dind-arm
-        K8S: [v1.19, v1.29] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
+        K8S: [v1.26, v1.34] # min and max supported versions, check actual in https://docs.wallarm.com/installation/kubernetes/sidecar-proxy/deployment/
   extends:
     - .before-test
   variables:
@@ -189,7 +189,7 @@ VALIDATE:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
-      - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
+      - K8S: [1.26.0, 1.34.0]
   script: |
     helm template helm/. > result-$K8S.yaml --kube-version $K8S --debug
     kubeval -d result-$K8S.yaml --kubernetes-version $K8S --ignore-missing-schemas=false -o stdout --strict=true --openshift=false
@@ -204,7 +204,7 @@ INSTALLATION:
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
-      - K8S: [1.19.16, 1.20.15, 1.21.14, 1.22.17, 1.23.17, 1.24.17, 1.25.16, 1.26.15, 1.27.13, 1.28.9, 1.29.4]
+      - K8S: [1.26.0, 1.34.0]
   variables:
     DOCKERHUB_USER: $X_CREDS_DOCKERHUB_WALLARMCICD_USER
     DOCKERHUB_PASSWORD: $X_CREDS_DOCKERHUB_WALLARMCICD_PASSWORD
@@ -270,7 +270,7 @@ CHART:
   variables:
     DOCKERHUB_USER: $X_CREDS_DOCKERHUB_WALLARMCICD_USER
     DOCKERHUB_PASSWORD: $X_CREDS_DOCKERHUB_WALLARMCICD_PASSWORD
-    K8S: 1.28.7
+    K8S: 1.34.0
   script: |
     [ -z "$TAG" ] && export TAG=$(cat TAG) && export REGISTRY=docker.io/wallarm
     docker pull -q ${REGISTRY}/sidecar-controller:${TAG}
