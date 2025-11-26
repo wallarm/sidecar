@@ -233,7 +233,7 @@ config:
     image:
       registry: docker.io
       image: wallarm/sidecar
-      tag: 6.6.0
+      tag: 6.7.2
       pullPolicy: IfNotPresent
     ### Shared security context for all (init and regular) containers in sidecar schema except `iptables` container.
     ### For `iptables` container it is described in `sidecar.initContainers.iptables.securityContext` value
@@ -451,7 +451,7 @@ helper:
   image:
     registry: docker.io
     image: wallarm/node-helpers
-    tag: 6.6.2-wstore-health-check
+    tag: 6.7.2
     pullPolicy: IfNotPresent
 
 ### Configuration for post-analytics module
