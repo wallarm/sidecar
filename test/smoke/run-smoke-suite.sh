@@ -35,7 +35,7 @@ WALLARM_API_CA_VERIFY="${WALLARM_API_CA_VERIFY:-true}"
 WALLARM_API_HOST="${WALLARM_API_HOST:-api.wallarm.com}"
 WALLARM_API_PRESET="${WALLARM_API_PRESET:-eu1}"
 NODE_BASE_URL="${NODE_BASE_URL:-http://workload.default.svc.cluster.local}"
-PYTEST_PARAMS=$(echo "[test-env] ${PYTEST_PARAMS:---allure-features=Node}" | xargs)
+PYTEST_PARAMS=$(echo "${PYTEST_PARAMS:---allure-features=Node}" | xargs)
 PYTEST_PROCESSES="${PYTEST_PROCESSES:-15}"
 #TODO We need it here just to don't let test fail. Remove this variable when test will be fixed.
 HOSTNAME_OLD_NODE="smoke-tests-old-node"
