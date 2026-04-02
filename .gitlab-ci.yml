@@ -309,7 +309,10 @@ HELM_PUBLISH:
   stage: publish
   image: $RUNNER_K8S_IMAGE
   rules:
-   - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $X_CI_BUILD_KIND == "production"
+      when: manual
+      allow_failure: true
+    - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
   secrets:
     GITHUB_TOKEN: {vault: "pipelines/common/github_token/token@node-team", file: false}
   variables:
