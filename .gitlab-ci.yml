@@ -43,11 +43,11 @@ workflow:
   rules:
     - if: $AIO_VERSION =~ /^([0-9]+.[0-9]+.[0-9]+-rc).*$/
       variables:
-        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
+        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set config.sidecar.image.registry=dkr.wallarm.com --set config.sidecar.image.image=wallarm-node/wallarm-sidecar-proxy/sidecar --set helper.image.tag=$AIO_VERSION --set helper.image.registry=dkr.wallarm.com --set helper.image.image=wallarm-node/node-helpers
         CHART_TYPE: "release-candidate"
     - if: $AIO_VERSION
       variables:
-        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set helper.image.tag=$AIO_VERSION # only override tag here, registry in use is still PUBLIC (chart default)
+        HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set config.sidecar.image.registry=dkr.wallarm.com --set config.sidecar.image.image=wallarm-node/wallarm-sidecar-proxy/sidecar --set helper.image.tag=$AIO_VERSION --set helper.image.registry=dkr.wallarm.com --set helper.image.image=wallarm-node/node-helpers
         CHART_TYPE: "release"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH =~ /^stable\/.*$/
       changes:
@@ -305,11 +305,23 @@ SIGN_DOCKER:
       - $CI_PROJECT_DIR/sbom_*.json
       - $CI_PROJECT_DIR/provenance_*.json
 
+PUBLISH_GUARD:
+  stage: publish
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "pipeline" && $X_CI_BUILD_KIND == "production"
+      when: manual
+      allow_failure: true
+    - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
+      when: on_success
+  script:
+    - echo "Publish gate opened"
+
 HELM_PUBLISH:
   stage: publish
+  needs: [PUBLISH_GUARD]
   image: $RUNNER_K8S_IMAGE
   rules:
-   - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
+    - if: $X_CI_BUILD_KIND =~ /^(chart|production|release-candidate)$/
   secrets:
     GITHUB_TOKEN: {vault: "pipelines/common/github_token/token@node-team", file: false}
   variables:
