@@ -55,9 +55,26 @@ class Helpers:
 
     @staticmethod
     def copy_docker_reg(namespace: str, docker_reg_name: str, source_docker_reg_namespace: str) -> None:
-        cmd = f"kubectl get secret {docker_reg_name} -n {source_docker_reg_namespace} -o yaml | sed 's/namespace: {source_docker_reg_namespace}/namespace: {namespace}/g' | kubectl apply -n {namespace} -f -"
-        logger.info('Copy dockerhub-secret ...')
-        Helpers.subprocess_run(cmd)
+        # The Helpers.subprocess_run helper uses shlex.split without shell=True, so shell
+        # pipes are not honored. Run the two kubectl calls ourselves and pipe stdout→stdin
+        # through Python instead of the shell.
+        logger.info(f'Copy {docker_reg_name} from {source_docker_reg_namespace} to {namespace} ...')
+        get_cmd = f'kubectl get secret {docker_reg_name} -n {source_docker_reg_namespace} -o yaml'
+        get_result = subprocess.run(shlex.split(get_cmd), capture_output=True, text=True)
+        if get_result.returncode != 0:
+            raise Exception(f'Command: {get_cmd} '
+                            f'Exit code: {get_result.returncode} '
+                            f'Stderr: {get_result.stderr}')
+        patched = get_result.stdout.replace(
+            f'namespace: {source_docker_reg_namespace}',
+            f'namespace: {namespace}',
+        )
+        apply_cmd = f'kubectl apply -n {namespace} -f -'
+        apply_result = subprocess.run(shlex.split(apply_cmd), input=patched, capture_output=True, text=True)
+        if apply_result.returncode != 0:
+            raise Exception(f'Command: {apply_cmd} '
+                            f'Exit code: {apply_result.returncode} '
+                            f'Stderr: {apply_result.stderr}')
 
     @staticmethod
     def create_resources(path: str, namespace: str) -> None:
@@ -83,7 +100,8 @@ class Helpers:
     @staticmethod
     def setup_resources(path: str, namespace: str, docker_reg_name: str, source_docker_reg_namespace: str) -> None:
         Helpers.create_namespace(namespace)
-        #Helpers.copy_docker_reg(namespace, docker_reg_name, source_docker_reg_namespace)
+        Helpers.copy_docker_reg(namespace, docker_reg_name, source_docker_reg_namespace)
+        Helpers.copy_docker_reg(namespace, 'ci-registry-secret', source_docker_reg_namespace)
         Helpers.create_resources(path, namespace)
         Helpers.wait_pods(namespace)
 
