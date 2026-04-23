@@ -45,6 +45,14 @@ DOCKERHUB_SECRET_NAME="dockerhub-secret"
 DOCKERHUB_USER="${DOCKERHUB_USER:-fake_user}"
 DOCKERHUB_PASSWORD="${DOCKERHUB_PASSWORD:-fake_password}"
 
+# Upstream-triggered pipelines set config.sidecar.image.registry and helper.image.registry to
+# dkr.wallarm.com, which needs CI registry auth. Outside CI we fall back to fakes; the default
+# chart values point at public registries and don't require this secret.
+CI_REGISTRY_SECRET_NAME="ci-registry-secret"
+CI_REGISTRY="${CI_REGISTRY:-fake_registry_server}"
+CI_REGISTRY_USER="${CI_REGISTRY_USER:-fake_user}"
+CI_REGISTRY_PASSWORD="${CI_REGISTRY_PASSWORD:-fake_password}"
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -102,6 +110,16 @@ else
     --docker-email=docker-pull@unexists.unexists
 fi
 
+if kubectl get secret ${CI_REGISTRY_SECRET_NAME} &>/dev/null; then
+  echo "[test-env] secret ${CI_REGISTRY_SECRET_NAME} already exists, skipping creation."
+else
+  kubectl create secret docker-registry ${CI_REGISTRY_SECRET_NAME} \
+    --docker-server=${CI_REGISTRY} \
+    --docker-username="${CI_REGISTRY_USER}" \
+    --docker-password="${CI_REGISTRY_PASSWORD}" \
+    --docker-email=docker-pull@unexists.unexists
+fi
+
 
 if [ "${SKIP_IMAGE_CREATION:-false}" = "false" ]; then
   echo "[test-env] building sidecar image..."
@@ -140,6 +158,7 @@ echo "[test-env] installing Helm chart using TAG=${TAG} ..."
 cat << EOF | helm upgrade --install sidecar-controller "${DIR}/../../helm" --wait ${HELM_ARGS} --debug --values -
 imagePullSecrets:
   - name: ${DOCKERHUB_SECRET_NAME}
+  - name: ${CI_REGISTRY_SECRET_NAME}
 config:
   sidecar:
     image:
