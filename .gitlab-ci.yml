@@ -229,6 +229,11 @@ INSTALLATION:
       --docker-username="${DOCKERHUB_USER}" \
       --docker-password="${DOCKERHUB_PASSWORD}" \
       --docker-email=docker-pull@unexists.unexists
+    kubectl create secret docker-registry ci-registry-secret \
+      --docker-server="${CI_REGISTRY}" \
+      --docker-username="${CI_REGISTRY_USER}" \
+      --docker-password="${CI_REGISTRY_PASSWORD}" \
+      --docker-email=docker-pull@unexists.unexists
     helm install wallarm-sidecar ./helm -f helm/values.test.yaml ${HELM_ARGS:-} \
       --set config.wallarm.api.host=${WALLARM_API_HOST} \
       --set config.wallarm.api.token=${WALLARM_API_TOKEN} \
@@ -249,6 +254,11 @@ INSTALLATION:
       --docker-server="https://index.docker.io/v1/" \
       --docker-username="${DOCKERHUB_USER}" \
       --docker-password="${DOCKERHUB_PASSWORD}" \
+      --docker-email=docker-pull@unexists.unexists
+    kubectl -n pytest create secret docker-registry ci-registry-secret \
+      --docker-server="${CI_REGISTRY}" \
+      --docker-username="${CI_REGISTRY_USER}" \
+      --docker-password="${CI_REGISTRY_PASSWORD}" \
       --docker-email=docker-pull@unexists.unexists
     kubectl apply -f kind/docker/manifests/init/pytest.yaml
     while [[ -z $(kubectl -n pytest get pods -o name) ]]; do
