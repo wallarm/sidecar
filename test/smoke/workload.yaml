@@ -121,6 +121,7 @@ spec:
     spec:
       imagePullSecrets:
         - name: dockerhub-secret
+        - name: ci-registry-secret
       containers:
         - name: nginx
           image: nginx:stable-alpine
