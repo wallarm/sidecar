@@ -133,6 +133,10 @@ SMOKE:
   image: $RUNNER_K8S_IMAGE
   tags: [$RUNNER]
   rules:
+    # cve-scan: slim matrix to a single variant (amd64, single injection, latest K8s).
+    - if: '$X_CI_BUILD_KIND == "cve-scan" && ($ARCH != "amd64" || $INJECTION_STRATEGY != "single" || $K8S != "v1.34")'
+      when: never
+    - if: '$X_CI_BUILD_KIND == "cve-scan"'
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
@@ -178,6 +182,7 @@ LINT:
   stage: test
   image: $RUNNER_K8S_IMAGE
   rules:
+    - if: '$X_CI_BUILD_KIND == "cve-scan"'
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   script: |
     helm version
@@ -187,6 +192,10 @@ VALIDATE:
   stage: test
   image: $RUNNER_K8S_IMAGE
   rules:
+    # cve-scan: slim K8s matrix to latest only.
+    - if: '$X_CI_BUILD_KIND == "cve-scan" && $K8S != "1.34.0"'
+      when: never
+    - if: '$X_CI_BUILD_KIND == "cve-scan"'
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
