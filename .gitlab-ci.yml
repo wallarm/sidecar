@@ -140,10 +140,6 @@ SMOKE:
   image: $RUNNER_K8S_IMAGE
   tags: [$RUNNER]
   rules:
-    # cve-scan: slim matrix to a single variant (amd64, single injection, latest K8s).
-    - if: '$X_CI_BUILD_KIND == "cve-scan" && ($ARCH != "amd64" || $INJECTION_STRATEGY != "single" || $K8S != "v1.34")'
-      when: never
-    - if: '$X_CI_BUILD_KIND == "cve-scan"'
     - if: $X_CI_BUILD_KIND =~ /^(develop|production|release-candidate)$/
   parallel:
     matrix:
