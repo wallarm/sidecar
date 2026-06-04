@@ -164,9 +164,8 @@ SMOKE:
     ALLURE_GENERATE_REPORT: true
     ALLURE_ENVIRONMENT_ARCH: $ARCH
   script:
-    - |
-      export KINDEST_NODE_IMAGE=kindest/node:$(curl -s "https://registry.hub.docker.com/v2/repositories/kindest/node/tags?page_size=1000" \
-      | jq -r --arg k "${K8S}." '.results[].name | select(startswith($k))' | sort -V | tail -n 1)
+    # kind 0.29 fails on newer kindest/node patches (containerd config v4) — pin to .0
+    - export KINDEST_NODE_IMAGE=kindest/node:${K8S}.0
     - kind --version
     - |
       export KIND_CLUSTER_NAME=kind-$K8S
