@@ -1,3 +1,15 @@
+include:
+  # Docker Scout CVE scanning (shared DevOps template, publishes SBOM to the CVE dashboard)
+  - project: 'devops-public/pipelines'
+    ref: '${X_DEVOPS_SHARED_PIPELINES_STABLE}'
+    file: '/applications/common/tests/docker-scout.yaml'
+    inputs:
+      scout_image: '${SCOUT_IMAGE}' # exported by BUILD via dotenv (REGISTRY/TAG have make-level fallbacks)
+      # 'true' also publishes SBOMs from MR/dev pipelines (wanted for E2E validation
+      # of the dashboard ingestion); releases are additionally forced via workflow rules
+      scout_publish_sbom: 'true'
+      stage: 'scan'
+
 default:
   id_tokens:
     VAULT_ID_TOKEN:
@@ -7,6 +19,7 @@ default:
 
 stages:
   - build
+  - scan
   - test
   - publish
 
@@ -45,10 +58,12 @@ workflow:
       variables:
         HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set config.sidecar.image.registry=dkr.wallarm.com --set config.sidecar.image.image=wallarm-node/wallarm-sidecar-proxy/sidecar --set helper.image.tag=$AIO_VERSION --set helper.image.registry=dkr.wallarm.com --set helper.image.image=wallarm-node/node-helpers
         CHART_TYPE: "release-candidate"
+        SCOUT_PUBLISH_SBOM: "true" # release artifacts must land on the CVE dashboard
     - if: $AIO_VERSION
       variables:
         HELM_ARGS: --set config.sidecar.image.tag=$AIO_VERSION --set config.sidecar.image.registry=dkr.wallarm.com --set config.sidecar.image.image=wallarm-node/wallarm-sidecar-proxy/sidecar --set helper.image.tag=$AIO_VERSION --set helper.image.registry=dkr.wallarm.com --set helper.image.image=wallarm-node/node-helpers
         CHART_TYPE: "release"
+        SCOUT_PUBLISH_SBOM: "true" # release artifacts must land on the CVE dashboard
     - if: ($CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH =~ /^stable\/.*$/) && $CI_PIPELINE_SOURCE == "push"
       changes:
         - TAG
@@ -134,6 +149,22 @@ BUILD:
     echo "Building for registry: $REGISTRY"
 
     make build
+
+    # expose the built image reference for the Docker Scout scan job
+    # (same REGISTRY/TAG fallbacks as the Makefile defaults)
+    echo "SCOUT_IMAGE=${REGISTRY:-wallarm}/sidecar-controller:${TAG:-$(cat TAG)}" > build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+# Vulnerability scan (docker_scout_scan comes from the shared docker-scout
+# template, see include; only needs/rules are customized here)
+docker_scout_scan:
+  needs:
+    - job: BUILD
+  rules:
+    - if: $X_CI_BUILD_KIND =~ /^(develop|production-local|cve-scan)$/ # same kinds as BUILD
+    - when: never
 
 SMOKE:
   stage: test
