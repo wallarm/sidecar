@@ -60,6 +60,13 @@ data:
         location /smoke-auto-forced-browsing/ {
             return 404;
         }
+        # ptrav_etc_passwd — passive detect matches "root:[x*]:0:0:root:/root" in the
+        # response (test_triggers_incidents_exceeded.py). Mirrors smoke-tests
+        # data/ingress_conf/workload_common.yaml and aio-deploy backend_nginx.conf.
+        location /passive-detect/ptrav {
+          default_type text/plain;
+          return 200 'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\n';
+        }
       }
     }
 ---
@@ -97,6 +104,18 @@ data:
 
     location /blocking-by-tor-test {
         wallarm_application $http_custom_id;
+        proxy_pass http://127.0.0.1:80;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # Passive detect (tests/triggers/test_triggers_incidents_exceeded.py): the node must
+    # read the leaking RESPONSE, so monitoring (in block mode the request never reaches
+    # the backend) plus wallarm_parse_response. Mirrors aio-deploy wallarm_nginx.conf.
+    location /passive-detect/ {
+        wallarm_mode monitoring;
+        wallarm_parse_response on;
         proxy_pass http://127.0.0.1:80;
         proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
